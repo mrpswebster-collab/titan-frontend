@@ -124,11 +124,18 @@ export default function App() {
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [stagedNotification, setStagedNotification] = useState(null);
 
-  // User session with persistent localStorage authentication
+  // User session with persistent localStorage authentication (requires cryptographic idToken)
   const [userSession, setUserSession] = useState(() => {
     try {
       const saved = localStorage.getItem('titan_user_session');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.idToken && parsed.isAuthed) {
+          return parsed;
+        }
+        // Purge any legacy unverified email-only session
+        localStorage.removeItem('titan_user_session');
+      }
     } catch (e) {}
     return {
       isAuthed: false,
@@ -136,7 +143,10 @@ export default function App() {
       email: '',
       name: '',
       tenantId: '',
+      idToken: '',
+      startingCapital: 25000,
       currency: 'AUD',
+      kellyFraction: 0.25,
       spreadsheetId: ''
     };
   });
@@ -533,6 +543,10 @@ export default function App() {
       {activeMainTab === 'PORTFOLIO' && (
         <PortfolioHoldingsView
           userSession={userSession}
+          onUpdateSession={(updated) => {
+            setUserSession(updated);
+            try { localStorage.setItem('titan_user_session', JSON.stringify(updated)); } catch(e) {}
+          }}
           onSelectTicker={(t) => {
             const found = {
               ticker: t.ticker,
@@ -587,6 +601,7 @@ export default function App() {
       <InteractiveKinematicDrawer
         ticker={selectedTicker?.ticker}
         data={selectedTicker}
+        userEquity={userSession.startingCapital || 25000}
         onClose={() => setSelectedTicker(null)}
         onExecuteOrder={handleStageOrder}
       />

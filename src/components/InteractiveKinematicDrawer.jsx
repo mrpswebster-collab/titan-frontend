@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { X, Activity, ShieldAlert, Cpu, ArrowUpRight, BarChart2, CheckCircle2 } from 'lucide-react';
+import { X, Activity, ShieldAlert, Cpu, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 import KellySizingCalculator from './KellySizingCalculator';
 
-export default function InteractiveKinematicDrawer({ ticker, data, onClose, onExecuteOrder }) {
+export default function InteractiveKinematicDrawer({ ticker, data, userEquity = 25000, onClose, onExecuteOrder }) {
   if (!ticker || !data) return null;
 
   const [orderUnits, setOrderUnits] = useState(10000);
@@ -102,6 +102,7 @@ export default function InteractiveKinematicDrawer({ ticker, data, onClose, onEx
           ticker={ticker}
           price={data.price}
           currency={data.currency}
+          initialEquity={userEquity}
           onApplyUnits={(units) => setOrderUnits(units)}
         />
 

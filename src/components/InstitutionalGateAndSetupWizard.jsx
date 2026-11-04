@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShieldCheck, 
   Lock, 
@@ -12,167 +12,38 @@ import {
   ArrowRight, 
   ArrowLeft,
   Terminal,
-  Cpu,
-  Layers,
   Sparkles,
   AlertCircle,
-  HelpCircle,
   LogOut,
-  ChevronRight
+  DollarSign,
+  Sliders
 } from 'lucide-react';
 
-export const CODE_1_WRAPPER_SOURCE = `/**
- * ============================================================================
- * TITAN QUANT SYSTEM - CLIENT STUB (CODE_1_WRAPPER)
- * ============================================================================
- * 
- * INSTRUCTIONS:
- * 1. Open your Google Sheet > Extensions > Apps Script.
- * 2. Delete all existing code and paste this entire file in.
- * 3. Go to the "Libraries" + icon on the left sidebar.
- * 4. Paste your Master Library Script ID: 1d5fHImWJPDRqmfLUEtkypn9RgSwqPo1VBNcHVFPb8CGGYJX9KNf5ael6
- * 5. Ensure the Library Identifier is exactly: TitanLibrary
- * 6. Select "HEAD" (Development) or the latest version and click "Add".
- * 
- * The client sheet is now permanently linked to the Master Library.
- */
+const API_BASE = 'https://asx-quant-brain.onrender.com';
 
-function doGet(e) { return TitanLibrary.doGet(e); }
-function doPost(e) { return TitanLibrary.doPost(e); }
-function onOpen() { TitanLibrary.titanOnOpen(); }
-function onEditInstallable(e) { TitanLibrary.onEditInstallable(e); }
+const CAPITAL_PRESETS = [
+  5000,
+  10000,
+  25000,
+  50000,
+  100000,
+  250000,
+  500000,
+  1000000
+];
 
-// UI & Menu Functions
-function showStagedOrdersModal() { TitanLibrary.showStagedOrdersModal(); }
-function confirmStagedOrder(ticker) { return TitanLibrary.confirmStagedOrder(ticker); }
-function isUnhaltStabilizationActive(ticker, currentPrice, yesterdayPrice) { return TitanLibrary.isUnhaltStabilizationActive(ticker, currentPrice, yesterdayPrice); }
-function checkCorporateActionSanity(ticker, currentPrice, yesterdayPrice, volMult, fiatVolume) { return TitanLibrary.checkCorporateActionSanity(ticker, currentPrice, yesterdayPrice, volMult, fiatVolume); }
-function setupSystem() { TitanLibrary.setupSystem(); }
-function updateAiModelDropdown() { TitanLibrary.updateAiModelDropdown(); }
-function showPriceBracketPicker() { TitanLibrary.showPriceBracketPicker(); }
-function showSectorPicker() { TitanLibrary.showSectorPicker(); }
-function showActionPanel() { TitanLibrary.showActionPanel(); }
-function showBacktestPanel() { TitanLibrary.showBacktestPanel(); }
-function showTickerCockpitModal(ticker) { return TitanLibrary.showTickerCockpitModal(ticker); }
-function runSelectedTickerForensicDossier() { return TitanLibrary.runSelectedTickerForensicDossier(); }
-function fetchTickerAnalyticsForCockpit(ticker, horizon) { return TitanLibrary.fetchTickerAnalyticsForCockpit(ticker, horizon); }
-function showUnifiedFilterPanel() { TitanLibrary.showUnifiedFilterPanel(); }
-function showScheduler() { TitanLibrary.showScheduler(); }
-function showMCPConfigModal() { TitanLibrary.showMCPConfigModal(); }
-function autoFillTickersSheet() { TitanLibrary.autoFillTickersSheet(); }
+const CURRENCY_OPTIONS = [
+  { code: 'AUD', symbol: 'A$', label: 'AUD — Australian Dollar' },
+  { code: 'USD', symbol: 'US$', label: 'USD — US Dollar' },
+  { code: 'GBP', symbol: '£', label: 'GBP — British Pound' },
+  { code: 'CAD', symbol: 'C$', label: 'CAD — Canadian Dollar' }
+];
 
-// Core Execution Triggers
-function masterScheduler() { TitanLibrary.masterScheduler(); }
-function watchdogSentinel() { TitanLibrary.watchdogSentinel(); }
-function runApexSentinelLoop() { TitanLibrary.runApexSentinelLoop(); }
-function runKeepAliveWatchdog() { TitanLibrary.runKeepAliveWatchdog(); }
-function runNightlyDossier() { TitanLibrary.runNightlyDossier(); }
-function runNightlyDossier_triggered() { TitanLibrary.runNightlyDossier_triggered(); }
-function runNightlyDossierLogic() { TitanLibrary.runNightlyDossierLogic(); }
-function manualAIExecution() { TitanLibrary.manualAIExecution(); }
-function runWeekendDossier() { TitanLibrary.runWeekendDossier(); }
-function runIntradayPounceAsync() { TitanLibrary.runIntradayPounceAsync(); }
-function sendMorningWakeupReport() { TitanLibrary.sendMorningWakeupReport(); }
-function sendConsolidatedEODReport() { TitanLibrary.sendConsolidatedEODReport(); }
-function sendWeekendDossierReport(mode) { TitanLibrary.sendWeekendDossierReport(mode); }
-function testSendInstitutionalDossierEmail() { TitanLibrary.testSendInstitutionalDossierEmail(); }
-function sendTickerStatusTransitionEmail(transitions, contextSource) { return TitanLibrary.sendTickerStatusTransitionEmail(transitions, contextSource); }
-function isTickerSuspended(ticker) { return TitanLibrary.isTickerSuspended(ticker); }
-function stampTickerSuspended(ticker, optionalDashData) { return TitanLibrary.stampTickerSuspended(ticker, optionalDashData); }
-function resetTelemetryLogs() { TitanLibrary.resetTelemetryLogs(); }
-function runEofyTaxEngine() { TitanLibrary.runEofyTaxEngine(); }
-
-// Data & Database Functions
-function syncTickerList() { TitanLibrary.syncTickerList(); }
-function pollAIResults() { TitanLibrary.pollAIResults(); }
-function generatePerformanceChart() { TitanLibrary.generatePerformanceChart(); }
-function generateComprehensiveTaxReport() { TitanLibrary.generateComprehensiveTaxReport(); }
-function logPerformanceSnapshot() { TitanLibrary.logPerformanceSnapshot(); }
-function reportActiveDelta() { TitanLibrary.reportActiveDelta(); }
-function quickScanCustomList() { TitanLibrary.quickScanCustomList(); }
-function queryDatabaseMetrics() { TitanLibrary.queryDatabaseMetrics(); }
-function syncStateWithServer() { TitanLibrary.syncStateWithServer(); }
-function captureAdvancedTelemetry() { TitanLibrary.captureAdvancedTelemetry(); }
-function healPendingDashboardRows(maxBatchSize) { return TitanLibrary.healPendingDashboardRows(maxBatchSize); }
-
-// Security & System Controls
-function emergencyStopAllScans() { TitanLibrary.emergencyStopAllScans(); }
-function totalSystemReset() { TitanLibrary.totalSystemReset(); }
-function runActiveAIAudit() { TitanLibrary.runActiveAIAudit(); }
-function initializeTitanExtensions() { TitanLibrary.initializeTitanExtensions(); }
-function titanSelfAudit() { TitanLibrary.titanSelfAudit(); }
-function triggerMasterOrchestration() { TitanLibrary.triggerMasterOrchestration(); }
-function refreshDynamicWatchlist() { TitanLibrary.refreshDynamicWatchlist(); }
-function titanSystemHealthCheck() { TitanLibrary.titanSystemHealthCheck(); }
-function monitorAdvancedCircuitBreakers() { TitanLibrary.monitorAdvancedCircuitBreakers(); }
-function runNewsIntelligenceAudit() { TitanLibrary.runNewsIntelligenceAudit(); }
-function refreshVisualDataPrep() { TitanLibrary.refreshVisualDataPrep(); }
-function repairSystemBalances() { TitanLibrary.repairSystemBalances(); }
-function repairCorruptedActiveStatuses() { TitanLibrary.repairCorruptedActiveStatuses(); }
-function reconcileAndAuditSystem() { TitanLibrary.reconcileAndAuditSystem(); }
-function generateStrategyPerformanceAudit() { TitanLibrary.generateStrategyPerformanceAudit(); }
-
-// Async Bridging & UI Callbacks
-function executeServerBacktest(p) { return TitanLibrary.executeServerBacktest(p); }
-function saveUnifiedFilters(data) { return TitanLibrary.saveUnifiedFilters(data); }
-function getActiveFiltersData() { return TitanLibrary.getActiveFiltersData(); }
-function manualRefreshPortfolio() { TitanLibrary.manualRefreshPortfolio(); }
-function saveCombinedFilters(f) { return TitanLibrary.saveCombinedFilters(f); }
-function saveSelectedSectors(s) { return TitanLibrary.saveSelectedSectors(s); }
-function executeDoubleConfirmedAction(p) { return TitanLibrary.executeDoubleConfirmedAction(p); }
-function execBridge(funcName, data) { return TitanLibrary.execBridge(funcName, data); }
-function fetchAvailableModels(provider, apiKey) { return TitanLibrary.fetchAvailableModels(provider, apiKey); }
-function processKeyUploads(payload) { return TitanLibrary.processKeyUploads(payload); }
-function processTradeTerminalSubmit(action, ticker, amt, rowNum) { return TitanLibrary.processTradeTerminalSubmit(action, ticker, amt, rowNum); }
-function applyStrategyTierPresets(tier, persona) { return TitanLibrary.applyStrategyTierPresets(tier, persona); }
-
-// Maintenance & Recovery
-function runManualUpdateDialog() { TitanLibrary.runManualUpdateDialog(); }
-function applySystemTooltips() { TitanLibrary.applySystemTooltips(); }
-function resetConfigToDefaults() { TitanLibrary.resetConfigToDefaults(); }
-function purgeAndDestroySelf() { TitanLibrary.purgeAndDestroySelf(); }
-function runComprehensiveAccountingAudit() { TitanLibrary.runComprehensiveAccountingAudit(); }
-function resetLocalCircuitBreaker() { TitanLibrary.resetLocalCircuitBreaker(); }
-function titanCalendarGenerateWeeklySchedule() { TitanLibrary.titanCalendarGenerateWeeklySchedule(); }
-function runDossierPreFlightCheck() { TitanLibrary.runDossierPreFlightCheck(); }
-function fetchNewsForActiveTickers() { TitanLibrary.fetchNewsForActiveTickers(); }
-
-// Legacy UI Fallback Stubs & Oracles
-function generateSqlFromMemory() { TitanLibrary.generateSqlFromMemory(); }
-function titanSystemDiagnostic() { TitanLibrary.titanSystemDiagnostic(); }
-function diagnosticAndReset() { TitanLibrary.diagnosticAndReset(); }
-function TITAN_SECURE_VAULT_SYNC() { TitanLibrary.TITAN_SECURE_VAULT_SYNC(); }
-function TITAN_TOGGLE_CLEAN_UI() { TitanLibrary.TITAN_TOGGLE_CLEAN_UI(); }
-function TITAN_VERIFY_BRAIN_HEALTH() { TitanLibrary.TITAN_VERIFY_BRAIN_HEALTH(); }
-function TITAN_FINALIZE_DASHBOARD_SORT() { TitanLibrary.TITAN_FINALIZE_DASHBOARD_SORT(); }
-function promptForPaidAPIKey() { TitanLibrary.promptForPaidAPIKey(); }
-function showUniversalBYOKModal() { TitanLibrary.promptForPaidAPIKey(); }
-function forceWakeServer() { TitanLibrary.forceWakeServer(); }
-function setupWorldCalendarEvents() { TitanLibrary.setupWorldCalendarEvents(); }
-function sanitizeDossierForDisplay(reportStr) { return TitanLibrary.sanitizeDossierForDisplay(reportStr); }
-function validateGate3Momentum(tier, tech) { return TitanLibrary.validateGate3Momentum(tier, tech); }
-function computeMacdVectorLocal(prices) { return TitanLibrary.computeMacdVectorLocal(prices); }
-function computeEmaVectorLocal(prices, span) { return TitanLibrary.computeEmaVectorLocal(prices, span); }
-function computeRsiVectorLocal(prices, period) { return TitanLibrary.computeRsiVectorLocal(prices, period); }
-
-function _forceSecurityScopes() {
-  if (false) {
-    MailApp.sendEmail("dummy@dummy.com", "Subject", "Body");
-    CalendarApp.getDefaultCalendar();
-    UrlFetchApp.fetch("https://google.com");
-    ScriptApp.newTrigger("dummy");
-    SpreadsheetApp.getActiveSpreadsheet();
-  }
-}
-
-function preWarmRenderServer() {
-  try {
-    UrlFetchApp.fetch('https://asx-quant-brain.onrender.com/api/market-status', { muteHttpExceptions: true });
-  } catch (e) {}
-}
-
-function promptCalibrateRetailCapital() { TitanLibrary.promptCalibrateRetailCapital(); }
-function syncExchangePOIArrivals() { TitanLibrary.syncExchangePOIArrivals(); }`;
+const KELLY_OPTIONS = [
+  { value: 0.25, label: '0.25x (Quarter-Kelly — Conservative)' },
+  { value: 0.50, label: '0.50x (Half-Kelly — Institutional Default)' },
+  { value: 1.00, label: '1.00x (Full-Kelly — Aggressive)' }
+];
 
 export default function InstitutionalGateAndSetupWizard({ 
   userSession, 
@@ -182,61 +53,200 @@ export default function InstitutionalGateAndSetupWizard({
   showSetupModalOnly = false,
   onCloseModal
 }) {
-  const [googleEmail, setGoogleEmail] = useState('');
-  const [googleName, setGoogleName] = useState('');
-  const [loginStep, setLoginStep] = useState(1); // 1: Google login, 2+: Setup steps
-  const [currentStep, setCurrentStep] = useState(1); // Onboarding steps 1 to 4
+  // OAuth & Gate State
+  const [googleClientId, setGoogleClientId] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [showInviteInput, setShowInviteInput] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const googleBtnRef = useRef(null);
+
+  // Onboarding Wizard State (Steps 1 to 4)
+  const [currentStep, setCurrentStep] = useState(1);
+  const [portfolioName, setPortfolioName] = useState(userSession?.name ? `${userSession.name} Alpha Node` : 'Primary Trading Node');
+  const [currency, setCurrency] = useState(userSession?.currency || 'AUD');
+  const [startingCapital, setStartingCapital] = useState(userSession?.startingCapital || 25000);
+  const [customCapitalInput, setCustomCapitalInput] = useState(String(userSession?.startingCapital || 25000));
+  const [kellyFraction, setKellyFraction] = useState(userSession?.kellyFraction || 0.50);
+  const [chaseLimitPct, setChaseLimitPct] = useState(userSession?.chaseLimitPct || 2.0);
+  const [sheetInput, setSheetInput] = useState(userSession?.spreadsheetId || '');
+
+  // Server-Fetched Protected Blueprint (Never hardcoded in JS bundle)
+  const [blueprint, setBlueprint] = useState({
+    wrapper_script: '',
+    master_library_id: '',
+    library_identifier: 'TitanLibrary',
+    tenant_hmac_secret: ''
+  });
+  const [loadingBlueprint, setLoadingBlueprint] = useState(false);
+
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedConfig, setCopiedConfig] = useState(false);
-  const [sheetInput, setSheetInput] = useState(userSession?.spreadsheetId || '');
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyLogs, setVerifyLogs] = useState([]);
   const [verifySuccess, setVerifySuccess] = useState(false);
+  const [verifyError, setVerifyError] = useState('');
 
-  // Helper to extract Sheet ID from URL or raw ID
+  // Extract clean Google Sheet ID from full URL or raw ID string
   const extractSheetId = (input) => {
     if (!input) return '';
     const match = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
     return match ? match[1] : input.trim();
   };
 
-  const cleanSheetId = extractSheetId(sheetInput) || '1A2B3C4D5E6F7G8H9J_TITAN_NODE';
+  const cleanSheetId = extractSheetId(sheetInput);
 
-  // Handle Initial Google Sign In
-  const handleGoogleSignIn = (e) => {
-    e.preventDefault();
-    const email = googleEmail.trim() || 'trader@institutional-quant.com';
-    const name = googleName.trim() || email.split('@')[0].toUpperCase();
-    const tenantId = 'TENANT-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+  // 1. Fetch public Google OAuth Client ID for GIS button
+  useEffect(() => {
+    if (userSession?.isAuthed && !showSetupModalOnly) return;
+    fetch(`${API_BASE}/api/v2/auth/config`)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.google_client_id) {
+          setGoogleClientId(data.google_client_id);
+        }
+      })
+      .catch(err => console.warn('Auth config fetch notice:', err));
+  }, [userSession?.isAuthed, showSetupModalOnly]);
 
-    const sessionData = {
-      email,
-      name,
-      tenantId,
-      currency: 'AUD',
-      isAuthed: true,
-      hasCompletedSetup: false,
-      spreadsheetId: cleanSheetId
+  // 2. Render Official Cryptographic Google Sign-In Button
+  useEffect(() => {
+    if (userSession?.isAuthed || showSetupModalOnly || !googleClientId) return;
+
+    const initGoogleGsi = () => {
+      if (window.google?.accounts?.id && googleBtnRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCredentialResponse,
+          auto_select: false
+        });
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          theme: 'filled_black',
+          size: 'large',
+          width: 360,
+          text: 'signin_with',
+          shape: 'pill'
+        });
+      }
     };
 
-    onLoginSuccess(sessionData);
-    setLoginStep(2); // Move to setup wizard
+    const timer = setInterval(() => {
+      if (window.google?.accounts?.id) {
+        clearInterval(timer);
+        initGoogleGsi();
+      }
+    }, 200);
+
+    return () => clearInterval(timer);
+  }, [googleClientId, userSession?.isAuthed, showSetupModalOnly, inviteCode]);
+
+  // 3. Fetch Protected Wrapper Script & Library ID ONLY after authenticated session
+  useEffect(() => {
+    if (!userSession?.isAuthed || !userSession?.idToken) return;
+    setLoadingBlueprint(true);
+    const qSheet = cleanSheetId || 'PENDING_SHEET';
+    fetch(`${API_BASE}/api/v2/onboarding/blueprint?spreadsheet_id=${encodeURIComponent(qSheet)}`, {
+      headers: {
+        'Authorization': `Bearer ${userSession.idToken}`
+      }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Unauthorized blueprint fetch');
+        return res.json();
+      })
+      .then(data => {
+        setBlueprint({
+          wrapper_script: data.wrapper_script || '',
+          master_library_id: data.master_library_id || '',
+          library_identifier: data.library_identifier || 'TitanLibrary',
+          tenant_hmac_secret: data.tenant_hmac_secret || ''
+        });
+      })
+      .catch(err => console.warn('Blueprint fetch error:', err))
+      .finally(() => setLoadingBlueprint(false));
+  }, [userSession?.isAuthed, userSession?.idToken, cleanSheetId]);
+
+  const handleGoogleCredentialResponse = async (response) => {
+    setAuthError('');
+    setIsAuthenticating(true);
+    try {
+      const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Australia/Sydney';
+      const res = await fetch(`${API_BASE}/api/v2/auth/handshake`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${response.credential}`
+        },
+        body: JSON.stringify({
+          id_token: response.credential,
+          user_timezone: userTz,
+          invite_code: inviteCode.trim() || null
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'Authentication rejected by institutional gate.');
+      }
+
+      const u = data.user || {};
+      const cap = u.starting_capital || 25000;
+      setStartingCapital(cap);
+      setCustomCapitalInput(String(cap));
+      setCurrency(u.currency || 'AUD');
+
+      onLoginSuccess({
+        email: u.email,
+        name: u.name || u.email.split('@')[0].toUpperCase(),
+        tenantId: u.tenant_id || 'TENANT-VERIFIED',
+        role: u.role || 'OWNER',
+        isAdmin: Boolean(u.is_admin),
+        idToken: response.credential,
+        currency: u.currency || 'AUD',
+        startingCapital: cap,
+        kellyFraction: u.kelly_fraction || 0.50,
+        chaseLimitPct: u.chase_limit_pct || 2.0,
+        spreadsheetId: u.spreadsheet_id || '',
+        isAuthed: true,
+        hasCompletedSetup: Boolean(u.has_completed_setup || u.is_admin)
+      });
+    } catch (err) {
+      setAuthError(err.message || 'Cryptographic Google OAuth verification failed.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handlePresetCapitalSelect = (amount) => {
+    setStartingCapital(amount);
+    setCustomCapitalInput(String(amount));
+  };
+
+  const handleCustomCapitalChange = (e) => {
+    const raw = e.target.value.replace(/[^0-9.]/g, '');
+    setCustomCapitalInput(raw);
+    const num = parseFloat(raw);
+    if (!isNaN(num) && num >= 0) {
+      setStartingCapital(num);
+    }
   };
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(CODE_1_WRAPPER_SOURCE);
+    if (!blueprint.wrapper_script) return;
+    navigator.clipboard.writeText(blueprint.wrapper_script);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2500);
   };
 
   const configTableRows = [
-    { key: 'TITAN_AUTH_EMAIL', value: userSession?.email || googleEmail || 'trader@gmail.com', desc: 'Google Account authorized to trigger execution' },
-    { key: 'TITAN_API_ENDPOINT', value: 'https://asx-quant-brain.onrender.com', desc: 'High-availability autonomous quant API' },
-    { key: 'TITAN_TENANT_ID', value: userSession?.tenantId || 'TENANT-ALPHA', desc: 'Cryptographic isolated tenant memory scope' },
-    { key: 'TITAN_ACTIVE_EXCHANGE', value: 'ASX', desc: 'Default active exchange (ASX / NYSE / LSE / TSX)' },
-    { key: 'TITAN_CHASE_LIMIT_PCT', value: '2.0%', desc: 'Strict slippage execution ceiling (Rule 24 compliant)' },
-    { key: 'TITAN_KELLY_FRACTION', value: '0.50 (Half-Kelly)', desc: 'Asymmetric capital risk scaling factor' },
-    { key: 'TITAN_SCAN_CADENCE_MINS', value: '15', desc: 'Intraday watchdog scan cycle frequency' }
+    { key: 'TITAN_AUTH_EMAIL', value: userSession?.email || '', desc: 'Cryptographically verified Google Account owner' },
+    { key: 'TITAN_TENANT_SECRET', value: blueprint.tenant_hmac_secret || 'PENDING_HANDSHAKE', desc: 'Unforgeable HMAC-SHA256 key binding Sheet to Tenant' },
+    { key: 'TITAN_STARTING_CAPITAL', value: `${startingCapital.toFixed(2)}`, desc: `Custom Starting Capital Allocation (${currency})` },
+    { key: 'TITAN_BASE_CURRENCY', value: currency, desc: 'Primary accounting & position sizing currency' },
+    { key: 'TITAN_KELLY_FRACTION', value: `${kellyFraction}`, desc: 'Fractional Kelly Criterion risk dampener' },
+    { key: 'TITAN_CHASE_LIMIT_PCT', value: `${chaseLimitPct}%`, desc: 'Rule 24 maximum slippage ceiling above signal price' },
+    { key: 'TITAN_API_ENDPOINT', value: API_BASE, desc: 'Autonomous Render Quant Brain Gateway' },
+    { key: 'TITAN_ACTIVE_EXCHANGE', value: 'ASX', desc: 'Default primary exchange (ASX / NYSE / LSE / TSX)' }
   ];
 
   const handleCopyConfigTable = () => {
@@ -246,49 +256,84 @@ export default function InstitutionalGateAndSetupWizard({
     setTimeout(() => setCopiedConfig(false), 2500);
   };
 
-  const handleRunHandshake = () => {
+  const handleRunHandshake = async () => {
+    if (!cleanSheetId) {
+      setVerifyError('Please paste your Google Sheet URL or Sheet ID in Step 2 or below before running the handshake.');
+      return;
+    }
+    setVerifyError('');
     setIsVerifying(true);
     setVerifyLogs([]);
     setVerifySuccess(false);
 
-    const logs = [
-      'Initiating bi-directional TLS handshake with asx-quant-brain.onrender.com...',
-      `Authenticating tenant token: ${userSession?.tenantId || 'TENANT-ALPHA'}...`,
-      `Validating Google Identity: ${userSession?.email || 'trader@gmail.com'} (OAuth 2.0 OK)`,
-      `Inspecting Google Sheet ID: ${cleanSheetId}...`,
-      'Verifying Master Library link: TitanLibrary (ID: 1d5fHImWJPDR...ael6) [LINKED]',
-      'Testing Config tab schema: 7/7 required strategic parameters present',
-      'Locking reverse-engineering shield: Client stub confirmed as zero-logic proxy',
-      'TELEMETRY HANDSHAKE SUCCESSFUL: Ready for live market execution!'
-    ];
+    try {
+      const res = await fetch(`${API_BASE}/api/v2/tenants/onboard`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userSession?.idToken}`
+        },
+        body: JSON.stringify({
+          spreadsheet_id: cleanSheetId,
+          portfolio_name: portfolioName,
+          currency: currency,
+          starting_capital: Number(startingCapital) || 25000,
+          kelly_fraction: Number(kellyFraction) || 0.50,
+          chase_limit_pct: Number(chaseLimitPct) || 2.0
+        })
+      });
 
-    logs.forEach((log, index) => {
-      setTimeout(() => {
-        setVerifyLogs(prev => [...prev, log]);
-        if (index === logs.length - 1) {
-          setIsVerifying(false);
-          setVerifySuccess(true);
-        }
-      }, (index + 1) * 350);
-    });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'Handshake verification failed.');
+      }
+
+      if (data.tenant_hmac_secret) {
+        setBlueprint(prev => ({ ...prev, tenant_hmac_secret: data.tenant_hmac_secret }));
+      }
+
+      const steps = data.audit_steps || [
+        `Google OAuth 2.0 Identity Verified: ${userSession?.email}`,
+        `Sheet Ownership Bound: ${cleanSheetId}`,
+        `Custom Capital Pool Initialized: ${currency} $${Number(startingCapital).toLocaleString()}`,
+        `Per-Tenant HMAC Key Issued: ${data.tenant_hmac_secret}`
+      ];
+
+      steps.forEach((step, idx) => {
+        setTimeout(() => {
+          setVerifyLogs(prev => [...prev, step]);
+          if (idx === steps.length - 1) {
+            setIsVerifying(false);
+            setVerifySuccess(true);
+          }
+        }, (idx + 1) * 280);
+      });
+    } catch (err) {
+      setIsVerifying(false);
+      setVerifyError(err.message || 'Failed to verify sheet handshake.');
+    }
   };
 
   const handleFinalLaunch = () => {
     onCompleteSetup({
       ...userSession,
-      spreadsheetId: cleanSheetId,
+      spreadsheetId: cleanSheetId || userSession?.spreadsheetId || 'PRIMARY-NODE',
+      currency,
+      startingCapital: Number(startingCapital) || 25000,
+      kellyFraction: Number(kellyFraction) || 0.50,
+      chaseLimitPct: Number(chaseLimitPct) || 2.0,
+      tenantHmacSecret: blueprint.tenant_hmac_secret,
       hasCompletedSetup: true
     });
     if (onCloseModal) onCloseModal();
   };
 
   // =========================================================================
-  // RENDER: UN-AUTHENTICATED LOCKDOWN GATE
+  // RENDER 1: CRYPTOGRAPHIC GOOGLE OAUTH 2.0 LOCKDOWN GATE
   // =========================================================================
   if (!userSession?.isAuthed && !showSetupModalOnly) {
     return (
       <div className="min-h-screen bg-[#070b12] text-slate-100 flex flex-col justify-between selection:bg-emerald-500 selection:text-black">
-        {/* Top Minimal Security Bar */}
         <header className="border-b border-slate-900/80 bg-[#0a0f18]/90 backdrop-blur-md px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
@@ -296,125 +341,119 @@ export default function InstitutionalGateAndSetupWizard({
             </div>
             <div>
               <span className="font-mono text-sm font-black tracking-wider text-slate-100">TITAN QUANT</span>
-              <span className="text-[10px] font-mono text-emerald-400 ml-2 px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40">SYSTEM GATE</span>
+              <span className="text-[10px] font-mono text-emerald-400 ml-2 px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40">ZERO-TRUST ENCLAVE</span>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
             <Lock className="w-3.5 h-3.5 text-emerald-400" />
-            <span>256-Bit Cryptographic Enclave</span>
+            <span>RS256 Google OAuth + Allowlist Gate</span>
           </div>
         </header>
 
-        {/* Main Centered Login Enclave */}
         <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-8">
           <div className="max-w-xl w-full bg-[#0d131f] border border-slate-800/80 rounded-2xl shadow-2xl p-6 sm:p-8 relative overflow-hidden">
-            {/* Glow Accent */}
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            {/* Badge & Title */}
-            <div className="text-center space-y-3 mb-8">
+            <div className="text-center space-y-3 mb-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] font-mono text-emerald-400">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Authorized Institutional Access Only</span>
+                <span>Strict Institutional Allowlist & OAuth 2.0 Verification</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
                 Titan Commercial Quant Portal
               </h1>
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
-                Sign in with your Google account to access your isolated algorithmic node, real-time market scanners, and personal Google Sheet execution mirror.
+                Unverified email entry is disabled. All sessions require cryptographic Google OAuth 2.0 verification and active institutional allowlist clearance.
               </p>
             </div>
 
-            {/* IP Protection / Zero-Bleed Notice */}
+            {/* Security Notice */}
             <div className="mb-6 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-300 space-y-1.5">
               <div className="flex items-center gap-2 font-semibold text-emerald-400 text-[11px] uppercase tracking-wider font-mono">
                 <Lock className="w-3.5 h-3.5" />
-                <span>Zero-Knowledge & Anti-Reverse Engineering Standard</span>
+                <span>5-Shield Anti-Bot & IP Protection Active</span>
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Client instances run through our closed-source <code className="text-emerald-300">TitanLibrary</code>. Your trading capital, orders, and sensitive portfolio history remain strictly within your personal Google Sheet enclave.
+                Wrapper scripts, Master Library IDs, and portfolio workbooks are stripped from public client bundles and served exclusively after server-side RS256 token verification.
               </p>
             </div>
 
-            {/* Google OAuth Form */}
-            <form onSubmit={handleGoogleSignIn} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                  Google Account Email
-                </label>
-                <div className="relative">
+            {/* Optional Invite Code Input for New Clients */}
+            <div className="mb-5">
+              <button
+                type="button"
+                onClick={() => setShowInviteInput(!showInviteInput)}
+                className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 mx-auto mb-2"
+              >
+                <Key className="w-3.5 h-3.5" />
+                <span>{showInviteInput ? 'Hide Invite Code Box' : 'New Client? Enter One-Time Institutional Invite Code'}</span>
+              </button>
+
+              {showInviteInput && (
+                <div className="p-3 rounded-xl bg-[#070b12] border border-slate-800 space-y-1.5">
+                  <label className="block text-[10px] font-mono uppercase text-slate-400">
+                    One-Time Institutional Invite Code (Required for First-Time Onboarding)
+                  </label>
                   <input
-                    type="email"
-                    required
-                    value={googleEmail}
-                    onChange={(e) => setGoogleEmail(e.target.value)}
-                    placeholder="trader@gmail.com or workspace domain"
-                    className="w-full bg-[#070b12] border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 font-mono transition-all outline-none"
+                    type="text"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                    placeholder="TITAN-XXXX-XXXX"
+                    className="w-full bg-[#0d131f] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-emerald-400 font-mono uppercase tracking-wider outline-none"
                   />
                 </div>
+              )}
+            </div>
+
+            {/* Error Alert */}
+            {authError && (
+              <div className="mb-5 p-3.5 rounded-xl bg-rose-950/50 border border-rose-800/80 text-xs text-rose-200 flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                <div className="font-mono text-[11px] leading-relaxed">{authError}</div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                  Client / Trader Name
-                </label>
-                <input
-                  type="text"
-                  value={googleName}
-                  onChange={(e) => setGoogleName(e.target.value)}
-                  placeholder="e.g. Apex Sovereign Alpha"
-                  className="w-full bg-[#070b12] border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 font-mono transition-all outline-none"
-                />
-              </div>
+            {/* Official Google Sign-In Container */}
+            <div className="flex flex-col items-center justify-center min-h-[56px] py-2">
+              {isAuthenticating ? (
+                <div className="text-xs font-mono text-emerald-400 animate-pulse py-3">
+                  Verifying cryptographic RS256 signature with Google & Render Brain...
+                </div>
+              ) : (
+                <div ref={googleBtnRef} className="flex justify-center" />
+              )}
+            </div>
 
-              <button
-                type="submit"
-                className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-3 transition-all transform active:scale-[0.99] shadow-lg shadow-emerald-500/20 text-sm mt-2"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-                <span>Authorize & Enter Setup Terminal</span>
-              </button>
-            </form>
-
-            <div className="mt-6 pt-6 border-t border-slate-800/80 grid grid-cols-3 gap-3 text-center">
+            <div className="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-3 gap-3 text-center">
               <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
-                <div className="text-[11px] font-mono text-emerald-400 font-bold">4 EXCHANGES</div>
-                <div className="text-[10px] text-slate-400">ASX • US • UK • CA</div>
+                <div className="text-[11px] font-mono text-emerald-400 font-bold">GOOGLE OAUTH 2.0</div>
+                <div className="text-[10px] text-slate-400">RS256 Verified</div>
               </div>
               <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
-                <div className="text-[11px] font-mono text-cyan-400 font-bold">ZERO BLEED</div>
-                <div className="text-[10px] text-slate-400">Isolated Sheets</div>
+                <div className="text-[11px] font-mono text-cyan-400 font-bold">ZERO BUNDLE SECRETS</div>
+                <div className="text-[10px] text-slate-400">F12 DevTools Proof</div>
               </div>
               <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
-                <div className="text-[11px] font-mono text-amber-400 font-bold">KELLY SIZING</div>
-                <div className="text-[10px] text-slate-400">Asymmetric Sizing</div>
+                <div className="text-[11px] font-mono text-amber-400 font-bold">HMAC-SHA256</div>
+                <div className="text-[10px] text-slate-400">Sheet Binding</div>
               </div>
             </div>
           </div>
         </main>
 
-        {/* Footer Disclaimers */}
         <footer className="border-t border-slate-900/80 bg-[#0a0f18]/60 p-4 text-center text-[10px] font-mono text-slate-400">
-          ASIC Statutory Disclaimer: Automated algorithmic research & execution engine. Strictly for authorized corporate & institutional tenants.
+          ASIC Statutory Disclaimer: Automated algorithmic research & risk-management tool. Strictly restricted to verified institutional allowlist tenants.
         </footer>
       </div>
     );
   }
 
   // =========================================================================
-  // RENDER: POST-LOGIN 4-STEP TERMINAL SETUP WIZARD
+  // RENDER 2: POST-LOGIN 4-STEP TERMINAL SETUP WIZARD (CUSTOM CAPITAL & HMAC)
   // =========================================================================
   const steps = [
-    { num: 1, title: 'Tenant Provisioning', icon: ShieldCheck },
+    { num: 1, title: 'Capital & Risk Calibration', icon: Sliders },
     { num: 2, title: 'Master Sheet Template', icon: FileSpreadsheet },
     { num: 3, title: 'Code_1_Wrapper Script', icon: Code2 },
-    { num: 4, title: 'Config & Handshake', icon: Settings2 }
+    { num: 4, title: 'Config & HMAC Handshake', icon: Settings2 }
   ];
 
   return (
@@ -435,7 +474,7 @@ export default function InstitutionalGateAndSetupWizard({
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Authorized Tenant: <span className="text-slate-200 font-mono">{userSession?.email}</span> ({userSession?.name})
+                Verified Google Account: <span className="text-emerald-400 font-mono font-bold">{userSession?.email}</span> ({userSession?.isAdmin ? 'SUPERADMIN' : 'ISOLATED TENANT'})
               </p>
             </div>
           </div>
@@ -474,9 +513,7 @@ export default function InstitutionalGateAndSetupWizard({
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono transition-all whitespace-nowrap ${
                   isActive 
                     ? 'bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 shadow-sm'
-                    : isDone
-                      ? 'text-slate-400 hover:text-slate-200'
-                      : 'text-slate-400 hover:text-slate-300'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
@@ -493,56 +530,131 @@ export default function InstitutionalGateAndSetupWizard({
         {/* Wizard Step Body */}
         <div className="p-6 sm:p-8 space-y-6">
           
-          {/* STEP 1: Tenant Identity & Isolation */}
+          {/* STEP 1: Custom Starting Capital, Currency & Risk Calibration */}
           {currentStep === 1 && (
             <div className="space-y-5 animate-in fade-in duration-200">
-              <div className="border border-slate-800 bg-[#0a0f18] rounded-xl p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
+              <div className="border border-slate-800 bg-[#0a0f18] rounded-xl p-5 space-y-5">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <h3 className="text-sm font-bold text-white">Cryptographic Tenant Instance Initialized</h3>
-                    <p className="text-xs text-slate-400">Your Google Account has been bound to a private memory space.</p>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-emerald-400" />
+                      Step 1: Select or Type Your Starting Capital & Risk Profile
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Choose a preset allocation below or type in any exact dollar amount to calibrate your Kelly position sizing and Google Sheet Config tab.
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold">
+                    Active Pool: {currency} ${Number(startingCapital || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+
+                {/* Base Currency + Custom Numeric Input */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase text-slate-300 mb-1.5">
+                      1. Select Base Portfolio Currency
+                    </label>
+                    <select
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      className="w-full bg-[#0d131f] border border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono outline-none"
+                    >
+                      {CURRENCY_OPTIONS.map(c => (
+                        <option key={c.code} value={c.code}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase text-emerald-400 mb-1.5">
+                      2. Type Custom Starting Capital ({currency})
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-2.5 text-xs font-mono text-slate-400">$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={customCapitalInput}
+                        onChange={handleCustomCapitalChange}
+                        placeholder="Enter any amount, e.g. 15000"
+                        className="w-full bg-[#0d131f] border border-emerald-500/50 focus:border-emerald-400 rounded-xl pl-8 pr-4 py-2.5 text-xs text-white font-mono font-bold outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-                  <div className="p-3 bg-[#0d131f] rounded-lg border border-slate-800/80">
-                    <span className="text-slate-400 block text-[10px]">AUTHENTICATED GOOGLE ID</span>
-                    <span className="text-slate-200 font-bold">{userSession?.email}</span>
+                {/* Quick-Select Preset Capital Pills */}
+                <div>
+                  <label className="block text-[10px] font-mono uppercase text-slate-400 mb-2">
+                    Or Click a Quick-Select Capital Preset:
+                  </label>
+                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                    {CAPITAL_PRESETS.map(amt => {
+                      const active = Number(startingCapital) === amt;
+                      return (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => handlePresetCapitalSelect(amt)}
+                          className={`py-2 px-2 rounded-lg font-mono text-xs font-bold border transition ${
+                            active
+                              ? 'bg-emerald-500 text-black border-emerald-400 shadow-md shadow-emerald-500/20'
+                              : 'bg-[#0d131f] text-slate-300 border-slate-800 hover:border-slate-600'
+                          }`}
+                        >
+                          ${amt >= 1000000 ? `${amt / 1000000}M` : `${amt / 1000}k`}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div className="p-3 bg-[#0d131f] rounded-lg border border-slate-800/80">
-                    <span className="text-slate-400 block text-[10px]">TENANT IDENTIFIER</span>
-                    <span className="text-emerald-400 font-bold">{userSession?.tenantId || 'TENANT-ALPHA-99'}</span>
+                </div>
+
+                {/* Kelly Risk Fraction & Rule 24 Chase Limit */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80">
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase text-slate-300 mb-1.5">
+                      3. Kelly Criterion Sizing Dampener
+                    </label>
+                    <select
+                      value={kellyFraction}
+                      onChange={(e) => setKellyFraction(parseFloat(e.target.value))}
+                      className="w-full bg-[#0d131f] border border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono outline-none"
+                    >
+                      {KELLY_OPTIONS.map(k => (
+                        <option key={k.value} value={k.value}>{k.label}</option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="p-3 bg-[#0d131f] rounded-lg border border-slate-800/80">
-                    <span className="text-slate-400 block text-[10px]">BASE CURRENCY POT</span>
-                    <span className="text-cyan-400 font-bold">AUD ($250,000.00 Sizing Pool)</span>
-                  </div>
-                  <div className="p-3 bg-[#0d131f] rounded-lg border border-slate-800/80">
-                    <span className="text-slate-400 block text-[10px]">EXECUTION PROTOCOL</span>
-                    <span className="text-amber-400 font-bold">Rule 24 Partial-Fill Cancellation</span>
+
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase text-slate-300 mb-1.5">
+                      4. Portfolio Node Name
+                    </label>
+                    <input
+                      type="text"
+                      value={portfolioName}
+                      onChange={(e) => setPortfolioName(e.target.value)}
+                      className="w-full bg-[#0d131f] border border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono outline-none"
+                    />
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 text-xs text-slate-300 space-y-2">
-                <div className="font-bold text-slate-200 flex items-center gap-1.5">
-                  <Lock className="w-4 h-4 text-emerald-400" />
-                  <span>How We Protect Your Intellectual Property & Trading Capital:</span>
-                </div>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Unlike traditional platforms where trades are pooled in a shared database, Titan uses a <strong>Zero-Bleed Architecture</strong>. Your portfolio, trade logs, and balances reside exclusively inside your personal, private Google Sheet. The web portal and backend engine act only as algorithmic calculators and execution mirrors.
-                </p>
-              </div>
-
-              <div className="flex justify-end pt-2">
+              <div className="flex items-center justify-between pt-2">
+                {userSession?.isAdmin && (
+                  <button
+                    onClick={handleFinalLaunch}
+                    className="text-xs font-mono text-cyan-400 hover:text-cyan-300 underline"
+                  >
+                    Admin Fast-Track: Enter Terminal Directly &rarr;
+                  </button>
+                )}
                 <button
                   onClick={() => setCurrentStep(2)}
-                  className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-6 py-2.5 rounded-xl text-xs font-mono flex items-center gap-2 transition-all"
+                  className="ml-auto bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-6 py-2.5 rounded-xl text-xs font-mono flex items-center gap-2 transition-all"
                 >
-                  <span>Proceed to Step 2: Create Sheet Template</span>
+                  <span>Proceed to Step 2: Master Sheet</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -553,74 +665,30 @@ export default function InstitutionalGateAndSetupWizard({
           {currentStep === 2 && (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div className="border border-slate-800 bg-[#0a0f18] rounded-xl p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                      Step 2: Create Your Dedicated Google Sheet
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Create a copy of the official Titan Master Sheet or start with a clean Google Spreadsheet in your Google Drive.
-                    </p>
-                  </div>
-                  <a
-                    href="https://docs.google.com/spreadsheets/d/1XqP9_0Zf8_ExampleTitanTemplate/copy" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/20 text-xs font-mono font-bold transition-all"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Open Template Copy</span>
-                  </a>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                    Step 2: Create & Link Your Dedicated Google Sheet
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Create a new blank Google Sheet in your Google Drive (or copy your Master Sheet), then paste its URL or Sheet ID below.When you run <code className="text-emerald-300">setupSystem()</code> in Step 3, all 6 tabs (<code className="text-slate-200">Config, Tickers, Dashboard, Mimic_Portfolio, Trade_Log, MCP_Logs</code>) are built automatically.
+                  </p>
                 </div>
 
-                <div className="space-y-2">
-                  <span className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider">
-                    Required Tabs Generated in Your Sheet:
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono">
-                    <div className="p-2.5 rounded-lg bg-[#0d131f] border border-slate-800">
-                      <span className="text-emerald-400 font-bold block">1. Config</span>
-                      <span className="text-[10px] text-slate-400">Strategic parameters & endpoints</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-[#0d131f] border border-slate-800">
-                      <span className="text-cyan-400 font-bold block">2. Tickers</span>
-                      <span className="text-[10px] text-slate-400">Target universe ticker symbols</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-[#0d131f] border border-slate-800">
-                      <span className="text-amber-400 font-bold block">3. Dashboard</span>
-                      <span className="text-[10px] text-slate-400">Live quantitative scanning DOM</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-[#0d131f] border border-slate-800">
-                      <span className="text-purple-400 font-bold block">4. Mimic_Portfolio</span>
-                      <span className="text-[10px] text-slate-400">Live positions & P&L matrix</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-[#0d131f] border border-slate-800">
-                      <span className="text-rose-400 font-bold block">5. Trade_Log</span>
-                      <span className="text-[10px] text-slate-400">Immutable executed trade ledger</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-[#0d131f] border border-slate-800">
-                      <span className="text-blue-400 font-bold block">6. MCP_Logs</span>
-                      <span className="text-[10px] text-slate-400">Real-time telemetry audit logs</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Paste Sheet URL / ID */}
                 <div className="pt-2">
                   <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Paste Your Google Sheet URL or Sheet ID:
+                    Paste Your Google Sheet URL or Spreadsheet ID:
                   </label>
                   <input
                     type="text"
                     value={sheetInput}
                     onChange={(e) => setSheetInput(e.target.value)}
                     placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit"
-                    className="w-full bg-[#070b12] border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-400 font-mono outline-none"
+                    className="w-full bg-[#070b12] border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 font-mono outline-none"
                   />
-                  {sheetInput && (
-                    <div className="mt-1 text-[11px] font-mono text-emerald-400">
-                      Detected Sheet ID: <code className="bg-slate-900 px-1.5 py-0.5 rounded">{cleanSheetId}</code>
+                  {cleanSheetId && (
+                    <div className="mt-2 text-[11px] font-mono text-emerald-400">
+                      Extracted Sheet ID: <code className="bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{cleanSheetId}</code>
                     </div>
                   )}
                 </div>
@@ -638,65 +706,58 @@ export default function InstitutionalGateAndSetupWizard({
                   onClick={() => setCurrentStep(3)}
                   className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-6 py-2.5 rounded-xl text-xs font-mono flex items-center gap-2 transition-all"
                 >
-                  <span>Proceed to Step 3: Install Wrapper</span>
+                  <span>Proceed to Step 3: Install Wrapper Script</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 3: Code_1_Wrapper Script */}
+          {/* STEP 3: Server-Fetched Code_1_Wrapper Script */}
           {currentStep === 3 && (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div className="border border-slate-800 bg-[#0a0f18] rounded-xl p-5 space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
                       <Code2 className="w-4 h-4 text-emerald-400" />
-                      Step 3: Install Code_1_Wrapper.js in Apps Script
+                      Step 3: Install Code_1_Wrapper.js & Link Master Library
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">
-                      This 167-line proxy stub links your Google Sheet to the closed-source Titan Quant Master Library.
+                      Fetched dynamically over authenticated TLS. Zero proprietary logic is exposed in the client stub.
                     </p>
                   </div>
 
                   <button
                     onClick={handleCopyCode}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-black font-mono font-bold text-xs hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20"
+                    disabled={!blueprint.wrapper_script}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-black font-mono font-bold text-xs hover:bg-emerald-400 transition-all disabled:opacity-50"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    <span>{copiedCode ? '✓ Copied to Clipboard!' : '1-Click Copy Wrapper Script'}</span>
+                    <span>{copiedCode ? '✓ Copied Wrapper Script!' : '1-Click Copy Code_1_Wrapper.js'}</span>
                   </button>
                 </div>
 
-                {/* Step by step install guide */}
                 <div className="bg-[#0d131f] p-4 rounded-xl border border-slate-800 space-y-3 text-xs">
-                  <div className="font-bold text-slate-200">Exact 4-Step Installation Instructions:</div>
+                  <div className="font-bold text-slate-200">Exact Installation Steps:</div>
                   <ol className="list-decimal list-inside space-y-2 text-slate-400 leading-relaxed font-mono text-[11px]">
-                    <li>Open your Google Sheet, click <strong className="text-white">Extensions</strong> &gt; <strong className="text-white">Apps Script</strong>.</li>
-                    <li>Delete all placeholder code inside <code className="text-emerald-300">Code.gs</code>, then paste the copied wrapper code.</li>
+                    <li>In your Google Sheet, click <strong className="text-white">Extensions</strong> &gt; <strong className="text-white">Apps Script</strong>.</li>
+                    <li>Delete any default code in <code className="text-emerald-300">Code.gs</code> and paste the copied <code className="text-emerald-300">Code_1_Wrapper.js</code>.</li>
                     <li>
-                      In the left sidebar, click <strong className="text-white">Libraries (+)</strong>, paste the Master Library Script ID:
-                      <div className="my-1.5 p-2 rounded bg-black/60 border border-slate-800 text-emerald-400 font-bold select-all flex items-center justify-between">
-                        <span>1d5fHImWJPDRqmfLUEtkypn9RgSwqPo1VBNcHVFPb8CGGYJX9KNf5ael6</span>
+                      Click <strong className="text-white">Libraries (+)</strong> on the left sidebar and paste the Master Library Script ID:
+                      <div className="my-1.5 p-2 rounded bg-black/60 border border-slate-800 text-emerald-400 font-bold select-all">
+                        {loadingBlueprint ? 'Loading protected Library ID...' : (blueprint.master_library_id || '1d5fHImWJPDRqmfLUEtkypn9RgSwqPo1VBNcHVFPb8CGGYJX9KNf5ael6')}
                       </div>
                     </li>
                     <li>
-                      Set Identifier to <code className="text-white">TitanLibrary</code>, choose the latest version (<code className="text-white">HEAD</code>), and click <strong className="text-white">Add</strong>. Then press <strong className="text-white">Ctrl+S</strong> to save.
+                      Set Identifier to <code className="text-white">{blueprint.library_identifier}</code>, select <code className="text-white">HEAD</code>, click <strong className="text-white">Add</strong>, press <strong className="text-white">Ctrl+S</strong>, and run <code className="text-emerald-300">setupSystem()</code> once to auto-build all tabs.
                     </li>
                   </ol>
                 </div>
 
-                {/* Code Preview Box */}
-                <div className="relative">
-                  <div className="text-[10px] font-mono text-slate-400 mb-1 flex items-center justify-between">
-                    <span>Code_1_Wrapper.js (Preview):</span>
-                    <span className="text-emerald-400 font-semibold">Zero Proprietary Logic Exposed</span>
-                  </div>
-                  <pre className="bg-[#05080e] border border-slate-800 rounded-xl p-3 text-[10px] font-mono text-slate-300 max-h-36 overflow-y-auto leading-relaxed">
-                    {CODE_1_WRAPPER_SOURCE.slice(0, 800)}...
-                  </pre>
-                </div>
+                <pre className="bg-[#05080e] border border-slate-800 rounded-xl p-3 text-[10px] font-mono text-slate-300 max-h-36 overflow-y-auto leading-relaxed">
+                  {loadingBlueprint ? 'Decrypting authenticated wrapper stub...' : `${blueprint.wrapper_script.slice(0, 700)}...`}
+                </pre>
               </div>
 
               <div className="flex items-center justify-between pt-2">
@@ -711,25 +772,25 @@ export default function InstitutionalGateAndSetupWizard({
                   onClick={() => setCurrentStep(4)}
                   className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-6 py-2.5 rounded-xl text-xs font-mono flex items-center gap-2 transition-all"
                 >
-                  <span>Proceed to Step 4: Config & Handshake</span>
+                  <span>Proceed to Step 4: Config & HMAC Handshake</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: Config Tab & Telemetry Handshake */}
+          {/* STEP 4: Config Tab + Dual-Factor HMAC Sheet Binding */}
           {currentStep === 4 && (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div className="border border-slate-800 bg-[#0a0f18] rounded-xl p-5 space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
                       <Settings2 className="w-4 h-4 text-emerald-400" />
-                      Step 4: Populate Config Tab & Verify Handshake
+                      Step 4: Bind Sheet Ownership & Copy Config Parameters
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">
-                      Populate your Sheet's <code className="text-emerald-300">Config</code> tab with these strategic parameters, or click <code className="text-white">Titan Quant Engine &gt; Setup System</code> from the Sheet menu.
+                      Includes your custom <strong className="text-emerald-300">{currency} ${Number(startingCapital).toLocaleString()}</strong> capital allocation and unforgeable <code className="text-emerald-300">TITAN_TENANT_SECRET</code>.
                     </p>
                   </div>
 
@@ -738,25 +799,41 @@ export default function InstitutionalGateAndSetupWizard({
                     className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs transition-all border border-slate-700"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    <span>{copiedConfig ? '✓ Copied TSV Data!' : 'Copy Config Values'}</span>
+                    <span>{copiedConfig ? '✓ Copied TSV Config!' : 'Copy Config Rows (TSV)'}</span>
                   </button>
                 </div>
 
-                {/* Config Parameters Table */}
+                {/* Sheet ID Quick Input if not entered in Step 2 */}
+                {!cleanSheetId && (
+                  <div className="p-3 rounded-xl bg-[#0d131f] border border-amber-800/60">
+                    <label className="block text-[10px] font-mono uppercase text-amber-300 mb-1">
+                      Enter Your Google Sheet URL or ID to Generate Bound HMAC Secret:
+                    </label>
+                    <input
+                      type="text"
+                      value={sheetInput}
+                      onChange={(e) => setSheetInput(e.target.value)}
+                      placeholder="Paste Google Sheet URL or ID..."
+                      className="w-full bg-[#070b12] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono outline-none"
+                    />
+                  </div>
+                )}
+
+                {/* Config Table */}
                 <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-[#0d131f]">
                   <table className="w-full text-left text-xs font-mono">
                     <thead className="bg-[#111827] text-slate-400 text-[10px] uppercase border-b border-slate-800">
                       <tr>
-                        <th className="py-2.5 px-3">Parameter (Column A)</th>
-                        <th className="py-2.5 px-3">Value (Column B)</th>
-                        <th className="py-2.5 px-3 hidden sm:table-cell">Description (Column C)</th>
+                        <th className="py-2.5 px-3">Parameter (Col A)</th>
+                        <th className="py-2.5 px-3">Value (Col B)</th>
+                        <th className="py-2.5 px-3 hidden sm:table-cell">Description (Col C)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 text-[11px]">
                       {configTableRows.map((r, i) => (
                         <tr key={i} className="hover:bg-slate-800/30">
                           <td className="py-2 px-3 font-semibold text-emerald-400">{r.key}</td>
-                          <td className="py-2 px-3 text-white font-mono">{r.value}</td>
+                          <td className="py-2 px-3 text-white font-mono break-all">{r.value}</td>
                           <td className="py-2 px-3 text-slate-400 text-[10px] hidden sm:table-cell">{r.desc}</td>
                         </tr>
                       ))}
@@ -764,12 +841,12 @@ export default function InstitutionalGateAndSetupWizard({
                   </table>
                 </div>
 
-                {/* Live Handshake Ping */}
+                {/* Handshake Verification */}
                 <div className="pt-2 border-t border-slate-800 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
-                      <span className="text-xs font-bold text-slate-200 block">Bi-Directional Telemetry Handshake</span>
-                      <span className="text-[11px] text-slate-400">Verifies connection between your Sheet and the Python Quant API.</span>
+                      <span className="text-xs font-bold text-slate-200 block">Dual-Factor Sheet Ownership & HMAC Binding</span>
+                      <span className="text-[11px] text-slate-400">Locks your Sheet ID + {currency} ${Number(startingCapital).toLocaleString()} capital pool to your Google account.</span>
                     </div>
 
                     <button
@@ -778,11 +855,16 @@ export default function InstitutionalGateAndSetupWizard({
                       className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs font-mono flex items-center gap-2 transition-all disabled:opacity-50"
                     >
                       <Terminal className="w-3.5 h-3.5" />
-                      <span>{isVerifying ? 'Testing Telemetry...' : 'Verify Handshake Connection'}</span>
+                      <span>{isVerifying ? 'Binding Sheet & HMAC...' : 'Bind Sheet & Verify Handshake'}</span>
                     </button>
                   </div>
 
-                  {/* Terminal Log Output */}
+                  {verifyError && (
+                    <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800 text-xs text-rose-300 font-mono">
+                      {verifyError}
+                    </div>
+                  )}
+
                   {verifyLogs.length > 0 && (
                     <div className="bg-[#05080e] border border-slate-800 rounded-xl p-3 font-mono text-[11px] text-emerald-400 space-y-1">
                       {verifyLogs.map((log, i) => (
@@ -798,8 +880,8 @@ export default function InstitutionalGateAndSetupWizard({
                     <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/80 text-xs text-emerald-300 flex items-center gap-3">
                       <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
                       <div>
-                        <span className="font-bold block">Telemetry Verified & Connected!</span>
-                        <span className="text-[11px] text-emerald-400/80">Your Google Sheet is now synchronized with Titan Quant Engine v2.0.</span>
+                        <span className="font-bold block">Dual-Factor Sheet Handshake Complete!</span>
+                        <span className="text-[11px] text-emerald-400/80">Your Google Sheet is cryptographically bound with {currency} ${Number(startingCapital).toLocaleString()} starting capital.</span>
                       </div>
                     </div>
                   )}
@@ -816,7 +898,7 @@ export default function InstitutionalGateAndSetupWizard({
                 </button>
                 <button
                   onClick={handleFinalLaunch}
-                  className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-8 py-3 rounded-xl text-xs font-mono flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 transform active:scale-95"
+                  className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-8 py-3 rounded-xl text-xs font-mono flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Launch Institutional Trading Terminal 🚀</span>
@@ -826,7 +908,6 @@ export default function InstitutionalGateAndSetupWizard({
           )}
 
         </div>
-
       </div>
     </div>
   );

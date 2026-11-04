@@ -8,11 +8,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="TITAN" />
-    <link rel="manifest" href="/portal/manifest.json" />
-    <title>TITAN | Universal Quant & World Exchange Portal</title>
+    <link rel="manifest" href="/manifest.json" />
+    <title>TITAN | Institutional Quant Enclave</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body class="bg-[#0a0e17] text-slate-100 antialiased selection:bg-emerald-500 selection:text-black min-h-screen">
     <div id="root"></div>
@@ -20,7 +21,7 @@
     <script>
       if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/portal/sw.js').catch((err) => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
             console.warn('SW registration notice:', err);
           });
         });

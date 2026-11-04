@@ -1,11 +1,35 @@
-import React, { useState } from 'react';
-import { Calculator, DollarSign, Percent, Shield, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calculator, DollarSign } from 'lucide-react';
 
-export default function KellySizingCalculator({ ticker, price, currency, onApplyUnits }) {
-  const [equity, setEquity] = useState(currency === 'USD' ? 65000 : 100000);
-  const [winRate, setWinRate] = useState(55); // 55%
-  const [rewardRatio, setRewardRatio] = useState(2.5); // 2.5:1
-  const [fractionMode, setFractionMode] = useState('HALF'); // HALF Kelly or FULL Kelly
+const PRESET_CAPS = [5000, 10000, 25000, 50000, 100000, 250000];
+
+export default function KellySizingCalculator({ ticker, price, currency = 'AUD', initialEquity = 25000, onApplyUnits }) {
+  const [equity, setEquity] = useState(Number(initialEquity) || 25000);
+  const [equityInput, setEquityInput] = useState(String(initialEquity || 25000));
+  const [winRate, setWinRate] = useState(55);
+  const [rewardRatio, setRewardRatio] = useState(2.5);
+  const [fractionMode, setFractionMode] = useState('HALF');
+
+  useEffect(() => {
+    if (initialEquity && Number(initialEquity) > 0) {
+      setEquity(Number(initialEquity));
+      setEquityInput(String(initialEquity));
+    }
+  }, [initialEquity]);
+
+  const handleCustomEquityChange = (e) => {
+    const raw = e.target.value.replace(/[^0-9.]/g, '');
+    setEquityInput(raw);
+    const num = parseFloat(raw);
+    if (!isNaN(num) && num >= 0) {
+      setEquity(num);
+    }
+  };
+
+  const handleSelectPreset = (amt) => {
+    setEquity(amt);
+    setEquityInput(String(amt));
+  };
 
   // Kelly Formula: K% = W - (1 - W) / R
   const w = winRate / 100;
@@ -34,6 +58,44 @@ export default function KellySizingCalculator({ ticker, price, currency, onApply
       </div>
 
       <div className="space-y-3 font-mono">
+        {/* Editable Capital Pool Input + Presets */}
+        <div className="bg-[#0a0e17] border border-slate-800 rounded-lg p-2.5 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] text-slate-400 uppercase flex items-center gap-1">
+              <DollarSign className="w-3 h-3 text-emerald-400" />
+              Account Capital ({currency}):
+            </span>
+            <div className="relative">
+              <span className="absolute left-2 top-1 text-[11px] text-slate-400">$</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={equityInput}
+                onChange={handleCustomEquityChange}
+                placeholder="Type capital"
+                className="w-28 bg-[#111827] border border-emerald-500/40 focus:border-emerald-400 rounded px-2 pl-5 py-0.5 text-right text-xs font-bold text-white outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-6 gap-1">
+            {PRESET_CAPS.map(amt => (
+              <button
+                key={amt}
+                type="button"
+                onClick={() => handleSelectPreset(amt)}
+                className={`py-1 rounded text-[10px] font-bold border transition ${
+                  Number(equity) === amt
+                    ? 'bg-emerald-500 text-black border-emerald-400'
+                    : 'bg-[#111827] text-slate-400 border-slate-800 hover:text-white'
+                }`}
+              >
+                ${amt / 1000}k
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Win Rate Slider */}
         <div>
           <div className="flex justify-between text-slate-400 mb-1 text-[11px]">
@@ -74,6 +136,7 @@ export default function KellySizingCalculator({ ticker, price, currency, onApply
             {['QUARTER', 'HALF', 'FULL'].map((mode) => (
               <button
                 key={mode}
+                type="button"
                 onClick={() => setFractionMode(mode)}
                 className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                   fractionMode === mode
@@ -94,30 +157,24 @@ export default function KellySizingCalculator({ ticker, price, currency, onApply
             <span className="text-emerald-400 font-bold text-sm">
               {(finalAllocationPct * 100).toFixed(1)}%
             </span>
-            <span className="text-slate-500 block text-[9px]">
-              {currency === 'USD' ? '$' : 'A$'}{allocationAmount.toLocaleString()}
+            <span className="text-slate-400 block text-[10px]">
+              {currency} ${allocationAmount.toLocaleString()}
             </span>
           </div>
-          <div>
-            <span className="text-slate-500 block text-[10px]">RECOMMENDED POSITION</span>
-            <span className="text-cyan-300 font-bold text-sm">
-              {recommendedUnits.toLocaleString()} units
+          <div className="text-right">
+            <span className="text-slate-500 block text-[10px]">RECOMMENDED PARCEL</span>
+            <span className="text-slate-100 font-bold text-sm">
+              {recommendedUnits.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">units</span>
             </span>
-            <span className="text-slate-500 block text-[9px]">
-              @ {currency === 'USD' ? '$' : 'A$'}{currentPrice.toFixed(3)}
-            </span>
+            <button
+              type="button"
+              onClick={() => onApplyUnits && onApplyUnits(recommendedUnits)}
+              className="mt-1 text-[10px] text-cyan-400 hover:text-cyan-300 underline"
+            >
+              Apply to Order Ticket &rarr;
+            </button>
           </div>
         </div>
-
-        {onApplyUnits && recommendedUnits > 0 && (
-          <button
-            onClick={() => onApplyUnits(recommendedUnits)}
-            className="w-full py-1.5 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
-          >
-            <span>Apply {recommendedUnits.toLocaleString()} Units to Order</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        )}
       </div>
     </div>
   );

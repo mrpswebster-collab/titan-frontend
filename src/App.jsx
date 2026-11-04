@@ -8,6 +8,7 @@ import BacktestLabModal from './components/BacktestLabModal';
 import PortfolioHoldingsView from './components/PortfolioHoldingsView';
 import AIAnalystTerminalView from './components/AIAnalystTerminalView';
 import InstitutionalGateAndSetupWizard from './components/InstitutionalGateAndSetupWizard';
+import WorkbookAutoBuilderModal from './components/WorkbookAutoBuilderModal';
 import { 
   Zap, 
   ShieldCheck, 
@@ -182,14 +183,14 @@ export default function App() {
   };
 
   const handleLoginSuccess = (session) => {
-    const updated = { ...session, isAuthed: true };
+    const updated = { ...session, isAuthed: true, hasCompletedSetup: true };
     setUserSession(updated);
     try { localStorage.setItem('titan_user_session', JSON.stringify(updated)); } catch(e) {}
   };
 
   const handleCompleteSetup = (completedSession) => {
-    setUserSession(completedSession);
-    try { localStorage.setItem('titan_user_session', JSON.stringify(completedSession)); } catch(e) {}
+    setUserSession({ ...completedSession, isAuthed: true, hasCompletedSetup: true });
+    try { localStorage.setItem('titan_user_session', JSON.stringify({ ...completedSession, isAuthed: true, hasCompletedSetup: true })); } catch(e) {}
     setActiveMainTab('PORTFOLIO');
   };
 
@@ -208,9 +209,10 @@ export default function App() {
   };
 
   // =========================================================================
-  // HARD LOCKDOWN: If not logged in or onboarding incomplete, show Gate / Setup
+  // ZERO-TRUST GATE: Require cryptographic Google OAuth login, then go straight
+  // into the live Terminal (no clumsy 4-step setup blocker!)
   // =========================================================================
-  if (!userSession.isAuthed || !userSession.hasCompletedSetup) {
+  if (!userSession.isAuthed) {
     return (
       <InstitutionalGateAndSetupWizard
         userSession={userSession}
@@ -255,14 +257,14 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Sheet Setup Guide Re-open Button */}
+            {/* 1-Click Workbook Auto-Builder & Global AI (Antigravity MCP) Hub */}
             <button
               onClick={() => setShowSetupModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition"
-              title="View Setup Guide & Code_1_Wrapper"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition"
+              title="Open 1-Click Workbook Auto-Builder & Global AI (Antigravity MCP) Hub"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden md:inline">Sheet Setup Guide</span>
+              <span className="hidden md:inline">Workbook Builder & Global AI</span>
             </button>
 
             {/* FinTech Pro Add-On Toggle */}
@@ -612,19 +614,17 @@ export default function App() {
         onClose={() => setIsFinTechProOpen(false)}
       />
 
-      {/* Sheet Setup Guide Modal */}
-      {showSetupModal && (
-        <InstitutionalGateAndSetupWizard
-          userSession={userSession}
-          showSetupModalOnly={true}
-          onCloseModal={() => setShowSetupModal(false)}
-          onCompleteSetup={(updated) => {
-            setUserSession(updated);
-            try { localStorage.setItem('titan_user_session', JSON.stringify(updated)); } catch(e) {}
-            setShowSetupModal(false);
-          }}
-        />
-      )}
+      {/* 1-Click Workbook Auto-Builder & Global AI (Antigravity MCP) Hub Modal */}
+      <WorkbookAutoBuilderModal
+        isOpen={showSetupModal}
+        onClose={() => setShowSetupModal(false)}
+        userSession={userSession}
+        initialTab="WORKBOOK_BUILDER"
+        onWorkbookSaved={() => {
+          setShowSetupModal(false);
+          setActiveMainTab('PORTFOLIO');
+        }}
+      />
 
       {/* Backtest Simulation Lab Modal */}
       <BacktestLabModal

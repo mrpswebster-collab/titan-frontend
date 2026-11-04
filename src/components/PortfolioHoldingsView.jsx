@@ -13,8 +13,13 @@ import {
   Key,
   UserPlus,
   Copy,
-  Sliders
+  Sliders,
+  PlusCircle,
+  Cpu,
+  Settings2,
+  Rocket
 } from 'lucide-react';
+import WorkbookAutoBuilderModal from './WorkbookAutoBuilderModal';
 
 const API_BASE = 'https://asx-quant-brain.onrender.com';
 const QUICK_CAPS = [5000, 10000, 25000, 50000, 100000, 250000];
@@ -25,6 +30,11 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
   const [holdings, setHoldings] = useState([]);
   const [accessTier, setAccessTier] = useState('ISOLATED_CLIENT_ENCLAVE');
   const [loading, setLoading] = useState(true);
+
+  // Workbook Auto-Builder & Global AI Hub Modal State
+  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [editingWorkbook, setEditingWorkbook] = useState(null);
+  const [builderInitialTab, setBuilderInitialTab] = useState('WORKBOOK_BUILDER');
 
   // Editable Capital Calibration State
   const [capitalInput, setCapitalInput] = useState(String(userSession?.startingCapital || 25000));
@@ -344,48 +354,125 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
         </div>
       )}
 
-      {/* 3. Workbook Selector Pills */}
-      {workbooks.length > 1 && (
-        <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-3">
+      {/* 3. Multi-Workbook Fleet Command & 1-Click Auto-Builder */}
+      <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
             <div className="flex items-center gap-2">
               <Database className="w-4 h-4 text-emerald-400" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
-                {accessTier === 'SUPERADMIN_FLEET' ? 'Superadmin 8-Workbook Fleet Selector' : 'Connected Trading Sheets'}
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-200 font-mono">
+                {accessTier === 'SUPERADMIN_FLEET' ? 'Multi-Workbook Fleet Command Center' : 'Your Dedicated Workbook Fleet'}
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                Antigravity MCP + Python Direct-Push Active
               </span>
             </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Each workbook can hunt a different exchange (ASX, NASDAQ, NYSE, LSE, TSX), price bracket ($0.001 Penny Coiled Springs to Blue-Chips), or dedicated stock list.
+            </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {workbooks.map((wb) => {
-              const isSelected = selectedWorkbook === wb.id;
-              return (
-                <button
-                  key={wb.id}
-                  onClick={() => setSelectedWorkbook(wb.id)}
-                  className={`text-left p-3 rounded-xl border transition-all ${
-                    isSelected
-                      ? 'bg-emerald-950/40 border-emerald-500 text-slate-100 shadow-lg'
-                      : 'bg-[#0f172a] border-slate-800/80 text-slate-400 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold truncate pr-2 text-slate-100">{wb.name}</span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">{wb.exchange}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] font-mono mt-2">
-                    <span className="text-slate-300 font-bold">
-                      ${wb.equity.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setEditingWorkbook(null);
+                setBuilderInitialTab('GLOBAL_AI_HUB');
+                setIsBuilderOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-200 text-xs font-bold transition"
+            >
+              <Cpu className="w-3.5 h-3.5 text-purple-400" />
+              <span>Global AI (Antigravity MCP) & Data APIs</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEditingWorkbook(null);
+                setBuilderInitialTab('WORKBOOK_BUILDER');
+                setIsBuilderOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-950 transition"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>+ New Dedicated Workbook</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {workbooks.map((wb) => {
+            const isSelected = selectedWorkbook === wb.id;
+            return (
+              <div
+                key={wb.id}
+                onClick={() => setSelectedWorkbook(wb.id)}
+                className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
+                  isSelected
+                    ? 'bg-emerald-950/40 border-emerald-500 text-slate-100 shadow-lg'
+                    : 'bg-[#0f172a] border-slate-800/80 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-xs font-bold truncate text-slate-100">{wb.name}</span>
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-800 text-emerald-300 shrink-0">
+                      {wb.exchange || 'ASX'}
                     </span>
-                    <span className={wb.dayPl >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                  </div>
+
+                  {/* Unlocked Strategy & Persona Badges */}
+                  <div className="flex flex-wrap items-center gap-1 my-1.5">
+                    {wb.strategy_protocol && (
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        {wb.strategy_protocol === 'MOONSHOT_COILED_SPRING' ? '🚀 2,000% MOONSHOT' : wb.strategy_protocol}
+                      </span>
+                    )}
+                    {wb.min_price !== undefined && wb.id !== 'ALL' && (
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                        ${wb.min_price}–${wb.max_price >= 99999 ? ' Uncapped' : wb.max_price}
+                      </span>
+                    )}
+                    {wb.dedicated_tickers && (
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 truncate max-w-[160px]">
+                        🎯 {wb.dedicated_tickers}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] font-mono mt-2 pt-2 border-t border-slate-800/70">
+                  <div>
+                    <span className="text-slate-200 font-bold">
+                      {wb.currency || currencyInput} ${Number(wb.equity || 0).toLocaleString('en-AU', { minimumFractionDigits: 0 })}
+                    </span>
+                    <span className={`ml-2 ${wb.dayPl >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}`}>
                       {wb.dayPl >= 0 ? '+' : ''}{wb.dayPlPct}%
                     </span>
                   </div>
-                </button>
-              );
-            })}
-          </div>
+
+                  {wb.id !== 'ALL' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingWorkbook(wb);
+                        setBuilderInitialTab('WORKBOOK_BUILDER');
+                        setIsBuilderOpen(true);
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-emerald-500 hover:text-black text-slate-200 text-[10px] font-bold transition"
+                    >
+                      <Settings2 className="w-3 h-3" />
+                      <span>Configure Rules</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
 
       {/* 4. Portfolio Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -508,6 +595,19 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
           </div>
         )}
       </div>
+
+      {/* Workbook Auto-Builder & Global AI Hub Modal */}
+      <WorkbookAutoBuilderModal
+        isOpen={isBuilderOpen}
+        onClose={() => setIsBuilderOpen(false)}
+        userSession={userSession}
+        initialWorkbook={editingWorkbook}
+        initialTab={builderInitialTab}
+        onWorkbookSaved={(savedWb) => {
+          fetchFleetData();
+          if (savedWb?.id) setSelectedWorkbook(savedWb.id);
+        }}
+      />
     </div>
   );
 }

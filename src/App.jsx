@@ -4,15 +4,16 @@ import ExchangeSwitcherTabs from './components/ExchangeSwitcherTabs';
 import UniversalTierSelector from './components/UniversalTierSelector';
 import InteractiveKinematicDrawer from './components/InteractiveKinematicDrawer';
 import FinTechProSuiteModal from './components/FinTechProSuiteModal';
-import CustomerAuthModal from './components/CustomerAuthModal';
 import BacktestLabModal from './components/BacktestLabModal';
 import PortfolioHoldingsView from './components/PortfolioHoldingsView';
 import AIAnalystTerminalView from './components/AIAnalystTerminalView';
+import InstitutionalGateAndSetupWizard from './components/InstitutionalGateAndSetupWizard';
 import { 
   Zap, 
   ShieldCheck, 
   Sparkles, 
-  User, 
+  FileSpreadsheet,
+  LogOut,
   SlidersHorizontal, 
   RefreshCw, 
   ChevronRight, 
@@ -58,44 +59,48 @@ const MOCK_TICKERS = {
       { ticker: 'PLUG', name: 'Plug Power Inc', price: 2.15, change: -1.2, conviction: 'C:6', rsi: 34.2, macd: 'BASE_FORMING', obv: 'FLAT', currency: 'USD', sector: 'Hydrogen Electrolyzers' }
     ],
     TIER_1: [
-      { ticker: 'NVDA', name: 'NVIDIA Corporation', price: 142.50, change: 2.4, conviction: 'C:10', rsi: 61.2, macd: 'EXPANDING', obv: 'SURGING', currency: 'USD', sector: 'Accelerated Computing' },
-      { ticker: 'MSFT', name: 'Microsoft Corporation', price: 428.10, change: 0.6, conviction: 'C:10', rsi: 54.0, macd: 'CONSOLIDATING', obv: 'NEUTRAL', currency: 'USD', sector: 'Enterprise Cloud & AI' },
-      { ticker: 'AAPL', name: 'Apple Inc', price: 228.40, change: -0.3, conviction: 'C:9', rsi: 49.5, macd: 'STABLE', obv: 'NEUTRAL', currency: 'USD', sector: 'Consumer Hardware' }
+      { ticker: 'NVDA', name: 'NVIDIA Corporation', price: 138.25, change: 2.4, conviction: 'C:10', rsi: 56.4, macd: 'BULLISH_HOOK', obv: 'ACCUMULATING', currency: 'USD', sector: 'Semiconductors / AI Datacenter' },
+      { ticker: 'AAPL', name: 'Apple Inc.', price: 232.10, change: 0.5, conviction: 'C:9', rsi: 49.8, macd: 'STABLE', obv: 'NEUTRAL', currency: 'USD', sector: 'Consumer Tech & Services' },
+      { ticker: 'MSFT', name: 'Microsoft Corporation', price: 428.50, change: 1.1, conviction: 'C:10', rsi: 51.2, macd: 'CONSOLIDATING', obv: 'NEUTRAL', currency: 'USD', sector: 'Enterprise Cloud & Copilot' }
     ],
     TIER_2: [
-      { ticker: 'PLTR', name: 'Palantir Technologies', price: 44.80, change: 5.6, conviction: 'C:9', rsi: 63.8, macd: 'EXPANDING', obv: 'SURGING', currency: 'USD', sector: 'Defense AIP Software' },
-      { ticker: 'APP', name: 'AppLovin Corporation', price: 285.40, change: 8.9, conviction: 'C:9', rsi: 68.2, macd: 'MOMENTUM', obv: 'SURGING', currency: 'USD', sector: 'AI Ad Optimization' }
+      { ticker: 'PLTR', name: 'Palantir Technologies', price: 44.80, change: 6.2, conviction: 'C:9', rsi: 58.1, macd: 'SURGING', obv: 'SURGING', currency: 'USD', sector: 'Enterprise AI AIP' },
+      { ticker: 'CRWD', name: 'CrowdStrike Holdings', price: 312.40, change: 3.5, conviction: 'C:8', rsi: 47.9, macd: 'BULLISH_HOOK', obv: 'ACCUMULATING', currency: 'USD', sector: 'Cloud Cybersecurity' }
     ],
     POI_SNIPER: [
-      { ticker: 'RKLB', name: 'Rocket Lab USA Inc', price: 15.60, change: 12.4, conviction: 'C:9', rsi: 48.0, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'USD', sector: 'Neutron Launch Vehicle' }
+      { ticker: 'RGTI', name: 'Rigetti Computing', price: 1.85, change: 18.5, conviction: 'C:8', rsi: 44.0, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'USD', sector: 'Superconducting Quantum' },
+      { ticker: 'IONQ', name: 'IonQ Inc', price: 15.60, change: 8.9, conviction: 'C:8', rsi: 49.2, macd: 'EXPANDING', obv: 'ACCUMULATING', currency: 'USD', sector: 'Trapped-Ion Quantum Computing' }
     ]
   },
   LSE: {
     TIER_3: [
-      { ticker: 'PREM', name: 'Premier African Minerals', price: 0.048, change: 18.5, conviction: 'C:8', rsi: 39.5, macd: 'BULLISH_HOOK', obv: 'ACCUMULATING', currency: 'GBP', sector: 'Zulu Lithium Project' }
+      { ticker: 'PREM', name: 'Premier African Minerals', price: 0.052, change: 12.8, conviction: 'C:7', rsi: 39.4, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'GBP', sector: 'Zulu Lithium Project' },
+      { ticker: 'KOD', name: 'Kodal Minerals PLC', price: 0.38, change: 7.2, conviction: 'C:8', rsi: 44.1, macd: 'COILED', obv: 'ACCUMULATING', currency: 'GBP', sector: 'Bougouni Lithium Mine' }
     ],
     TIER_1: [
-      { ticker: 'AZN', name: 'AstraZeneca PLC', price: 104.20, change: 1.1, conviction: 'C:10', rsi: 47.8, macd: 'STABLE', obv: 'NEUTRAL', currency: 'GBP', sector: 'Oncology Pharmaceuticals' }
+      { ticker: 'AZN', name: 'AstraZeneca PLC', price: 11850.0, change: 0.9, conviction: 'C:10', rsi: 50.1, macd: 'STABLE', obv: 'NEUTRAL', currency: 'GBP', sector: 'Pharmaceutical Oncology' },
+      { ticker: 'SHEL', name: 'Shell PLC', price: 2640.0, change: 1.4, conviction: 'C:9', rsi: 53.8, macd: 'CONSOLIDATING', obv: 'NEUTRAL', currency: 'GBP', sector: 'Integrated Energy' }
     ],
     TIER_2: [
-      { ticker: 'RR', name: 'Rolls-Royce Holdings', price: 5.65, change: 3.4, conviction: 'C:9', rsi: 62.1, macd: 'EXPANDING', obv: 'SURGING', currency: 'GBP', sector: 'Defense & Aerospace Power' }
+      { ticker: 'RR', name: 'Rolls-Royce Holdings', price: 542.0, change: 3.8, conviction: 'C:9', rsi: 57.2, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'GBP', sector: 'Civil Aerospace & SMR' }
     ],
     POI_SNIPER: [
-      { ticker: 'KOD', name: 'Kodal Minerals PLC', price: 0.42, change: 4.8, conviction: 'C:8', rsi: 43.2, macd: 'BULLISH_HOOK', obv: 'ACCUMULATING', currency: 'GBP', sector: 'Bougouni Lithium' }
+      { ticker: 'GGP', name: 'Greatland Gold PLC', price: 6.95, change: 6.4, conviction: 'C:8', rsi: 43.8, macd: 'BULLISH_HOOK', obv: 'ACCUMULATING', currency: 'GBP', sector: 'Havieron Gold-Copper' }
     ]
   },
   TSX: {
     TIER_3: [
-      { ticker: 'PMET', name: 'Patriot Battery Metals', price: 3.45, change: 8.2, conviction: 'C:8', rsi: 42.0, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'CAD', sector: 'Shaakichiuwaana Lithium' }
+      { ticker: 'PMET', name: 'Patriot Battery Metals', price: 4.85, change: 9.8, conviction: 'C:8', rsi: 42.5, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'CAD', sector: 'Corvette Lithium Pegmatite' },
+      { ticker: 'FIL', name: 'Filo Mining Corp', price: 21.40, change: 4.2, conviction: 'C:9', rsi: 48.9, macd: 'STEADY', obv: 'ACCUMULATING', currency: 'CAD', sector: 'Filo del Sol Copper-Gold' }
     ],
     TIER_1: [
-      { ticker: 'ABX', name: 'Barrick Gold Corp', price: 24.80, change: 1.5, conviction: 'C:10', rsi: 54.0, macd: 'STABLE', obv: 'NEUTRAL', currency: 'CAD', sector: 'Tier 1 Gold Mining' }
+      { ticker: 'SHOP', name: 'Shopify Inc', price: 108.50, change: 2.8, conviction: 'C:9', rsi: 54.2, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'CAD', sector: 'Global E-Commerce Platform' }
     ],
     TIER_2: [
-      { ticker: 'LUN', name: 'Lundin Mining Corp', price: 14.20, change: 3.1, conviction: 'C:9', rsi: 57.5, macd: 'EXPANDING', obv: 'ACCUMULATING', currency: 'CAD', sector: 'Copper / Zinc Production' }
+      { ticker: 'IVN', name: 'Ivanhoe Mines Ltd', price: 18.25, change: 3.1, conviction: 'C:9', rsi: 52.4, macd: 'STEADY', obv: 'NEUTRAL', currency: 'CAD', sector: 'Kamoa-Kakula Ultra Copper' }
     ],
     POI_SNIPER: [
-      { ticker: 'ISO', name: 'IsoEnergy Ltd', price: 4.10, change: 6.4, conviction: 'C:9', rsi: 46.2, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'CAD', sector: 'Athabasca Basin Uranium' }
+      { ticker: 'EU', name: 'EnCore Energy Corp', price: 4.12, change: 7.5, conviction: 'C:8', rsi: 45.6, macd: 'BULLISH_HOOK', obv: 'ACCUMULATING', currency: 'CAD', sector: 'In-Situ Uranium Extraction' }
     ]
   }
 };
@@ -115,15 +120,26 @@ export default function App() {
   const [exchangeData, setExchangeData] = useState(null);
   const [selectedTicker, setSelectedTicker] = useState(null);
   const [isFinTechProOpen, setIsFinTechProOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isBacktestOpen, setIsBacktestOpen] = useState(false);
-  const [userSession, setUserSession] = useState({
-    name: 'Demonstration Quant Node',
-    email: 'demo@titanquant.com',
-    isAuthed: false,
-    currency: 'AUD'
-  });
+  const [showSetupModal, setShowSetupModal] = useState(false);
   const [stagedNotification, setStagedNotification] = useState(null);
+
+  // User session with persistent localStorage authentication
+  const [userSession, setUserSession] = useState(() => {
+    try {
+      const saved = localStorage.getItem('titan_user_session');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      isAuthed: false,
+      hasCompletedSetup: false,
+      email: '',
+      name: '',
+      tenantId: '',
+      currency: 'AUD',
+      spreadsheetId: ''
+    };
+  });
 
   // Poll exchange clock status from the live Render backend
   const fetchExchangeStatus = async () => {
@@ -156,9 +172,44 @@ export default function App() {
   };
 
   const handleLoginSuccess = (session) => {
-    setUserSession(session);
-    setActiveMainTab('PORTFOLIO'); // Automatically take the user to their portfolio upon logging in
+    const updated = { ...session, isAuthed: true };
+    setUserSession(updated);
+    try { localStorage.setItem('titan_user_session', JSON.stringify(updated)); } catch(e) {}
   };
+
+  const handleCompleteSetup = (completedSession) => {
+    setUserSession(completedSession);
+    try { localStorage.setItem('titan_user_session', JSON.stringify(completedSession)); } catch(e) {}
+    setActiveMainTab('PORTFOLIO');
+  };
+
+  const handleLogout = () => {
+    const reset = {
+      isAuthed: false,
+      hasCompletedSetup: false,
+      email: '',
+      name: '',
+      tenantId: '',
+      currency: 'AUD',
+      spreadsheetId: ''
+    };
+    setUserSession(reset);
+    try { localStorage.removeItem('titan_user_session'); } catch(e) {}
+  };
+
+  // =========================================================================
+  // HARD LOCKDOWN: If not logged in or onboarding incomplete, show Gate / Setup
+  // =========================================================================
+  if (!userSession.isAuthed || !userSession.hasCompletedSetup) {
+    return (
+      <InstitutionalGateAndSetupWizard
+        userSession={userSession}
+        onLoginSuccess={handleLoginSuccess}
+        onCompleteSetup={handleCompleteSetup}
+        onLogout={handleLogout}
+      />
+    );
+  }
 
   const currentExMeta = exchangeData?.[activeExchange] || {};
   const isExtendedHours = currentExMeta.session_phase === 'PRE_MARKET' || currentExMeta.session_phase === 'AFTER_HOURS';
@@ -185,22 +236,25 @@ export default function App() {
                 <h1 className="font-bold text-base tracking-tight text-slate-100">
                   TITAN <span className="text-emerald-400 font-mono text-xs font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">SAAS V2</span>
                 </h1>
-                {userSession.isAuthed ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    AUTHENTICATED NODE
-                  </span>
-                ) : (
-                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                    <FlaskConical className="w-3 h-3 text-cyan-400" />
-                    PUBLIC DEMO SANDBOX
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  AUTHENTICATED FLEET: {userSession.name}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Sheet Setup Guide Re-open Button */}
+            <button
+              onClick={() => setShowSetupModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition"
+              title="View Setup Guide & Code_1_Wrapper"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden md:inline">Sheet Setup Guide</span>
+            </button>
+
             {/* FinTech Pro Add-On Toggle */}
             <button
               onClick={() => setIsFinTechProOpen(true)}
@@ -210,17 +264,14 @@ export default function App() {
               <span>FinTech Pro</span>
             </button>
 
-            {/* Tenant Auth Wall */}
+            {/* Lock / Sign Out Button */}
             <button
-              onClick={() => setIsAuthOpen(true)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
-                userSession.isAuthed
-                  ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
-              }`}
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950/30 hover:bg-rose-950/60 text-rose-300 border border-rose-900/50 text-xs font-mono transition"
+              title="Sign Out & Lock Portal"
             >
-              <ShieldCheck className={`w-3.5 h-3.5 ${userSession.isAuthed ? 'text-emerald-400' : 'text-slate-400'}`} />
-              <span className="hidden sm:inline">{userSession.isAuthed ? userSession.name : 'Sign In / Connect Node'}</span>
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden sm:inline">Lock Gate</span>
             </button>
           </div>
         </div>
@@ -251,63 +302,64 @@ export default function App() {
               }`}
             >
               <Briefcase className="w-4 h-4" />
-              <span>My Portfolio & Fleet</span>
-              {userSession.isAuthed && (
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              )}
+              <span>My Portfolio & Holdings</span>
             </button>
 
             <button
               onClick={() => setActiveMainTab('AI_TERMINAL')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition ${
                 activeMainTab === 'AI_TERMINAL'
-                  ? 'bg-purple-500/15 text-purple-300 border-b-2 border-purple-500'
+                  ? 'bg-emerald-500/15 text-emerald-400 border-b-2 border-emerald-500'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
-              <Cpu className="w-4 h-4 text-purple-400" />
+              <Cpu className="w-4 h-4" />
               <span>AI Analyst Terminal</span>
             </button>
 
             <button
               onClick={() => setIsBacktestOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/20 transition"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition"
             >
-              <BarChart3 className="w-4 h-4" />
-              <span>5-Year Backtest Lab</span>
+              <FlaskConical className="w-4 h-4 text-cyan-400" />
+              <span>Backtest Lab</span>
             </button>
           </div>
 
-          <div className="hidden md:flex items-center gap-2 text-xs font-mono text-slate-400 pr-2">
-            <span>Node:</span>
-            <span className="text-slate-200 font-bold">{userSession.isAuthed ? userSession.name : 'Demo Sandbox'}</span>
+          <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-400">
+            <span>Tenant: <strong className="text-slate-200">{userSession.tenantId || 'TENANT-ALPHA'}</strong></span>
           </div>
         </div>
       </nav>
 
-      {/* Public Demonstration & Paper Sandbox Banner (if not authenticated) */}
-      {!userSession.isAuthed && (
-        <div className="bg-cyan-950/40 border-b border-cyan-800/60 px-4 py-2 text-xs text-cyan-200">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
-              <span>
-                <strong>PUBLIC DEMONSTRATION & PAPER SANDBOX:</strong> You are viewing an interactive institutional quant simulation. Click <strong>"Sign In / Connect Node"</strong> to view real connected workbooks.
-              </span>
-            </div>
-            <button
-              onClick={() => setIsAuthOpen(true)}
-              className="text-[10px] font-mono bg-cyan-900/80 hover:bg-cyan-800 text-cyan-100 px-2.5 py-1 rounded border border-cyan-700 whitespace-nowrap self-start sm:self-auto transition font-bold"
-            >
-              CONNECT LIVE FLEET →
-            </button>
+      {/* Notification Toast for Staged Orders */}
+      {stagedNotification && (
+        <div className="bg-emerald-500/15 border-b border-emerald-500/40 px-4 py-2 text-emerald-300 text-xs font-mono flex items-center justify-between animate-in fade-in">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <strong>ORDER STAGED:</strong> BUY {stagedNotification.ticker} limit ceiling {stagedNotification.currency} ${stagedNotification.price} (2% Chase Cap enforced).
+            </span>
+            <span className="text-[10px] text-emerald-400/80">Pending Broker Routing</span>
+          </div>
+        </div>
+      )}
+
+      {/* Extended Hours Caution Alert */}
+      {isExtendedHours && (
+        <div className="bg-amber-950/40 border-b border-amber-800/40 px-4 py-2 text-amber-300 text-xs font-mono">
+          <div className="max-w-7xl mx-auto flex items-center gap-2">
+            <Moon className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+            <span>
+              <strong>EXTENDED HOURS NOTICE ({currentExMeta.session_phase}):</strong> Liquidity spreads are wider. 2% chase limits strictly enforce ceiling limits on all market submissions.
+            </span>
           </div>
         </div>
       )}
 
       {/* TAB 1: MARKETS & SCANNER */}
       {activeMainTab === 'SCANNER' && (
-        <>
+        <main className="max-w-7xl mx-auto px-4 py-6 w-full space-y-6 flex-1">
           {/* Exchange Switcher Tabs */}
           <ExchangeSwitcherTabs
             activeExchange={activeExchange}
@@ -315,188 +367,180 @@ export default function App() {
             exchangeData={exchangeData}
           />
 
-          {/* Extended Hours & Wide Spread Banner */}
-          {isExtendedHours && (
-            <div className="bg-amber-950/40 border-b border-amber-800/60 px-4 py-2 text-xs text-amber-300">
-              <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Moon className="w-4 h-4 text-amber-400 animate-pulse" />
-                  <span>
-                    <strong>EXTENDED TRADING HOURS ACTIVE:</strong> {currentExMeta.name} is in {currentExMeta.session_phase}. Wider bid-ask spreads apply. 2% chase limit strictly enforced.
-                  </span>
-                </div>
-                <span className="font-mono text-[10px] bg-amber-900/60 px-2 py-0.5 rounded border border-amber-700">
-                  LOW LIQUIDITY SHIELD
-                </span>
-              </div>
+          {/* AI Sector Persona Bar */}
+          <div className="bg-[#111827] border border-slate-800 rounded-xl p-3">
+            <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-800/60">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                Active Quantitative Sector Persona
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">
+                Weighting Model: Machine Learning Sentiment Grounding
+              </span>
             </div>
-          )}
-
-          {/* AI Persona Selector Strip */}
-          <div className="bg-[#111827]/60 border-b border-slate-800 px-4 py-2 text-xs">
-            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Cpu className="w-3.5 h-3.5 text-purple-400" />
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Active AI Sector Persona:
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {PERSONAS.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setActivePersona(p.id)}
-                    title={p.desc}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
-                      activePersona === p.id
-                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50 shadow-sm'
-                        : 'bg-slate-900/60 text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-slate-200'
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {PERSONAS.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setActivePersona(p.id)}
+                  className={`text-left p-2.5 rounded-lg border transition ${
+                    activePersona === p.id
+                      ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300 shadow-sm'
+                      : 'bg-[#0f172a] border-slate-800 text-slate-300 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="text-xs font-bold truncate">{p.label}</div>
+                  <div className="text-[10px] text-slate-400 truncate mt-0.5">{p.desc}</div>
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Universal Asset Tier Selectors */}
+          {/* Universal Tier Selector */}
           <UniversalTierSelector
             activeTier={activeTier}
             onSelectTier={setActiveTier}
-            activeExchange={activeExchange}
+            counts={{
+              TIER_3: MOCK_TICKERS[activeExchange]?.TIER_3?.length || 0,
+              TIER_1: MOCK_TICKERS[activeExchange]?.TIER_1?.length || 0,
+              TIER_2: MOCK_TICKERS[activeExchange]?.TIER_2?.length || 0,
+              POI_SNIPER: MOCK_TICKERS[activeExchange]?.POI_SNIPER?.length || 0
+            }}
           />
 
-          {/* Staged Order Toast Notification */}
-          {stagedNotification && (
-            <div className="max-w-7xl mx-auto px-4 w-full mb-3">
-              <div className="bg-emerald-950/80 border border-emerald-500/60 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-200 shadow-xl backdrop-blur">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                  <span>
-                    <strong>SIMULATED ORDER STAGED (PAPER SANDBOX):</strong> {stagedNotification.ticker} limit at {stagedNotification.currency === 'USD' ? '$' : 'A$'}{stagedNotification.price} (2% chase limit enforced).
-                  </span>
-                </div>
-                <span className="font-mono text-[10px] bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-700">
-                  STAGED ID: 9f8a-4b21
-                </span>
+          {/* Asset Scanner Table */}
+          <div className="bg-[#111827] border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-[#131b2e]">
+              <div>
+                <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                  <span>{activeExchange} {activeTier.replace('_', ' ')} Watchlist</span>
+                  <span className="text-xs font-normal text-slate-400">({tickerList.length} assets active)</span>
+                </h2>
+                <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  Vectorized RSI (14), EMA Cross & MACD Real-Time Telemetry
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsBacktestOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono rounded-lg border border-slate-700 transition"
+                >
+                  <FlaskConical className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Simulate Strategy</span>
+                </button>
               </div>
             </div>
-          )}
 
-          {/* Main Ticker Scanner Feed */}
-          <main className="max-w-7xl mx-auto px-4 flex-1 w-full pb-12">
-            <div className="bg-[#111827] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#151d30]">
-                <div>
-                  <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                    <span>{activeExchange} Active Candidates</span>
-                    <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-                      {tickerList.length} Qualified
-                    </span>
-                  </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Filtered via 14-day volatility compression, Wilder's RSI, and Rule 53 OBV Divergence.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400 font-mono">
-                    Chase Tolerance: <strong className="text-emerald-400">2.0% Max</strong>
-                  </span>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#0f172a] text-slate-400 font-mono text-[11px] uppercase tracking-wider border-b border-slate-800">
-                    <tr>
-                      <th className="p-3.5 font-semibold">Ticker / Asset</th>
-                      <th className="p-3.5 font-semibold">Live Price</th>
-                      <th className="p-3.5 font-semibold">24h Chg</th>
-                      <th className="p-3.5 font-semibold">Conviction</th>
-                      <th className="p-3.5 font-semibold">RSI (14)</th>
-                      <th className="p-3.5 font-semibold">Kinematic Vector</th>
-                      <th className="p-3.5 font-semibold">Stealth OBV</th>
-                      <th className="p-3.5 text-right font-semibold">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 font-mono">
-                    {tickerList.map((row) => {
-                      const isPositive = row.change >= 0;
-
-                      return (
-                        <tr
-                          key={row.ticker}
-                          onClick={() => setSelectedTicker(row)}
-                          className="hover:bg-slate-800/40 cursor-pointer transition"
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-[#0f172a] text-slate-400 text-[10px] uppercase tracking-wider border-b border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Symbol / Name</th>
+                    <th className="py-3 px-4">Sector</th>
+                    <th className="py-3 px-4 text-right">Price</th>
+                    <th className="py-3 px-4 text-right">Change</th>
+                    <th className="py-3 px-4 text-center">Score</th>
+                    <th className="py-3 px-4">RSI (14)</th>
+                    <th className="py-3 px-4">MACD Hook</th>
+                    <th className="py-3 px-4">Volume OBV</th>
+                    <th className="py-3 px-4 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {tickerList.map((item) => (
+                    <tr
+                      key={item.ticker}
+                      onClick={() => setSelectedTicker(item)}
+                      className="hover:bg-slate-800/40 cursor-pointer transition"
+                    >
+                      <td className="py-3 px-4 font-bold text-slate-100">
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-400 font-mono text-sm">{item.ticker}</span>
+                          <span className="text-[11px] text-slate-400 font-normal truncate max-w-[140px]">{item.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-slate-400 text-[11px] truncate max-w-[160px]">
+                        {item.sector}
+                      </td>
+                      <td className="py-3 px-4 text-right font-bold text-slate-100">
+                        {item.currency} ${item.price.toFixed(item.price < 1 ? 4 : 2)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-bold">
+                        <span className={`inline-flex items-center gap-0.5 ${item.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {item.change >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                          {item.change >= 0 ? '+' : ''}{item.change.toFixed(1)}%
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-[10px]">
+                          {item.conviction}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className={item.rsi < 40 ? 'text-emerald-400 font-bold' : item.rsi > 70 ? 'text-rose-400' : 'text-slate-300'}>
+                            {item.rsi.toFixed(1)}
+                          </span>
+                          <div className="w-12 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className={`h-full ${item.rsi < 40 ? 'bg-emerald-400' : item.rsi > 70 ? 'bg-rose-400' : 'bg-slate-500'}`}
+                              style={{ width: `${Math.min(item.rsi, 100)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          item.macd === 'BULLISH_HOOK'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-slate-800 text-slate-400'
+                        }`}>
+                          {item.macd}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`text-[11px] ${
+                          item.obv === 'SURGING'
+                            ? 'text-cyan-400 font-bold'
+                            : item.obv === 'ACCUMULATING'
+                              ? 'text-emerald-300'
+                              : 'text-slate-400'
+                        }`}>
+                          {item.obv}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTicker(item);
+                          }}
+                          className="px-2.5 py-1 rounded bg-slate-800 hover:bg-emerald-600 hover:text-black text-slate-200 text-[10px] font-bold transition"
                         >
-                          <td className="p-3.5">
-                            <div className="font-bold text-slate-100 text-sm">{row.ticker}</div>
-                            <div className="text-[11px] text-slate-400 font-sans">{row.name}</div>
-                          </td>
-                          <td className="p-3.5 font-bold text-slate-100 text-sm">
-                            {row.currency === 'USD' ? '$' : 'A$'}{row.price.toFixed(row.price < 1 ? 3 : 2)}
-                          </td>
-                          <td className="p-3.5 font-semibold">
-                            <span className={`inline-flex items-center gap-0.5 ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {isPositive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                              {isPositive ? '+' : ''}{row.change}%
-                            </span>
-                          </td>
-                          <td className="p-3.5">
-                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                              {row.conviction}
-                            </span>
-                          </td>
-                          <td className="p-3.5 text-slate-300">
-                            {row.rsi}
-                          </td>
-                          <td className="p-3.5">
-                            <span className="text-cyan-400 text-[11px]">
-                              {row.macd}
-                            </span>
-                          </td>
-                          <td className="p-3.5">
-                            <span className={`text-[11px] font-semibold ${
-                              row.obv === 'SURGING' ? 'text-amber-400' : 'text-slate-400'
-                            }`}>
-                              {row.obv}
-                            </span>
-                          </td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedTicker(row);
-                              }}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold inline-flex items-center gap-1 transition"
-                            >
-                              <span>Analyze</span>
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          Trade
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </main>
-        </>
+          </div>
+        </main>
       )}
 
-      {/* TAB 2: MY PORTFOLIO & CONNECTED FLEET */}
+      {/* TAB 2: PORTFOLIO & WORKBOOK FLEET */}
       {activeMainTab === 'PORTFOLIO' && (
         <PortfolioHoldingsView
-          onSelectTicker={(ticker) => {
-            const found = tickerList.find((t) => t.ticker === ticker) || {
-              ticker,
-              name: ticker,
-              price: 14.50,
+          userSession={userSession}
+          onSelectTicker={(t) => {
+            const found = {
+              ticker: t.ticker,
+              name: t.company,
+              price: t.livePrice,
+              change: t.plPct,
               conviction: 'C:9',
-              currency: 'AUD'
+              currency: t.currency
             };
             setSelectedTicker(found);
           }}
@@ -525,8 +569,8 @@ export default function App() {
             <div className="flex items-center gap-2">
               <span className="font-bold text-slate-300">TITAN QUANTITATIVE SYSTEMS</span>
               <span className="text-slate-600">|</span>
-              <span className="text-[11px] font-mono text-cyan-400">
-                {userSession.isAuthed ? `AUTHENTICATED FLEET: ${userSession.name}` : 'PUBLIC DEMONSTRATION & PAPER SANDBOX'}
+              <span className="text-[11px] font-mono text-emerald-400 font-bold">
+                AUTHENTICATED FLEET: {userSession.name}
               </span>
             </div>
             <div className="text-[11px] font-mono text-slate-400">
@@ -534,7 +578,7 @@ export default function App() {
             </div>
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-            <strong>ASIC Statutory Disclaimer:</strong> This system is an automated algorithmic research, demonstration, and risk-management tool. It does not constitute personal financial product advice, investment advice, or a recommendation to acquire any financial product. All simulated paper order executions, backtest results, and capital allocation models are for quantitative demonstration purposes only. Past quantitative performance is not a reliable indicator of future market returns.
+            <strong>ASIC Statutory Disclaimer:</strong> This system is an automated algorithmic research and risk-management tool. It does not constitute personal financial product advice. All trading execution and capital allocation risk is borne entirely by the user. Past quantitative performance is not a reliable indicator of future market returns.
           </p>
         </div>
       </footer>
@@ -553,13 +597,19 @@ export default function App() {
         onClose={() => setIsFinTechProOpen(false)}
       />
 
-      {/* Customer OAuth / Tenant Login Modal */}
-      <CustomerAuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        userSession={userSession}
-        onLoginSuccess={handleLoginSuccess}
-      />
+      {/* Sheet Setup Guide Modal */}
+      {showSetupModal && (
+        <InstitutionalGateAndSetupWizard
+          userSession={userSession}
+          showSetupModalOnly={true}
+          onCloseModal={() => setShowSetupModal(false)}
+          onCompleteSetup={(updated) => {
+            setUserSession(updated);
+            try { localStorage.setItem('titan_user_session', JSON.stringify(updated)); } catch(e) {}
+            setShowSetupModal(false);
+          }}
+        />
+      )}
 
       {/* Backtest Simulation Lab Modal */}
       <BacktestLabModal

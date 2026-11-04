@@ -3,47 +3,82 @@ import {
   X,
   Sparkles,
   Rocket,
-  Globe,
   ShieldCheck,
   Database,
   Cpu,
-  Sliders,
   CheckCircle2,
   RefreshCw,
-  Key,
-  Layers,
   Zap,
   Target,
   DollarSign,
   FileSpreadsheet,
-  Lock
+  Lock,
+  RotateCcw,
+  Coins,
+  TrendingUp
 } from 'lucide-react';
 
 const API_BASE = 'https://asx-quant-brain.onrender.com';
+
+const WEALTH_SUB_MODES = [
+  {
+    id: 'TOTAL_RETURN_DIVIDEND_GROWTH',
+    label: '1. High-Yield Dividend (5%–9%+) + Franking Credits + Capital Growth',
+    desc: 'Targets cash-generative dividend leaders with strong FCF coverage and steady upward price appreciation.'
+  },
+  {
+    id: 'QUALITY_WEALTH_COMPOUNDER',
+    label: '2. Long-Term Quality Compounder (High ROE/ROIC & Stacked 20/50/100/200 EMA)',
+    desc: 'Buy & Hold Wealth Fortress — wide economic moat, low net debt, smooth multi-year compounding.'
+  },
+  {
+    id: 'YIELD_ON_COST_BUILDER',
+    label: '3. Dividend Yield-on-Cost & Annual Payout Growth Builder',
+    desc: 'Focuses on dividend aristocrats that raise distributions year after year while holding core shares.'
+  },
+  {
+    id: 'DEFENSIVE_CASH_COW_ROYALTY',
+    label: '4. Defensive Cash-Cow, Infrastructure & Mining Royalty Income',
+    desc: 'High-margin royalty/streaming & monopoly cash cows protected by wide 50/200 EMA macro trend stops.'
+  }
+];
 
 const STRATEGY_BLUEPRINTS = [
   {
     id: 'MOONSHOT_COILED_SPRING',
     title: '🚀 Moonshot Coiled Spring (2,000%+ Hunter)',
-    subtitle: 'Sub-penny & Penny Stocks ($0.001–$0.50) | Bollinger/NR7 Squeeze + CMF Stealth Accumulation',
+    subtitle: 'Sub-penny & Penny Stocks ($0.001–$0.50) | Recover 100% House Money @ +100% & Ride Uncapped',
     badge: '2,000% RUNNER',
     defaults: {
       exchange: 'ASX',
       currency: 'AUD',
       strategy_protocol: 'MOONSHOT_COILED_SPRING',
       sector_persona: 'MOONSHOT_COILED_HUNTER',
+      wealth_sub_modes: [],
       execution_mode: 'AUTONOMOUS',
+      starting_capital: 5000,
       min_price: 0.001,
       max_price: 0.50,
       stop_loss_pct: 25.0,
       chandelier_atr_mult: 5.5,
       take_profit_pct: 2000.0,
-      uncapped_runner: true,
       power_thrust_rsi_override: true,
       max_rsi: 90,
       min_conviction: 8,
       kelly_fraction: 0.50,
-      max_open_positions: 12
+      max_open_positions: 12,
+      // Tried & True Stage 1 Harvest Defaults
+      harvest_enabled: true,
+      harvest_mode: 'RECOVER_PRINCIPAL_PCT',
+      harvest_trigger_gain_pct: 100.0,
+      harvest_recovery_pct: 100.0,
+      // Tried & True Stage 2 Catch Defaults (3 Selected = All 3 Must Hit Together)
+      catch_macd_cross: true,
+      catch_chandelier_atr: true,
+      catch_ema_break: true,
+      catch_ema_period: 20,
+      catch_obv_distribution: false,
+      catch_hard_ceiling: false
     }
   },
   {
@@ -56,18 +91,29 @@ const STRATEGY_BLUEPRINTS = [
       currency: 'AUD',
       strategy_protocol: 'MOONSHOT_COILED_SPRING',
       sector_persona: 'EXPLORATION_GEOLOGIST',
+      wealth_sub_modes: [],
       execution_mode: 'AUTONOMOUS',
+      starting_capital: 5000,
       min_price: 0.002,
       max_price: 1.50,
       stop_loss_pct: 22.0,
       chandelier_atr_mult: 5.0,
       take_profit_pct: 2000.0,
-      uncapped_runner: true,
       power_thrust_rsi_override: true,
       max_rsi: 88,
       min_conviction: 8,
       kelly_fraction: 0.50,
-      max_open_positions: 12
+      max_open_positions: 12,
+      harvest_enabled: true,
+      harvest_mode: 'RECOVER_PRINCIPAL_PCT',
+      harvest_trigger_gain_pct: 100.0,
+      harvest_recovery_pct: 100.0,
+      catch_macd_cross: true,
+      catch_chandelier_atr: true,
+      catch_ema_break: false,
+      catch_ema_period: 20,
+      catch_obv_distribution: true,
+      catch_hard_ceiling: false
     }
   },
   {
@@ -80,42 +126,71 @@ const STRATEGY_BLUEPRINTS = [
       currency: 'USD',
       strategy_protocol: 'INTERNATIONAL_ALPHA',
       sector_persona: 'WALL_ST_MOMENTUM_TECH',
+      wealth_sub_modes: [],
       execution_mode: 'AUTONOMOUS',
+      starting_capital: 5000,
       min_price: 1.00,
       max_price: 2500.0,
       stop_loss_pct: 12.0,
       chandelier_atr_mult: 3.5,
       take_profit_pct: 1000.0,
-      uncapped_runner: true,
       power_thrust_rsi_override: true,
       max_rsi: 85,
       min_conviction: 8,
       kelly_fraction: 0.50,
-      max_open_positions: 10
+      max_open_positions: 10,
+      harvest_enabled: true,
+      harvest_mode: 'RECOVER_PRINCIPAL_PCT',
+      harvest_trigger_gain_pct: 80.0,
+      harvest_recovery_pct: 100.0,
+      catch_macd_cross: true,
+      catch_chandelier_atr: true,
+      catch_ema_break: true,
+      catch_ema_period: 20,
+      catch_obv_distribution: false,
+      catch_hard_ceiling: false
     }
   },
   {
-    id: 'BLUE_CHIP_CORE',
-    title: '🏛️ ASX 100 / Blue-Chip Institutional Fortress',
-    subtitle: 'Large-Cap Dividend & Trend Compounder | 20/50/200 EMA + FCF Durability',
-    badge: 'CORE FORTRESS',
+    id: 'WEALTH_DIVIDEND_FORTRESS',
+    title: '💎 Wealth & High-Return Hold (Dividends + Compounders)',
+    subtitle: 'Large Capital / Long-Term Returns | High-Yield Dividends, Franking, Quality ROE & 50/200 EMA Hold',
+    badge: 'WEALTH & YIELD HOLD',
     defaults: {
       exchange: 'ASX',
       currency: 'AUD',
       strategy_protocol: 'BLUE_CHIP_CORE',
       sector_persona: 'FORTRESS_QUANT_OFFICER',
+      wealth_sub_modes: [
+        'TOTAL_RETURN_DIVIDEND_GROWTH',
+        'QUALITY_WEALTH_COMPOUNDER',
+        'YIELD_ON_COST_BUILDER',
+        'DEFENSIVE_CASH_COW_ROYALTY'
+      ],
       execution_mode: 'AUTONOMOUS',
+      starting_capital: 5000,
       min_price: 2.00,
-      max_price: 1000.0,
-      stop_loss_pct: 8.0,
-      chandelier_atr_mult: 2.5,
-      take_profit_pct: 250.0,
-      uncapped_runner: false,
+      max_price: 5000.0,
+      stop_loss_pct: 9.0,
+      chandelier_atr_mult: 3.0,
+      take_profit_pct: 500.0,
       power_thrust_rsi_override: false,
       max_rsi: 72,
       min_conviction: 8,
       kelly_fraction: 0.50,
-      max_open_positions: 15
+      max_open_positions: 15,
+      // Tried & True Wealth Hold Default: Keep 100% Compounding & Paying Dividends (or user can switch to Skim / Free-Carry)
+      harvest_enabled: true,
+      harvest_mode: 'HOLD_100_COMPOUND',
+      harvest_trigger_gain_pct: 150.0,
+      harvest_recovery_pct: 100.0,
+      // Macro Trend Catch Confluence (50 EMA + MACD Cross + OBV Distribution must all break before selling a long-term hold)
+      catch_macd_cross: true,
+      catch_chandelier_atr: false,
+      catch_ema_break: true,
+      catch_ema_period: 50,
+      catch_obv_distribution: true,
+      catch_hard_ceiling: false
     }
   },
   {
@@ -128,31 +203,60 @@ const STRATEGY_BLUEPRINTS = [
       currency: 'AUD',
       strategy_protocol: 'DEDICATED_TICKERS_ONLY',
       sector_persona: 'MOONSHOT_COILED_HUNTER',
+      wealth_sub_modes: [],
       execution_mode: 'APPROVAL_1CLICK',
+      starting_capital: 5000,
       min_price: 0.001,
       max_price: 999999.0,
       stop_loss_pct: 20.0,
       chandelier_atr_mult: 4.5,
       take_profit_pct: 2000.0,
-      uncapped_runner: true,
       power_thrust_rsi_override: true,
       max_rsi: 90,
       min_conviction: 7,
       kelly_fraction: 0.50,
-      max_open_positions: 10
+      max_open_positions: 10,
+      harvest_enabled: true,
+      harvest_mode: 'RECOVER_PRINCIPAL_PCT',
+      harvest_trigger_gain_pct: 100.0,
+      harvest_recovery_pct: 100.0,
+      catch_macd_cross: true,
+      catch_chandelier_atr: true,
+      catch_ema_break: false,
+      catch_ema_period: 20,
+      catch_obv_distribution: false,
+      catch_hard_ceiling: false
     }
   }
 ];
 
 const PERSONA_OPTIONS = [
-  { id: 'MOONSHOT_COILED_HUNTER', label: '🚀 Moonshot Coiled Spring 2,000% Profit Hunter (Squeeze / NR7 / CMF Accumulation)' },
-  { id: 'EXPLORATION_GEOLOGIST', label: '⛏️ Exploration Geologist & Assay Auditor (Drill Intercepts g/t Au, % Li2O, % Nb2O5, Cash Runway)' },
-  { id: 'BIOTECH_CLINICAL_AUDITOR', label: '🧬 Biotech & Clinical Trial Regulatory Auditor (Phase I/II/III, FDA/TGA Readouts)' },
-  { id: 'WALL_ST_MOMENTUM_TECH', label: '📈 High-Beta Global Tech, AI & Sovereign Defense Specialist (OBV Waves & ARR Growth)' },
-  { id: 'FORTRESS_QUANT_OFFICER', label: '🛡️ Institutional Quantitative Risk Officer (ASX 100 / Balance Sheet & EMA Alignment)' }
+  {
+    id: 'MOONSHOT_COILED_HUNTER',
+    label: '🚀 Moonshot Coiled Spring 2,000% Profit Hunter (Squeeze / NR7 / CMF Accumulation)',
+    blueprintId: 'MOONSHOT_COILED_SPRING'
+  },
+  {
+    id: 'EXPLORATION_GEOLOGIST',
+    label: '⛏️ Exploration Geologist & Assay Auditor (Drill Intercepts g/t Au, % Li2O, % Nb2O5, Cash Runway)',
+    blueprintId: 'EXPLORATION_ASSAY_SNIPER'
+  },
+  {
+    id: 'FORTRESS_QUANT_OFFICER',
+    label: '💎 Wealth & High-Return Hold — Quality Compounder & Franked Dividend Fortress (Sub-Modes 1–4)',
+    blueprintId: 'WEALTH_DIVIDEND_FORTRESS'
+  },
+  {
+    id: 'WALL_ST_MOMENTUM_TECH',
+    label: '📈 High-Beta Global Tech, AI & Sovereign Defense Specialist (OBV Waves & ARR Growth)',
+    blueprintId: 'INTERNATIONAL_ALPHA'
+  },
+  {
+    id: 'BIOTECH_CLINICAL_AUDITOR',
+    label: '🧬 Biotech & Clinical Trial Regulatory Auditor (Phase I/II/III, FDA/TGA Readouts)',
+    blueprintId: 'EXPLORATION_ASSAY_SNIPER'
+  }
 ];
-
-const CAPITAL_PRESETS = [5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
 
 export default function WorkbookAutoBuilderModal({
   isOpen,
@@ -163,6 +267,7 @@ export default function WorkbookAutoBuilderModal({
   onWorkbookSaved
 }) {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [selectedBlueprintId, setSelectedBlueprintId] = useState('MOONSHOT_COILED_SPRING');
 
   // Global AI & Data Hub State
   const [aiProvider, setAiProvider] = useState('antigravity_mcp');
@@ -182,21 +287,26 @@ export default function WorkbookAutoBuilderModal({
   const [isRefreshingModels, setIsRefreshingModels] = useState(false);
   const [globalSaveMsg, setGlobalSaveMsg] = useState('');
 
-  // Workbook Builder State (100% Unlocked)
+  // Workbook Builder State (Clean $5,000 Default + Tried & True Persona Auto-Defaults)
   const [wbName, setWbName] = useState('Moonshot Coiled Spring Node');
   const [sheetUrlOrId, setSheetUrlOrId] = useState('');
   const [exchange, setExchange] = useState('ASX');
   const [currency, setCurrency] = useState('AUD');
   const [strategyProtocol, setStrategyProtocol] = useState('MOONSHOT_COILED_SPRING');
   const [sectorPersona, setSectorPersona] = useState('MOONSHOT_COILED_HUNTER');
+  const [wealthSubModes, setWealthSubModes] = useState([
+    'TOTAL_RETURN_DIVIDEND_GROWTH',
+    'QUALITY_WEALTH_COMPOUNDER',
+    'YIELD_ON_COST_BUILDER',
+    'DEFENSIVE_CASH_COW_ROYALTY'
+  ]);
   const [executionMode, setExecutionMode] = useState('AUTONOMOUS');
-  const [startingCapital, setStartingCapital] = useState(25000);
+  const [startingCapital, setStartingCapital] = useState(5000);
   const [minPrice, setMinPrice] = useState(0.001);
   const [maxPrice, setMaxPrice] = useState(0.50);
   const [stopLossPct, setStopLossPct] = useState(25.0);
   const [chandelierAtr, setChandelierAtr] = useState(5.5);
   const [takeProfitPct, setTakeProfitPct] = useState(2000.0);
-  const [uncappedRunner, setUncappedRunner] = useState(true);
   const [powerThrustRsi, setPowerThrustRsi] = useState(true);
   const [maxRsi, setMaxRsi] = useState(90);
   const [minConviction, setMinConviction] = useState(8);
@@ -204,9 +314,24 @@ export default function WorkbookAutoBuilderModal({
   const [maxOpenPositions, setMaxOpenPositions] = useState(12);
   const [dedicatedTickers, setDedicatedTickers] = useState('');
 
+  // Stage 1: House Money Principal Harvest State
+  const [harvestEnabled, setHarvestEnabled] = useState(true);
+  const [harvestMode, setHarvestMode] = useState('RECOVER_PRINCIPAL_PCT');
+  const [harvestTriggerGainPct, setHarvestTriggerGainPct] = useState(100.0);
+  const [harvestRecoveryPct, setHarvestRecoveryPct] = useState(100.0);
+
+  // Stage 2: Selectable Runner Catch Options (1 to 5)
+  const [catchMacdCross, setCatchMacdCross] = useState(true);
+  const [catchChandelierAtr, setCatchChandelierAtr] = useState(true);
+  const [catchEmaBreak, setCatchEmaBreak] = useState(true);
+  const [catchEmaPeriod, setCatchEmaPeriod] = useState(20);
+  const [catchObvDistribution, setCatchObvDistribution] = useState(false);
+  const [catchHardCeiling, setCatchHardCeiling] = useState(false);
+
   const [isBuilding, setIsBuilding] = useState(false);
   const [buildLogs, setBuildLogs] = useState([]);
   const [buildError, setBuildError] = useState('');
+  const [defaultsAppliedBanner, setDefaultsAppliedBanner] = useState('Tried & True Defaults Active for: 🚀 Moonshot Coiled Spring (2,000%+ Hunter)');
 
   useEffect(() => {
     if (isOpen) {
@@ -219,21 +344,36 @@ export default function WorkbookAutoBuilderModal({
         setCurrency(initialWorkbook.currency || 'AUD');
         setStrategyProtocol(initialWorkbook.strategy_protocol || 'MOONSHOT_COILED_SPRING');
         setSectorPersona(initialWorkbook.sector_persona || 'MOONSHOT_COILED_HUNTER');
+        setWealthSubModes(
+          initialWorkbook.wealth_sub_modes?.length
+            ? initialWorkbook.wealth_sub_modes
+            : ['TOTAL_RETURN_DIVIDEND_GROWTH', 'QUALITY_WEALTH_COMPOUNDER', 'YIELD_ON_COST_BUILDER', 'DEFENSIVE_CASH_COW_ROYALTY']
+        );
         setExecutionMode(initialWorkbook.execution_mode || 'AUTONOMOUS');
-        setStartingCapital(initialWorkbook.starting_capital || initialWorkbook.equity || 25000);
+        setStartingCapital(initialWorkbook.starting_capital || initialWorkbook.equity || 5000);
         setMinPrice(initialWorkbook.min_price ?? 0.001);
         setMaxPrice(initialWorkbook.max_price ?? 0.50);
-        setStopLossPct(initialWorkbook.stop_loss_pct ?? 20.0);
-        setChandelierAtr(initialWorkbook.chandelier_atr_mult ?? 5.0);
+        setStopLossPct(initialWorkbook.stop_loss_pct ?? 25.0);
+        setChandelierAtr(initialWorkbook.chandelier_atr_mult ?? 5.5);
         setTakeProfitPct(initialWorkbook.take_profit_pct ?? 2000.0);
-        setUncappedRunner(initialWorkbook.uncapped_runner ?? true);
         setPowerThrustRsi(initialWorkbook.power_thrust_rsi_override ?? true);
-        setMaxRsi(initialWorkbook.max_rsi ?? 88);
+        setMaxRsi(initialWorkbook.max_rsi ?? 90);
         setMinConviction(initialWorkbook.min_conviction ?? 8);
         setKellyFraction(initialWorkbook.kelly_fraction ?? 0.50);
         setMaxOpenPositions(initialWorkbook.max_open_positions ?? 12);
         setDedicatedTickers(initialWorkbook.dedicated_tickers || '');
+        setHarvestEnabled(initialWorkbook.harvest_enabled ?? true);
+        setHarvestMode(initialWorkbook.harvest_mode || 'RECOVER_PRINCIPAL_PCT');
+        setHarvestTriggerGainPct(initialWorkbook.harvest_trigger_gain_pct ?? 100.0);
+        setHarvestRecoveryPct(initialWorkbook.harvest_recovery_pct ?? 100.0);
+        setCatchMacdCross(initialWorkbook.catch_macd_cross ?? true);
+        setCatchChandelierAtr(initialWorkbook.catch_chandelier_atr ?? true);
+        setCatchEmaBreak(initialWorkbook.catch_ema_break ?? true);
+        setCatchEmaPeriod(initialWorkbook.catch_ema_period ?? 20);
+        setCatchObvDistribution(initialWorkbook.catch_obv_distribution ?? false);
+        setCatchHardCeiling(initialWorkbook.catch_hard_ceiling ?? false);
       } else {
+        applyBlueprint(STRATEGY_BLUEPRINTS[0]);
         setBuildLogs([]);
         setBuildError('');
       }
@@ -313,10 +453,15 @@ export default function WorkbookAutoBuilderModal({
     }
   };
 
+  // Auto-populates the entire bottom section with Tried & True Defaults for the selected Blueprint/Persona
   const applyBlueprint = (bp) => {
+    setSelectedBlueprintId(bp.id);
     const d = bp.defaults;
     setStrategyProtocol(d.strategy_protocol);
     setSectorPersona(d.sector_persona);
+    if (d.wealth_sub_modes?.length) {
+      setWealthSubModes(d.wealth_sub_modes);
+    }
     setExchange(d.exchange);
     setCurrency(d.currency);
     setExecutionMode(d.execution_mode);
@@ -325,16 +470,52 @@ export default function WorkbookAutoBuilderModal({
     setStopLossPct(d.stop_loss_pct);
     setChandelierAtr(d.chandelier_atr_mult);
     setTakeProfitPct(d.take_profit_pct);
-    setUncappedRunner(d.uncapped_runner);
     setPowerThrustRsi(d.power_thrust_rsi_override);
     setMaxRsi(d.max_rsi);
     setMinConviction(d.min_conviction);
     setKellyFraction(d.kelly_fraction);
     setMaxOpenPositions(d.max_open_positions);
+    // Stage 1 Harvest Defaults
+    setHarvestEnabled(d.harvest_enabled);
+    setHarvestMode(d.harvest_mode);
+    setHarvestTriggerGainPct(d.harvest_trigger_gain_pct);
+    setHarvestRecoveryPct(d.harvest_recovery_pct);
+    // Stage 2 Catch Options Defaults
+    setCatchMacdCross(d.catch_macd_cross);
+    setCatchChandelierAtr(d.catch_chandelier_atr);
+    setCatchEmaBreak(d.catch_ema_break);
+    setCatchEmaPeriod(d.catch_ema_period);
+    setCatchObvDistribution(d.catch_obv_distribution);
+    setCatchHardCeiling(d.catch_hard_ceiling);
+
     if (!initialWorkbook) {
       setWbName(bp.title.replace(/^[^\w]+/, '').trim());
     }
+    setDefaultsAppliedBanner(`Tried & True Defaults Auto-Loaded for: ${bp.title}`);
   };
+
+  const handlePersonaDropdownChange = (newPersonaId) => {
+    setSectorPersona(newPersonaId);
+    const matchOpt = PERSONA_OPTIONS.find((p) => p.id === newPersonaId);
+    if (matchOpt) {
+      const bp = STRATEGY_BLUEPRINTS.find((b) => b.id === matchOpt.blueprintId);
+      if (bp) applyBlueprint(bp);
+    }
+  };
+
+  const toggleWealthSubMode = (modeId) => {
+    setWealthSubModes((prev) =>
+      prev.includes(modeId) ? prev.filter((m) => m !== modeId) : [...prev, modeId]
+    );
+  };
+
+  // Count how many Stage-2 Technical Catch Options are currently checked
+  const activeTechCatches = [
+    catchMacdCross && 'Bearish MACD Cross',
+    catchChandelierAtr && `Chandelier ATR (${chandelierAtr}x)`,
+    catchEmaBreak && `${catchEmaPeriod} EMA Breakdown`,
+    catchObvDistribution && 'OBV / CMF Distribution'
+  ].filter(Boolean);
 
   const handleAutoBuildWorkbook = async () => {
     setIsBuilding(true);
@@ -356,20 +537,32 @@ export default function WorkbookAutoBuilderModal({
           currency,
           strategy_protocol: strategyProtocol,
           sector_persona: sectorPersona,
+          wealth_sub_modes: wealthSubModes,
           execution_mode: executionMode,
-          starting_capital: Number(startingCapital) || 25000,
+          starting_capital: Number(startingCapital) || 5000,
           min_price: Number(minPrice),
           max_price: Number(maxPrice),
           stop_loss_pct: Number(stopLossPct),
           chandelier_atr_mult: Number(chandelierAtr),
           take_profit_pct: Number(takeProfitPct),
-          uncapped_runner: Boolean(uncappedRunner),
+          uncapped_runner: !catchHardCeiling,
           power_thrust_rsi_override: Boolean(powerThrustRsi),
           max_rsi: Number(maxRsi),
           min_conviction: Number(minConviction),
           kelly_fraction: Number(kellyFraction),
           max_open_positions: Number(maxOpenPositions),
-          dedicated_tickers: dedicatedTickers
+          dedicated_tickers: dedicatedTickers,
+          harvest_enabled: Boolean(harvestEnabled),
+          harvest_mode: harvestMode,
+          harvest_trigger_gain_pct: Number(harvestTriggerGainPct),
+          harvest_recovery_pct: Number(harvestRecoveryPct),
+          min_remaining_parcel_aud: 500.0,
+          catch_macd_cross: Boolean(catchMacdCross),
+          catch_chandelier_atr: Boolean(catchChandelierAtr),
+          catch_ema_break: Boolean(catchEmaBreak),
+          catch_ema_period: Number(catchEmaPeriod),
+          catch_obv_distribution: Boolean(catchObvDistribution),
+          catch_hard_ceiling: Boolean(catchHardCeiling)
         })
       });
       const data = await res.json();
@@ -381,7 +574,7 @@ export default function WorkbookAutoBuilderModal({
         '1. Global AI & Antigravity MCP Agent Linked',
         '2. Hidden _TITAN_VAULT Provisioned (Brain & DB Keys Hidden Server-Side)',
         `3. Persona Injected: ${sectorPersona}`,
-        `4. Unlocked Price Filter & Capital Synced ($${Number(startingCapital).toLocaleString()})`,
+        `4. Isolated Cash Pot ($${Number(startingCapital).toLocaleString()}) & Harvest Rules Synced`,
         '5. Python Direct-Push Active + GAS & Neon DB Failover Armed'
       ];
       steps.forEach((s, idx) => {
@@ -391,7 +584,7 @@ export default function WorkbookAutoBuilderModal({
             setIsBuilding(false);
             if (onWorkbookSaved) onWorkbookSaved(data.workbook);
           }
-        }, (idx + 1) * 180);
+        }, (idx + 1) * 160);
       });
     } catch (err) {
       setIsBuilding(false);
@@ -403,7 +596,7 @@ export default function WorkbookAutoBuilderModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-[#0b111e] border border-slate-800 rounded-2xl max-w-5xl w-full shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+      <div className="bg-[#0b111e] border border-slate-800 rounded-2xl max-w-6xl w-full shadow-2xl overflow-hidden my-auto max-h-[94vh] flex flex-col">
         {/* Top Modal Header */}
         <div className="bg-[#111827] border-b border-slate-800 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -412,10 +605,10 @@ export default function WorkbookAutoBuilderModal({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
-                TITAN FLEET COMMAND & 1-CLICK WORKBOOK AUTO-BUILDER
+                TITAN FLEET COMMAND & PERSONA WORKBOOK CONFIGURATOR
               </h2>
               <p className="text-[11px] font-mono text-slate-400">
-                Antigravity MCP Agent • Live Auto-Evolving Gemini Models • Uncapped 2,000% Moonshot Coiled Springs
+                Select a Persona to Auto-Load Tried & True Defaults • 2-Stage House Money Harvest • Wealth & Dividend Hold
               </p>
             </div>
           </div>
@@ -429,22 +622,22 @@ export default function WorkbookAutoBuilderModal({
         </div>
 
         {/* Mode Switcher Tabs */}
-        <div className="bg-[#0f172a] border-b border-slate-800 px-6 flex items-center gap-2">
+        <div className="bg-[#0f172a] border-b border-slate-800 px-6 flex items-center gap-2 overflow-x-auto">
           <button
             onClick={() => setActiveTab('WORKBOOK_BUILDER')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition ${
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap ${
               activeTab === 'WORKBOOK_BUILDER'
                 ? 'border-emerald-400 text-emerald-400 bg-emerald-500/10'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>{initialWorkbook ? `Edit Workbook: ${initialWorkbook.name}` : '1. Add / Configure Dedicated Workbook'}</span>
+            <span>{initialWorkbook ? `Edit Workbook: ${initialWorkbook.name}` : '1. Configure Workbook Persona, Harvest & Catch Rules'}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('GLOBAL_AI_HUB')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition ${
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap ${
               activeTab === 'GLOBAL_AI_HUB'
                 ? 'border-purple-400 text-purple-300 bg-purple-500/10'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -456,7 +649,7 @@ export default function WorkbookAutoBuilderModal({
 
           <button
             onClick={() => setActiveTab('FAILOVER_SHIELD')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition ${
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition whitespace-nowrap ${
               activeTab === 'FAILOVER_SHIELD'
                 ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -468,26 +661,35 @@ export default function WorkbookAutoBuilderModal({
         </div>
 
         {/* Scrollable Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
           {/* =============================================================== */}
-          {/* TAB 1: 1-CLICK WORKBOOK AUTO-BUILDER & UNLOCKED RULES           */}
+          {/* TAB 1: PERSONA-DRIVEN WORKBOOK BUILDER & HARVEST/CATCH SYSTEM   */}
           {/* =============================================================== */}
           {activeTab === 'WORKBOOK_BUILDER' && (
-            <div className="space-y-6">
-              {/* Step A: 1-Click Strategy Blueprint Presets */}
+            <div className="space-y-5">
+              {/* TOP SECTION: 1-Click Persona & Trading Method Selector */}
               <div>
-                <div className="flex items-center justify-between mb-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
                     <Zap className="w-3.5 h-3.5" />
-                    Step 1 — Pick a Workbook Blueprint (Or Customize Every Rule Below)
+                    Step 1 — Select Workbook Persona & Trading Method (Auto-Populates Tried & True Defaults Below)
                   </label>
-                  <span className="text-[11px] font-mono text-slate-400">
-                    All settings below are 100% unlocked & editable anytime
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const bp = STRATEGY_BLUEPRINTS.find((b) => b.id === selectedBlueprintId) || STRATEGY_BLUEPRINTS[0];
+                      applyBlueprint(bp);
+                    }}
+                    className="flex items-center gap-1 text-[11px] font-mono text-emerald-300 hover:text-emerald-200 bg-emerald-950/50 border border-emerald-700/50 px-2.5 py-1 rounded-lg"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset to Tried & True Persona Defaults</span>
+                  </button>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
                   {STRATEGY_BLUEPRINTS.map((bp) => {
-                    const isSelected = strategyProtocol === bp.defaults.strategy_protocol && sectorPersona === bp.defaults.sector_persona;
+                    const isSelected = selectedBlueprintId === bp.id;
                     return (
                       <button
                         key={bp.id}
@@ -495,7 +697,7 @@ export default function WorkbookAutoBuilderModal({
                         onClick={() => applyBlueprint(bp)}
                         className={`text-left p-3 rounded-xl border transition flex flex-col justify-between ${
                           isSelected
-                            ? 'bg-emerald-950/40 border-emerald-500/70 shadow-lg shadow-emerald-950/50'
+                            ? 'bg-emerald-950/50 border-emerald-400 shadow-lg shadow-emerald-950/50'
                             : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
                         }`}
                       >
@@ -518,291 +720,442 @@ export default function WorkbookAutoBuilderModal({
                 </div>
               </div>
 
-              {/* Step B: Workbook Identity, Google Sheet Link & Persona */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-900/50 border border-slate-800/90 rounded-xl p-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                    Workbook Name
-                  </label>
-                  <input
-                    type="text"
-                    value={wbName}
-                    onChange={(e) => setWbName(e.target.value)}
-                    placeholder="e.g., ASX PennyMines Coiled Springs"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-semibold focus:border-emerald-500 focus:outline-none"
-                  />
+              {/* WEALTH & HIGH-RETURN HOLD SUB-MODES (1 TO 4 SELECTABLE WHEN WEALTH FORTRESS ACTIVE) */}
+              {(selectedBlueprintId === 'WEALTH_DIVIDEND_FORTRESS' || sectorPersona === 'FORTRESS_QUANT_OFFICER') && (
+                <div className="bg-cyan-950/20 border border-cyan-500/40 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+                      <TrendingUp className="w-4 h-4 text-cyan-400" />
+                      Wealth & High-Return Hold Sub-Personas (Select 1 to 4 Flavours to Hunt & Hold)
+                    </span>
+                    <span className="text-[10px] font-mono text-cyan-200 bg-cyan-500/15 px-2 py-0.5 rounded">
+                      {wealthSubModes.length} of 4 Active
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {WEALTH_SUB_MODES.map((wm) => {
+                      const checked = wealthSubModes.includes(wm.id);
+                      return (
+                        <label
+                          key={wm.id}
+                          className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition ${
+                            checked
+                              ? 'bg-cyan-950/40 border-cyan-500/60 text-white'
+                              : 'bg-slate-950/60 border-slate-800 text-slate-400'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleWealthSubMode(wm.id)}
+                            className="mt-0.5 rounded text-cyan-500 focus:ring-0"
+                          />
+                          <div>
+                            <div className="text-xs font-bold text-cyan-200">{wm.label}</div>
+                            <div className="text-[10px] text-slate-400">{wm.desc}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                    Google Sheet URL or ID (Optional — Auto-Links Vault)
-                  </label>
-                  <input
-                    type="text"
-                    value={sheetUrlOrId}
-                    onChange={(e) => setSheetUrlOrId(e.target.value)}
-                    placeholder="Paste Google Sheet URL or leave blank for Virtual Node"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-emerald-300 font-mono focus:border-emerald-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-purple-300 mb-1">
-                    Specialist AI Persona for This Workbook
-                  </label>
-                  <select
-                    value={sectorPersona}
-                    onChange={(e) => setSectorPersona(e.target.value)}
-                    className="w-full bg-slate-950 border border-purple-500/40 rounded-lg px-3 py-2 text-xs text-purple-200 font-semibold focus:border-purple-400 focus:outline-none"
-                  >
-                    {PERSONA_OPTIONS.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Step C: Starting Capital, Exchange, Currency & Execution Mode */}
+              {/* Step 2: Workbook Name, Sheet Link, Persona & Clean $5,000 Default Cash Input */}
               <div className="bg-slate-900/50 border border-slate-800/90 rounded-xl p-4 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                    <DollarSign className="w-3.5 h-3.5" />
-                    Step 2 — Custom Capital Allocation, Exchange & Execution Mode
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {CAPITAL_PRESETS.map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setStartingCapital(preset)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition ${
-                          Number(startingCapital) === preset
-                            ? 'bg-emerald-500 text-slate-950'
-                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                        }`}
-                      >
-                        ${preset >= 1000000 ? `${preset / 1000000}M` : `${preset / 1000}k`}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">
-                      Custom Starting Capital (Type Any Amount)
+                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                      Workbook Name
                     </label>
                     <input
-                      type="number"
-                      min="100"
-                      step="500"
-                      value={startingCapital}
-                      onChange={(e) => setStartingCapital(e.target.value)}
-                      className="w-full bg-slate-950 border border-emerald-500/50 rounded-lg px-3 py-2 text-sm font-mono font-bold text-emerald-400 focus:outline-none"
+                      type="text"
+                      value={wbName}
+                      onChange={(e) => setWbName(e.target.value)}
+                      placeholder="e.g., ASX PennyMines Coiled Springs"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-semibold focus:border-emerald-500 focus:outline-none"
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">
-                      World Exchange Scope
-                    </label>
-                    <select
-                      value={exchange}
-                      onChange={(e) => {
-                        const ex = e.target.value;
-                        setExchange(ex);
-                        if (ex === 'ASX') setCurrency('AUD');
-                        if (ex === 'NYSE' || ex === 'NASDAQ') setCurrency('USD');
-                        if (ex === 'LSE') setCurrency('GBP');
-                        if (ex === 'TSX') setCurrency('CAD');
-                      }}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-white"
-                    >
-                      <option value="ASX">🇦🇺 ASX (Australian Securities Exchange)</option>
-                      <option value="NASDAQ">🇺🇸 NASDAQ (US Tech & Growth)</option>
-                      <option value="NYSE">🇺🇸 NYSE (Wall Street Institutional)</option>
-                      <option value="LSE">🇬🇧 LSE (London Stock Exchange)</option>
-                      <option value="TSX">🇨🇦 TSX / TSXV (Toronto Mining & Resources)</option>
-                      <option value="GLOBAL">🌐 GLOBAL (All 5 World Exchanges)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">
-                      Base Currency Pot
-                    </label>
-                    <select
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-white"
-                    >
-                      <option value="AUD">AUD ($)</option>
-                      <option value="USD">USD ($)</option>
-                      <option value="GBP">GBP (£)</option>
-                      <option value="CAD">CAD ($)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">
-                      Execution Mode
-                    </label>
-                    <select
-                      value={executionMode}
-                      onChange={(e) => setExecutionMode(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-emerald-300"
-                    >
-                      <option value="AUTONOMOUS">⚡ AUTONOMOUS (Auto-Execute Signals)</option>
-                      <option value="APPROVAL_1CLICK">👆 1-CLICK APPROVAL (Stage for Review)</option>
-                      <option value="PAPER_SANDBOX">🧪 PAPER SANDBOX (Zero-Risk Simulation)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Step D: Uncapped Moonshot Coiled Spring, Price Brackets & Dedicated Tickers */}
-              <div className="bg-slate-900/50 border border-slate-800/90 rounded-xl p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                    <Target className="w-3.5 h-3.5" />
-                    Step 3 — Uncapped Moonshot Coiled Spring Rules, Price Filter & Dedicated Stocks
-                  </label>
-                  <span className="text-[10px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">
-                    ZERO ARTIFICIAL CAPS • 2,000%+ RUNNERS ENABLED
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">
-                      Min Share Price ($)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.001"
-                      value={minPrice}
-                      onChange={(e) => setMinPrice(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">
-                      Max Share Price ($)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.05"
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">
-                      Profit Target (%)
-                    </label>
-                    <input
-                      type="number"
-                      step="50"
-                      value={takeProfitPct}
-                      onChange={(e) => setTakeProfitPct(e.target.value)}
-                      className="w-full bg-slate-950 border border-amber-500/50 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-amber-300"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">
-                      Stop-Loss Room (%)
-                    </label>
-                    <input
-                      type="number"
-                      step="1"
-                      value={stopLossPct}
-                      onChange={(e) => setStopLossPct(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">
-                      Chandelier ATR Mult
-                    </label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={chandelierAtr}
-                      onChange={(e) => setChandelierAtr(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">
-                      Max Open Positions
-                    </label>
-                    <input
-                      type="number"
-                      step="1"
-                      value={maxOpenPositions}
-                      onChange={(e) => setMaxOpenPositions(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
-                    />
-                  </div>
-                </div>
-
-                {/* Moonshot Toggles + Dedicated Stock List */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2.5 cursor-pointer bg-slate-950/80 border border-slate-800 p-2.5 rounded-lg">
-                      <input
-                        type="checkbox"
-                        checked={uncappedRunner}
-                        onChange={(e) => setUncappedRunner(e.target.checked)}
-                        className="rounded text-emerald-500 focus:ring-0"
-                      />
-                      <div>
-                        <div className="text-xs font-bold text-emerald-300">
-                          Uncapped Multi-Bagger Runner Mode (2,000%+ Free-Carry Trail)
-                        </div>
-                        <div className="text-[10px] text-slate-400">
-                          Never clips winners early — rides coiled springs until Chandelier ATR trail breaks
-                        </div>
-                      </div>
-                    </label>
-
-                    <label className="flex items-center gap-2.5 cursor-pointer bg-slate-950/80 border border-slate-800 p-2.5 rounded-lg">
-                      <input
-                        type="checkbox"
-                        checked={powerThrustRsi}
-                        onChange={(e) => setPowerThrustRsi(e.target.checked)}
-                        className="rounded text-emerald-500 focus:ring-0"
-                      />
-                      <div>
-                        <div className="text-xs font-bold text-amber-300">
-                          Power-Thrust RSI Override (Allow RSI up to {maxRsi} on 4.0x+ Volume Surge)
-                        </div>
-                        <div className="text-[10px] text-slate-400">
-                          Prevents missing explosive penny breakouts when SPRING_EXPANSION triggers
-                        </div>
-                      </div>
-                    </label>
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                      Dedicated Stocks Only (Optional — Leave blank to scan full {exchange} exchange)
+                      Google Sheet URL or ID (Optional)
                     </label>
-                    <textarea
-                      rows={3}
-                      value={dedicatedTickers}
-                      onChange={(e) => setDedicatedTickers(e.target.value)}
-                      placeholder="e.g. WA1, WIA, SXG, DEG, LTR (If entered, this workbook acts as a dedicated sniper exclusively for these tickers)"
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs font-mono text-emerald-300 focus:border-emerald-500 focus:outline-none"
+                    <input
+                      type="text"
+                      value={sheetUrlOrId}
+                      onChange={(e) => setSheetUrlOrId(e.target.value)}
+                      placeholder="Paste Sheet URL or leave blank"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-emerald-300 font-mono focus:border-emerald-500 focus:outline-none"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-emerald-300 mb-1">
+                      Isolated Workbook Cash Pot (Default $5,000)
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs font-mono font-bold text-white"
+                      >
+                        <option value="AUD">AUD</option>
+                        <option value="USD">USD</option>
+                        <option value="GBP">GBP</option>
+                        <option value="CAD">CAD</option>
+                      </select>
+                      <input
+                        type="number"
+                        min="100"
+                        step="500"
+                        value={startingCapital}
+                        onChange={(e) => setStartingCapital(e.target.value)}
+                        className="w-full bg-slate-950 border border-emerald-500/60 rounded-lg px-3 py-2 text-xs font-mono font-bold text-emerald-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                      World Exchange & Execution Mode
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <select
+                        value={exchange}
+                        onChange={(e) => {
+                          const ex = e.target.value;
+                          setExchange(ex);
+                          if (ex === 'ASX') setCurrency('AUD');
+                          if (ex === 'NYSE' || ex === 'NASDAQ') setCurrency('USD');
+                          if (ex === 'LSE') setCurrency('GBP');
+                          if (ex === 'TSX') setCurrency('CAD');
+                        }}
+                        className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs font-bold text-white"
+                      >
+                        <option value="ASX">🇦🇺 ASX</option>
+                        <option value="NASDAQ">🇺🇸 NASDAQ</option>
+                        <option value="NYSE">🇺🇸 NYSE</option>
+                        <option value="LSE">🇬🇧 LSE</option>
+                        <option value="TSX">🇨🇦 TSX</option>
+                        <option value="GLOBAL">🌐 GLOBAL</option>
+                      </select>
+                      <select
+                        value={executionMode}
+                        onChange={(e) => setExecutionMode(e.target.value)}
+                        className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs font-bold text-emerald-300"
+                      >
+                        <option value="AUTONOMOUS">⚡ AUTO</option>
+                        <option value="APPROVAL_1CLICK">👆 1-CLICK</option>
+                        <option value="PAPER_SANDBOX">🧪 PAPER</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* =============================================================== */}
+              {/* BOTTOM SECTION: AUTO-POPULATED TRIED & TRUE DEFAULTS            */}
+              {/* (Entry/Stop + Stage 1 House Money Harvest + Stage 2 Catch)      */}
+              {/* =============================================================== */}
+              <div className="bg-[#0e1628] border border-emerald-500/40 rounded-2xl p-4 sm:p-5 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-emerald-400" />
+                    <span className="text-xs font-black uppercase tracking-wider text-white">
+                      {defaultsAppliedBanner}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded">
+                    All Tried & True Defaults Below Can Be Customized Anytime
+                  </span>
+                </div>
+
+                {/* 3-Column Bottom Grid: Col 1 (Entry & Stop) | Col 2 (Stage 1 House Money Harvest) | Col 3 (Stage 2 Catch Options) */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* COLUMN 1: ENTRY PRICE BRACKET & INITIAL DOWNSIDE STOP */}
+                  <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-3">
+                    <div className="text-xs font-bold text-slate-200 uppercase font-mono flex items-center justify-between">
+                      <span>1. Entry & Initial Stop Rules</span>
+                      <span className="text-[10px] text-slate-400">Pre-Harvest</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[10px] text-slate-400 mb-1">Min Share Price ($)</label>
+                        <input
+                          type="number"
+                          step="0.001"
+                          value={minPrice}
+                          onChange={(e) => setMinPrice(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-slate-400 mb-1">Max Share Price ($)</label>
+                        <input
+                          type="number"
+                          step="0.05"
+                          value={maxPrice}
+                          onChange={(e) => setMaxPrice(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-slate-400 mb-1">Initial Stop-Loss (%)</label>
+                        <input
+                          type="number"
+                          step="1"
+                          value={stopLossPct}
+                          onChange={(e) => setStopLossPct(e.target.value)}
+                          className="w-full bg-slate-900 border border-rose-500/40 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-rose-300"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-slate-400 mb-1">Max Open Positions</label>
+                        <input
+                          type="number"
+                          step="1"
+                          value={maxOpenPositions}
+                          onChange={(e) => setMaxOpenPositions(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <label className="flex items-start gap-2 cursor-pointer bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg">
+                      <input
+                        type="checkbox"
+                        checked={powerThrustRsi}
+                        onChange={(e) => setPowerThrustRsi(e.target.checked)}
+                        className="mt-0.5 rounded text-emerald-500 focus:ring-0"
+                      />
+                      <div>
+                        <div className="text-[11px] font-bold text-amber-300">
+                          Power-Thrust RSI Override (Allow RSI up to {maxRsi})
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                          Enters explosive coiled breakouts on 4.0x+ volume surge
+                        </div>
+                      </div>
+                    </label>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-300 mb-1">
+                        Dedicated Stocks Only (Optional — Blank = Full {exchange} Scan)
+                      </label>
+                      <input
+                        type="text"
+                        value={dedicatedTickers}
+                        onChange={(e) => setDedicatedTickers(e.target.value)}
+                        placeholder="e.g. WA1, WIA, SXG, DEG"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-emerald-300"
+                      />
+                    </div>
+                  </div>
+
+                  {/* COLUMN 2: STAGE 1 — "HOUSE MONEY" PRINCIPAL HARVEST SYSTEM */}
+                  <div className="bg-slate-950/70 border border-amber-500/40 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-300 uppercase font-mono flex items-center gap-1.5">
+                        <Coins className="w-3.5 h-3.5 text-amber-400" />
+                        2. Stage-1 House Money Harvest
+                      </span>
+                      <span className="text-[9px] font-mono bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded">
+                        Rule 24 &gt;= $500 Guard
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-400 mb-1">
+                        Harvest Method (Tried & True Default Pre-Selected)
+                      </label>
+                      <select
+                        value={harvestMode}
+                        onChange={(e) => setHarvestMode(e.target.value)}
+                        className="w-full bg-slate-900 border border-amber-500/40 rounded-lg px-2.5 py-1.5 text-xs font-bold text-amber-200"
+                      >
+                        <option value="RECOVER_PRINCIPAL_PCT">
+                          🏦 Recover Original Principal % (House Money Free-Carry)
+                        </option>
+                        <option value="SELL_SHARE_PCT">
+                          📊 Sell Fixed % of Total Shares at Trigger
+                        </option>
+                        <option value="SKIM_EXCESS_PROFIT">
+                          💰 Skim Excess Profit Only (Keep 100% Core Principal Riding)
+                        </option>
+                        <option value="HOLD_100_COMPOUND">
+                          💎 Hold 100% & Compound (Wealth / Dividend Hold Default)
+                        </option>
+                      </select>
+                    </div>
+
+                    {harvestMode !== 'HOLD_100_COMPOUND' ? (
+                      <>
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="block text-[10px] text-slate-400 mb-1">
+                              Trigger at Gain (%)
+                            </label>
+                            <input
+                              type="number"
+                              step="10"
+                              value={harvestTriggerGainPct}
+                              onChange={(e) => setHarvestTriggerGainPct(e.target.value)}
+                              className="w-full bg-slate-900 border border-amber-500/50 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-amber-300"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-slate-400 mb-1">
+                              {harvestMode === 'SELL_SHARE_PCT' ? 'Shares to Sell (%)' : 'Principal Recovery (%)'}
+                            </label>
+                            <input
+                              type="number"
+                              step="10"
+                              value={harvestRecoveryPct}
+                              onChange={(e) => setHarvestRecoveryPct(e.target.value)}
+                              className="w-full bg-slate-900 border border-emerald-500/50 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-emerald-300"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-amber-950/25 border border-amber-500/30 text-[11px] text-slate-300 leading-relaxed">
+                          At <strong className="text-amber-300">+{harvestTriggerGainPct}% gain</strong>, Titan sells enough shares to return{' '}
+                          <strong className="text-emerald-300">{harvestRecoveryPct}% of your initial capital + brokerage</strong> straight back into this workbook's Cash Pool. The initial stop-loss is then retired and the remaining shares ride <strong>100% risk-free</strong>!
+                        </div>
+                      </>
+                    ) : (
+                      <div className="p-3 rounded-lg bg-cyan-950/30 border border-cyan-500/30 text-[11px] text-cyan-200 leading-relaxed">
+                        <strong>💎 Wealth & Dividend Compounder Active:</strong> 100% of shares are held long-term to maximize dividend payouts, franking credits, and compounding returns. Positions only exit if all selected Stage-2 Macro Catch signals break simultaneously.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* COLUMN 3: STAGE 2 — SELECTABLE MOONSHOT RUNNER "CATCH OPTIONS" (1 TO 5) */}
+                  <div className="bg-slate-950/70 border border-emerald-500/40 rounded-xl p-4 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-300 uppercase font-mono">
+                        3. Stage-2 Runner Catch Options
+                      </span>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+                        {activeTechCatches.length === 1
+                          ? '1 Selected = Single Trigger'
+                          : `${activeTechCatches.length} Selected = ALL Must Hit`}
+                      </span>
+                    </div>
+
+                    <p className="text-[10px] text-slate-400">
+                      Select 1 option for a single trigger, or select multiple options so <strong>ALL selected signals must hit together</strong> before selling your Free-Carry Moonshot:
+                    </p>
+
+                    {/* Catch Option 1: Bearish MACD Crossover */}
+                    <label className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-900/90 border border-slate-800 cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={catchMacdCross}
+                          onChange={(e) => setCatchMacdCross(e.target.checked)}
+                          className="rounded text-emerald-500 focus:ring-0"
+                        />
+                        <span className="text-xs font-semibold text-slate-200">
+                          1. Bearish MACD Crossover / Hook
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-emerald-400">Momentum Roll</span>
+                    </label>
+
+                    {/* Catch Option 2: Chandelier ATR Trailing Stop */}
+                    <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-900/90 border border-slate-800">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={catchChandelierAtr}
+                          onChange={(e) => setCatchChandelierAtr(e.target.checked)}
+                          className="rounded text-emerald-500 focus:ring-0"
+                        />
+                        <span className="text-xs font-semibold text-slate-200">
+                          2. Chandelier ATR Trail
+                        </span>
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={chandelierAtr}
+                          onChange={(e) => setChandelierAtr(e.target.value)}
+                          className="w-14 bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-xs font-mono text-emerald-300 text-right"
+                        />
+                        <span className="text-[10px] font-mono text-slate-400">x ATR</span>
+                      </div>
+                    </div>
+
+                    {/* Catch Option 3: EMA Ribbon Breakdown */}
+                    <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-900/90 border border-slate-800">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={catchEmaBreak}
+                          onChange={(e) => setCatchEmaBreak(e.target.checked)}
+                          className="rounded text-emerald-500 focus:ring-0"
+                        />
+                        <span className="text-xs font-semibold text-slate-200">
+                          3. EMA Trend Breakdown
+                        </span>
+                      </label>
+                      <select
+                        value={catchEmaPeriod}
+                        onChange={(e) => setCatchEmaPeriod(Number(e.target.value))}
+                        className="bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-[11px] font-mono text-emerald-300"
+                      >
+                        <option value={9}>9 EMA (Fast)</option>
+                        <option value={20}>20 EMA (Swing)</option>
+                        <option value={50}>50 EMA (Macro Hold)</option>
+                      </select>
+                    </div>
+
+                    {/* Catch Option 4: OBV / CMF Distribution */}
+                    <label className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-900/90 border border-slate-800 cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={catchObvDistribution}
+                          onChange={(e) => setCatchObvDistribution(e.target.checked)}
+                          className="rounded text-emerald-500 focus:ring-0"
+                        />
+                        <span className="text-xs font-semibold text-slate-200">
+                          4. OBV / CMF Smart-Money Dump
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-cyan-400">Volume Outflow</span>
+                    </label>
+
+                    {/* Catch Option 5: Optional Hard Profit Ceiling % */}
+                    <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-900/90 border border-slate-800">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={catchHardCeiling}
+                          onChange={(e) => setCatchHardCeiling(e.target.checked)}
+                          className="rounded text-amber-500 focus:ring-0"
+                        />
+                        <span className="text-xs font-semibold text-slate-200">
+                          5. Hard Ceiling % {!catchHardCeiling && '(Uncapped)'}
+                        </span>
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          step="100"
+                          value={takeProfitPct}
+                          onChange={(e) => setTakeProfitPct(e.target.value)}
+                          disabled={!catchHardCeiling}
+                          className={`w-20 bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-xs font-mono text-right ${
+                            catchHardCeiling ? 'text-amber-300 font-bold' : 'text-slate-600'
+                          }`}
+                        />
+                        <span className="text-[10px] font-mono text-slate-400">%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -812,7 +1165,7 @@ export default function WorkbookAutoBuilderModal({
                 <div className="bg-emerald-950/30 border border-emerald-500/40 rounded-xl p-4 space-y-1.5">
                   <div className="text-xs font-bold text-emerald-300 mb-1 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    Auto-Build & Hidden _TITAN_VAULT Sync Complete:
+                    Auto-Build, House Money Harvest & Hidden _TITAN_VAULT Sync Complete:
                   </div>
                   {buildLogs.map((log, i) => (
                     <div key={i} className="text-xs font-mono text-slate-200">
@@ -828,7 +1181,7 @@ export default function WorkbookAutoBuilderModal({
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex items-center justify-end gap-3 pt-1">
                 <button
                   type="button"
                   onClick={onClose}
@@ -875,7 +1228,6 @@ export default function WorkbookAutoBuilderModal({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column: Primary AI Engine & Live Evolving Model Picker */}
                 <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <Cpu className="w-4 h-4 text-purple-400" />
@@ -944,7 +1296,6 @@ export default function WorkbookAutoBuilderModal({
                   </div>
                 </div>
 
-                {/* Right Column: Upgradable Market Data APIs */}
                 <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <Database className="w-4 h-4 text-emerald-400" />
@@ -988,9 +1339,6 @@ export default function WorkbookAutoBuilderModal({
                       placeholder="Paste FMP / Polygon / AlphaVantage Key (Auto-vaulted & hidden)"
                       className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white"
                     />
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      Even when a paid key is active, Yahoo + GoogleFinance + Stooq remain armed as automatic failover if the provider rate-limits.
-                    </p>
                   </div>
 
                   {globalSaveMsg && (

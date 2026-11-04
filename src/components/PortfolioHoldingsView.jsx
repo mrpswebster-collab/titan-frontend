@@ -36,8 +36,8 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
   const [editingWorkbook, setEditingWorkbook] = useState(null);
   const [builderInitialTab, setBuilderInitialTab] = useState('WORKBOOK_BUILDER');
 
-  // Editable Capital Calibration State
-  const [capitalInput, setCapitalInput] = useState(String(userSession?.startingCapital || 25000));
+  // Editable Capital Calibration State (Default $5,000, 100% Isolated per Workbook)
+  const [capitalInput, setCapitalInput] = useState(String(userSession?.startingCapital || 5000));
   const [currencyInput, setCurrencyInput] = useState(userSession?.currency || 'AUD');
   const [savingCapital, setSavingCapital] = useState(false);
   const [savedNotice, setSavedNotice] = useState('');
@@ -190,14 +190,14 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       
-      {/* 1. Interactive Capital Calibration Bar (Select Preset or Type Any Value) */}
+      {/* 1. Interactive Capital Calibration Bar (Clean $5,000 Default — Editable Anytime in UI or Config Tab) */}
       <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <Sliders className="w-4 h-4 text-emerald-400" />
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 font-mono">
-                Capital Pool & Position Sizing Calibration
+                Isolated Workbook Cash Pool Calibration (Default $5,000)
               </h3>
               {savedNotice && (
                 <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded">
@@ -206,30 +206,12 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
               )}
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Select a preset below or type in any custom capital amount to calibrate your sheet & Kelly sizing calculator.
+              Each workbook maintains a 100% separate cash pool. Type any custom amount below (or edit in the Sheet Config tab) at any time.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Quick-Select Preset Pills */}
-            <div className="flex items-center gap-1 bg-[#0a0e17] p-1 rounded-xl border border-slate-800">
-              {QUICK_CAPS.map(amt => (
-                <button
-                  key={amt}
-                  type="button"
-                  onClick={() => handleSaveCustomCapital(amt)}
-                  className={`px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold transition ${
-                    Number(capitalInput) === amt
-                      ? 'bg-emerald-500 text-black'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  ${amt / 1000}k
-                </button>
-              ))}
-            </div>
-
-            {/* Currency Selector + Custom Type-In Box */}
+            {/* Currency Selector + Clean Custom Type-In Box */}
             <div className="flex items-center gap-1.5">
               <select
                 value={currencyInput}
@@ -249,8 +231,8 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
                   inputMode="decimal"
                   value={capitalInput}
                   onChange={(e) => setCapitalInput(e.target.value.replace(/[^0-9.]/g, ''))}
-                  placeholder="Custom amount"
-                  className="w-32 bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-xl pl-6 pr-2.5 py-1.5 text-xs font-mono font-bold text-white outline-none"
+                  placeholder="5000"
+                  className="w-36 bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-xl pl-6 pr-2.5 py-1.5 text-xs font-mono font-bold text-white outline-none"
                 />
               </div>
 
@@ -422,16 +404,32 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
                     </span>
                   </div>
 
-                  {/* Unlocked Strategy & Persona Badges */}
+                  {/* Unlocked Strategy, Harvest & Catch Confluence Badges */}
                   <div className="flex flex-wrap items-center gap-1 my-1.5">
                     {wb.strategy_protocol && (
                       <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                        {wb.strategy_protocol === 'MOONSHOT_COILED_SPRING' ? '🚀 2,000% MOONSHOT' : wb.strategy_protocol}
+                        {wb.strategy_protocol === 'MOONSHOT_COILED_SPRING'
+                          ? '🚀 2,000% MOONSHOT'
+                          : wb.strategy_protocol === 'BLUE_CHIP_CORE'
+                            ? '💎 WEALTH & DIVIDEND HOLD'
+                            : wb.strategy_protocol}
                       </span>
                     )}
                     {wb.min_price !== undefined && wb.id !== 'ALL' && (
                       <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
                         ${wb.min_price}–${wb.max_price >= 99999 ? ' Uncapped' : wb.max_price}
+                      </span>
+                    )}
+                    {wb.id !== 'ALL' && (
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                        {wb.harvest_mode === 'HOLD_100_COMPOUND'
+                          ? '💎 Hold 100% Compound'
+                          : `🏦 Harvest ${wb.harvest_recovery_pct ?? 100}% @ +${wb.harvest_trigger_gain_pct ?? 100}%`}
+                      </span>
+                    )}
+                    {wb.catch_confluence_summary && wb.id !== 'ALL' && (
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 truncate max-w-[200px]">
+                        🎯 {wb.catch_confluence_summary}
                       </span>
                     )}
                     {wb.dedicated_tickers && (

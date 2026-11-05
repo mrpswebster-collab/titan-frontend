@@ -9,6 +9,7 @@ import PortfolioHoldingsView from './components/PortfolioHoldingsView';
 import AIAnalystTerminalView from './components/AIAnalystTerminalView';
 import InstitutionalGateAndSetupWizard from './components/InstitutionalGateAndSetupWizard';
 import WorkbookAutoBuilderModal from './components/WorkbookAutoBuilderModal';
+import ProCockpitView from './components/ProCockpitView';
 import { 
   Zap, 
   ShieldCheck, 
@@ -124,6 +125,15 @@ export default function App() {
   const [isBacktestOpen, setIsBacktestOpen] = useState(false);
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [stagedNotification, setStagedNotification] = useState(null);
+
+  // Workspace Layout Mode: 'COCKPIT' (Admin Pro) vs. 'STANDARD' (Retail Multi-Tab)
+  const [layoutMode, setLayoutMode] = useState(() => {
+    try {
+      return localStorage.getItem('titan_layout_mode') || 'STANDARD';
+    } catch (e) {
+      return 'STANDARD';
+    }
+  });
 
   // User session with persistent localStorage authentication (requires cryptographic idToken)
   const [userSession, setUserSession] = useState(() => {
@@ -369,7 +379,33 @@ export default function App() {
         </div>
       )}
 
-      {/* TAB 1: MARKETS & SCANNER */}
+      {/* WORKSPACE CONTENT: PRO COCKPIT VS. STANDARD (RETAIL) TABS */}
+      {layoutMode === 'COCKPIT' ? (
+        <main className="w-full flex-1">
+          <ProCockpitView
+            userSession={userSession}
+            activeExchange={activeExchange}
+            onSelectExchange={setActiveExchange}
+            activeTier={activeTier}
+            onSelectTier={setActiveTier}
+            activePersona={activePersona}
+            onSelectPersona={setActivePersona}
+            tickerList={tickerList}
+            exchangeData={exchangeData}
+            onSelectTicker={(item) => setSelectedTicker(item)}
+            onOpenWorkbookBuilder={() => setShowSetupModal(true)}
+            onOpenBacktest={() => setIsBacktestOpen(true)}
+            stagedNotification={stagedNotification}
+            onStageOrder={handleStageOrder}
+            onOpenAIAnalyst={() => {
+              setLayoutMode('STANDARD');
+              setActiveMainTab('AI_TERMINAL');
+            }}
+          />
+        </main>
+      ) : (
+        <>
+          {/* TAB 1: MARKETS & SCANNER */}
       {activeMainTab === 'SCANNER' && (
         <main className="max-w-7xl mx-auto px-4 py-6 w-full space-y-6 flex-1">
           {/* Exchange Switcher Tabs */}
@@ -576,6 +612,8 @@ export default function App() {
             });
           }}
         />
+      )}
+        </>
       )}
 
       {/* Footer with ASIC Statutory Disclaimer */}

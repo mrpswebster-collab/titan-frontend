@@ -270,13 +270,6 @@ export default function InstitutionalGateAndSetupWizard({
       setAuthError('Please enter your complete 4-digit Security PIN.');
       return;
     }
-    if (signStep === 'CREATE_PIN') {
-      if (pinInput !== confirmPinInput) {
-        setAuthError('PIN confirmation does not match. Please re-enter.');
-        return;
-      }
-    }
-
     setAuthError('');
     setIsAuthenticating(true);
     try {
@@ -295,7 +288,7 @@ export default function InstitutionalGateAndSetupWizard({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.detail || 'PIN verification failed.');
+        throw new Error(data.detail || 'PIN verification failed. Please try again.');
       }
 
       const u = data.user || {};
@@ -653,15 +646,11 @@ const handleCopyCode = () => {
             
             {/* Header Titles */}
             <div className="text-center space-y-2 mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] font-mono text-emerald-400">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Automated Anti-Bot Protection & Bank-Grade 2FA</span>
-              </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                Titan Commercial Quant Portal
+                Titan Institutional Terminal
               </h1>
               <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
-                Automated self-service client onboarding. Protected by Cloudflare Turnstile anti-bot verification and recurring Google OAuth + 4-digit Security PIN authentication.
+                Quantitative Trading Desk & Multi-Asset Intelligence
               </p>
             </div>
 
@@ -682,7 +671,7 @@ const handleCopyCode = () => {
                 }`}
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Sign In (Google + PIN)</span>
+                <span>Sign In</span>
               </button>
 
               <button
@@ -700,7 +689,7 @@ const handleCopyCode = () => {
                 }`}
               >
                 <UserCheck className="w-3.5 h-3.5" />
-                <span>New Client Registration</span>
+                <span>New Client Access</span>
               </button>
             </div>
 
@@ -728,7 +717,7 @@ const handleCopyCode = () => {
                   <div className="space-y-4">
                     <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-center space-y-2">
                       <span className="text-xs font-mono text-emerald-400 font-bold block uppercase tracking-wider">
-                        Step 1: Authenticate with Google
+                        Institutional Client Sign-In
                       </span>
                       <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
                         Sign in with your authorized Google Account, then enter your 4-digit PIN.
@@ -767,10 +756,10 @@ const handleCopyCode = () => {
                   <form onSubmit={handlePinSubmit} className="space-y-4">
                     <div className="p-3.5 rounded-xl bg-slate-950/60 border border-emerald-800/40 text-center space-y-1">
                       <div className="text-xs font-mono text-slate-300">
-                        Authenticated as: <strong className="text-emerald-400">{pendingUserEmail}</strong>
+                        Client: <strong className="text-emerald-400">{pendingUserEmail}</strong>
                       </div>
                       <div className="text-[11px] font-mono text-slate-400">
-                        Step 2: Enter your 4-Digit Security PIN (Bank-Grade 2FA)
+                        Enter your 4-Digit Security PIN
                       </div>
                     </div>
 
@@ -864,52 +853,82 @@ const handleCopyCode = () => {
                 {signStep === 'CREATE_PIN' && (
                   <form onSubmit={handlePinSubmit} className="space-y-4">
                     <div className="p-3.5 rounded-xl bg-slate-950/60 border border-emerald-800/40 text-center space-y-1">
-                      <span className="text-xs font-mono text-emerald-400 font-bold block uppercase">
-                        First-Time Setup: Create Security PIN
-                      </span>
-                      <p className="text-[11px] font-mono text-slate-400">
-                        Create a private 4-digit Trading PIN for <strong className="text-white">{pendingUserEmail}</strong> to enable 2-point authentication.
-                      </p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
-                          Create 4-Digit Security PIN
-                        </label>
-                        <input
-                          type="password"
-                          maxLength={6}
-                          value={pinInput}
-                          onChange={(e) => setPinInput(e.target.value.replace(/[^0-9]/g, ''))}
-                          placeholder="4-digit PIN..."
-                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
-                        />
+                      <div className="text-xs font-mono text-slate-300">
+                        Client: <strong className="text-emerald-400">{pendingUserEmail}</strong>
                       </div>
-
-                      <div>
-                        <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
-                          Confirm 4-Digit Security PIN
-                        </label>
-                        <input
-                          type="password"
-                          maxLength={6}
-                          value={confirmPinInput}
-                          onChange={(e) => setConfirmPinInput(e.target.value.replace(/[^0-9]/g, ''))}
-                          placeholder="Re-enter PIN..."
-                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
-                        />
+                      <div className="text-[11px] font-mono text-slate-400">
+                        Choose your 4-Digit Security PIN
                       </div>
                     </div>
 
-                    <button
-                      type="submit"
-                      disabled={pinInput.length < 4 || isAuthenticating}
-                      className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-xs font-mono font-bold text-black flex items-center justify-center gap-1.5 transition shadow-lg shadow-emerald-500/20"
-                    >
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>{isAuthenticating ? 'Locking PIN...' : 'Lock PIN & Launch Node'}</span>
-                    </button>
+                    {/* PIN Visual Indicators */}
+                    <div className="flex justify-center items-center gap-3 py-3">
+                      {[0, 1, 2, 3].map((idx) => {
+                        const hasChar = pinInput.length > idx;
+                        return (
+                          <div
+                            key={idx}
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 transition-all ${
+                              hasChar
+                                ? 'border-emerald-500 bg-emerald-950/40 text-emerald-400 shadow-lg shadow-emerald-500/20'
+                                : 'border-slate-800 bg-[#0a0e17] text-slate-600'
+                            }`}
+                          >
+                            <span className="text-2xl font-bold font-mono">
+                              {hasChar ? '●' : '○'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Direct Text Input */}
+                    <div className="flex justify-center">
+                      <input
+                        type="password"
+                        maxLength={4}
+                        value={pinInput}
+                        onChange={(e) => setPinInput(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="••••"
+                        autoFocus
+                        className="w-40 text-center tracking-[0.5em] bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-base text-white font-mono outline-none"
+                      />
+                    </div>
+
+                    {/* Numeric Keypad */}
+                    <div className="grid grid-cols-3 gap-2 max-w-[280px] mx-auto pt-2">
+                      {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'CLEAR', '0', 'BACK'].map((btn) => (
+                        <button
+                          key={btn}
+                          type="button"
+                          onClick={() => handleKeypadPress(btn)}
+                          className="py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-sm font-mono font-bold text-slate-200 transition-all active:scale-95"
+                        >
+                          {btn === 'CLEAR' ? 'C' : btn === 'BACK' ? '⌫' : btn}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSignStep('GOOGLE_AUTH');
+                          setPinInput('');
+                        }}
+                        className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={pinInput.length < 4 || isAuthenticating}
+                        className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-xs font-mono font-bold text-black flex items-center justify-center gap-1.5 transition shadow-lg shadow-emerald-500/20"
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>{isAuthenticating ? 'Saving...' : 'Set PIN & Enter'}</span>
+                      </button>
+                    </div>
                   </form>
                 )}
               </div>
@@ -925,10 +944,10 @@ const handleCopyCode = () => {
                     <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
                       <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold uppercase">
                         <ShieldCheck className="w-4 h-4" />
-                        <span>Step 1: Anti-Bot Verification & Email Entry</span>
+                        <span>Client Verification & Email Entry</span>
                       </div>
                       <p className="text-[11px] text-slate-400 leading-relaxed">
-                        No manual admin approval required. Enter your Google or corporate email to receive a 1-time 6-digit verification code.
+                        Enter your Google or corporate email address to receive a one-time verification code.
                       </p>
                     </div>
 
@@ -1171,19 +1190,10 @@ const handleCopyCode = () => {
               </div>
             )}
 
-            {/* Security Badges Footer */}
-            <div className="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-3 gap-3 text-center">
-              <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
-                <div className="text-[11px] font-mono text-emerald-400 font-bold">2-POINT AUTH</div>
-                <div className="text-[10px] text-slate-400">Google + PIN</div>
-              </div>
-              <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
-                <div className="text-[11px] font-mono text-slate-300 font-bold">VERIFICATION</div>
-                <div className="text-[10px] text-slate-400">Security Check</div>
-              </div>
-              <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
-                <div className="text-[11px] font-mono text-amber-400 font-bold">SELF-SERVICE</div>
-                <div className="text-[10px] text-slate-400">Email OTP 2FA</div>
+            {/* Institutional Footer */}
+            <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
+              <div className="text-[11px] font-mono text-slate-500">
+                Institutional Quant Terminal • Sovereign Multi-Asset Gateway
               </div>
             </div>
           </div>

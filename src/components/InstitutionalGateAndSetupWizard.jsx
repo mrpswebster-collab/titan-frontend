@@ -104,6 +104,9 @@ export default function InstitutionalGateAndSetupWizard({
   const [kellyFraction, setKellyFraction] = useState(userSession?.kellyFraction || 0.50);
   const [chaseLimitPct, setChaseLimitPct] = useState(userSession?.chaseLimitPct || 2.0);
   const [sheetInput, setSheetInput] = useState(userSession?.spreadsheetId || '');
+  const [isProvisioningDrive, setIsProvisioningDrive] = useState(false);
+  const [provisionedDriveData, setProvisionedDriveData] = useState(null);
+  const [provisionDriveError, setProvisionDriveError] = useState('');
 
   // Blueprint State
   const [blueprint, setBlueprint] = useState({
@@ -489,7 +492,37 @@ export default function InstitutionalGateAndSetupWizard({
     }
   };
 
-  const handleCopyCode = () => {
+    const handleAutoProvisionDrive = async () => {
+    setIsProvisioningDrive(true);
+    setProvisionDriveError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/v2/onboarding/provision-drive`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userSession?.idToken}`
+        },
+        body: JSON.stringify({
+          starting_capital: startingCapital,
+          currency: currency,
+          portfolio_name: portfolioName
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Drive provisioning failed.');
+      
+      setProvisionedDriveData(data);
+      if (data.workbook?.spreadsheet_id) {
+        setSheetInput(data.workbook.spreadsheet_id);
+      }
+    } catch (e) {
+      setProvisionDriveError(e.message || 'Failed to auto-provision Google Drive enclave.');
+    } finally {
+      setIsProvisioningDrive(false);
+    }
+  };
+
+const handleCopyCode = () => {
     if (!blueprint.wrapper_script) return;
     navigator.clipboard.writeText(blueprint.wrapper_script);
     setCopiedCode(true);
@@ -1355,6 +1388,70 @@ export default function InstitutionalGateAndSetupWizard({
                   <p className="text-xs text-slate-400 mt-1">
                     Paste the URL or Spreadsheet ID of your dedicated Google Sheet.
                   </p>
+                </div>
+
+                {/* Turnkey Cloud Auto-Provisioning Option A */}
+                <div className="p-4 rounded-xl bg-[#070b12] border border-cyan-800/60 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <span className="text-[10px] font-mono font-bold uppercase text-cyan-400 block">
+                        Option A: Turnkey Cloud Enclave (Recommended)
+                      </span>
+                      <span className="text-xs text-slate-300 font-semibold">
+                        1-Click Automated Google Drive Folder & Cloned Workbook Provisioning
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAutoProvisionDrive}
+                      disabled={isProvisioningDrive}
+                      className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs font-mono flex items-center gap-2 transition disabled:opacity-50 shadow-lg shadow-cyan-500/20"
+                    >
+                      <Rocket className="w-3.5 h-3.5" />
+                      <span>{isProvisioningDrive ? 'Provisioning Drive & Cloning Workbook...' : 'Auto-Provision Google Drive & Sheet'}</span>
+                    </button>
+                  </div>
+
+                  {provisionDriveError && (
+                    <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-800 text-xs text-rose-300 font-mono">
+                      {provisionDriveError}
+                    </div>
+                  )}
+
+                  {provisionedDriveData && (
+                    <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/80 text-xs text-emerald-300 space-y-2">
+                      <div className="flex items-center gap-2 font-bold font-mono">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span>Turnkey Google Drive Enclave Successfully Provisioned!</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px] pt-1">
+                        <a 
+                          href={provisionedDriveData.google_drive?.folder_url} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-cyan-400 hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Open Drive Folder: /Cust_{provisionedDriveData.tenant_id}</span>
+                        </a>
+                        <a 
+                          href={provisionedDriveData.workbook?.spreadsheet_url} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-emerald-400 hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Open Cloned Sheet: {provisionedDriveData.workbook?.spreadsheet_name}</span>
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-slate-800"></div>
+                  <span className="flex-shrink mx-4 text-[10px] font-mono uppercase text-slate-500">Or Option B: Connect Existing Sheet (Manual)</span>
+                  <div className="flex-grow border-t border-slate-800"></div>
                 </div>
 
                 <div className="space-y-3">

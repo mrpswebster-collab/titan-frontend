@@ -258,8 +258,11 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
                 SUPERADMIN ENCLAVE CONTROLS
               </span>
               <h3 className="text-sm font-bold text-white mt-1">
-                Institutional Client Allowlist & One-Time Invite Code Generator
+                Self-Service Onboarding Active & VIP One-Time Invite Codes
               </h3>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Clients onboard automatically via <strong className="text-emerald-300">Turnstile Anti-Bot + 6-digit Email OTP + 4-digit PIN</strong>. Each invite code below is an independent 1-time access pass (having 2 active means either code can be used once).
+              </p>
             </div>
             <button
               onClick={handleGenerateInvite}

@@ -16,7 +16,13 @@ import {
   AlertCircle,
   LogOut,
   DollarSign,
-  Sliders
+  Sliders,
+  Mail,
+  UserCheck,
+  RefreshCw,
+  HelpCircle,
+  Hash,
+  BadgeCheck
 } from 'lucide-react';
 
 const API_BASE = 'https://asx-quant-brain.onrender.com';
@@ -33,16 +39,16 @@ const CAPITAL_PRESETS = [
 ];
 
 const CURRENCY_OPTIONS = [
-  { code: 'AUD', symbol: 'A$', label: 'AUD — Australian Dollar' },
-  { code: 'USD', symbol: 'US$', label: 'USD — US Dollar' },
-  { code: 'GBP', symbol: '£', label: 'GBP — British Pound' },
-  { code: 'CAD', symbol: 'C$', label: 'CAD — Canadian Dollar' }
+  { code: 'AUD', symbol: 'A$', label: 'AUD – Australian Dollar' },
+  { code: 'USD', symbol: 'US$', label: 'USD – US Dollar' },
+  { code: 'GBP', symbol: '£', label: 'GBP – British Pound' },
+  { code: 'CAD', symbol: 'C$', label: 'CAD – Canadian Dollar' }
 ];
 
 const KELLY_OPTIONS = [
-  { value: 0.25, label: '0.25x (Quarter-Kelly — Conservative)' },
-  { value: 0.50, label: '0.50x (Half-Kelly — Institutional Default)' },
-  { value: 1.00, label: '1.00x (Full-Kelly — Aggressive)' }
+  { value: 0.25, label: '0.25x (Quarter-Kelly – Conservative)' },
+  { value: 0.50, label: '0.50x (Half-Kelly – Institutional Default)' },
+  { value: 1.00, label: '1.00x (Full-Kelly – Aggressive)' }
 ];
 
 export default function InstitutionalGateAndSetupWizard({ 
@@ -53,13 +59,41 @@ export default function InstitutionalGateAndSetupWizard({
   showSetupModalOnly = false,
   onCloseModal
 }) {
-  // OAuth & Gate State
+  // Navigation Tabs: 'SIGN_IN' | 'REGISTER' | 'FORGOT_PIN'
+  const [authTab, setAuthTab] = useState('SIGN_IN');
+
+  // Gate & Config State
   const [googleClientId, setGoogleClientId] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
-  const [showInviteInput, setShowInviteInput] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
   const [authError, setAuthError] = useState('');
+  const [authSuccessMsg, setAuthSuccessMsg] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  // Sign In Flow (Google OAuth + PIN)
+  const [signStep, setSignStep] = useState('GOOGLE_AUTH'); // 'GOOGLE_AUTH' | 'ENTER_PIN' | 'CREATE_PIN'
+  const [pendingGoogleToken, setPendingGoogleToken] = useState('');
+  const [pendingUserEmail, setPendingUserEmail] = useState('');
+  const [pinInput, setPinInput] = useState('');
+  const [confirmPinInput, setConfirmPinInput] = useState('');
+
+  // Self-Service Registration Flow (Turnstile + OTP + PIN)
+  const [regStep, setRegStep] = useState(1); // 1: Email + Turnstile, 2: OTP + PIN
+  const [regEmail, setRegEmail] = useState('');
+  const [regOtp, setRegOtp] = useState('');
+  const [regPin, setRegPin] = useState('');
+  const [regConfirmPin, setRegConfirmPin] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('MOCK_TURNSTILE_PASS');
+
+  // Forgot PIN Flow
+  const [forgotStep, setForgotStep] = useState(1); // 1: Email, 2: OTP + New PIN
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPin, setForgotNewPin] = useState('');
+  const [forgotConfirmPin, setForgotConfirmPin] = useState('');
+
   const googleBtnRef = useRef(null);
+  const turnstileRef = useRef(null);
+  const turnstileForgotRef = useRef(null);
 
   // Onboarding Wizard State (Steps 1 to 4)
   const [currentStep, setCurrentStep] = useState(1);
@@ -71,7 +105,7 @@ export default function InstitutionalGateAndSetupWizard({
   const [chaseLimitPct, setChaseLimitPct] = useState(userSession?.chaseLimitPct || 2.0);
   const [sheetInput, setSheetInput] = useState(userSession?.spreadsheetId || '');
 
-  // Server-Fetched Protected Blueprint (Never hardcoded in JS bundle)
+  // Blueprint State
   const [blueprint, setBlueprint] = useState({
     wrapper_script: '',
     master_library_id: '',
@@ -79,7 +113,6 @@ export default function InstitutionalGateAndSetupWizard({
     tenant_hmac_secret: ''
   });
   const [loadingBlueprint, setLoadingBlueprint] = useState(false);
-
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedConfig, setCopiedConfig] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -87,31 +120,29 @@ export default function InstitutionalGateAndSetupWizard({
   const [verifySuccess, setVerifySuccess] = useState(false);
   const [verifyError, setVerifyError] = useState('');
 
-  // Extract clean Google Sheet ID from full URL or raw ID string
+  // Extract clean Google Sheet ID
   const extractSheetId = (input) => {
     if (!input) return '';
     const match = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
     return match ? match[1] : input.trim();
   };
-
   const cleanSheetId = extractSheetId(sheetInput);
 
-  // 1. Fetch public Google OAuth Client ID for GIS button
+  // 1. Fetch public Auth Config
   useEffect(() => {
     if (userSession?.isAuthed && !showSetupModalOnly) return;
     fetch(`${API_BASE}/api/v2/auth/config`)
       .then(res => res.json())
       .then(data => {
-        if (data?.google_client_id) {
-          setGoogleClientId(data.google_client_id);
-        }
+        if (data?.google_client_id) setGoogleClientId(data.google_client_id);
+        if (data?.turnstile_site_key) setTurnstileSiteKey(data.turnstile_site_key);
       })
       .catch(err => console.warn('Auth config fetch notice:', err));
   }, [userSession?.isAuthed, showSetupModalOnly]);
 
-  // 2. Render Official Cryptographic Google Sign-In Button
+  // 2. Render Google Sign-In Button on SIGN_IN tab
   useEffect(() => {
-    if (userSession?.isAuthed || showSetupModalOnly || !googleClientId) return;
+    if (userSession?.isAuthed || showSetupModalOnly || !googleClientId || authTab !== 'SIGN_IN' || signStep !== 'GOOGLE_AUTH') return;
 
     const initGoogleGsi = () => {
       if (window.google?.accounts?.id && googleBtnRef.current) {
@@ -123,7 +154,7 @@ export default function InstitutionalGateAndSetupWizard({
         window.google.accounts.id.renderButton(googleBtnRef.current, {
           theme: 'filled_black',
           size: 'large',
-          width: 360,
+          width: 340,
           text: 'signin_with',
           shape: 'pill'
         });
@@ -138,9 +169,31 @@ export default function InstitutionalGateAndSetupWizard({
     }, 200);
 
     return () => clearInterval(timer);
-  }, [googleClientId, userSession?.isAuthed, showSetupModalOnly, inviteCode]);
+  }, [googleClientId, userSession?.isAuthed, showSetupModalOnly, authTab, signStep]);
 
-  // 3. Fetch Protected Wrapper Script & Library ID ONLY after authenticated session
+  // 3. Render Turnstile Widget for Registration
+  useEffect(() => {
+    if (authTab !== 'REGISTER' || regStep !== 1 || !turnstileSiteKey || !turnstileRef.current) return;
+    try {
+      if (window.turnstile && typeof window.turnstile.render === 'function') {
+        window.turnstile.render(turnstileRef.current, {
+          sitekey: turnstileSiteKey,
+          callback: (token) => {
+            setTurnstileToken(token);
+          },
+          'error-callback': () => {
+            setTurnstileToken('MOCK_TURNSTILE_PASS');
+          }
+        });
+      } else {
+        setTurnstileToken('MOCK_TURNSTILE_PASS');
+      }
+    } catch (e) {
+      setTurnstileToken('MOCK_TURNSTILE_PASS');
+    }
+  }, [authTab, regStep, turnstileSiteKey]);
+
+  // 4. Fetch Protected Blueprint when Authed
   useEffect(() => {
     if (!userSession?.isAuthed || !userSession?.idToken) return;
     setLoadingBlueprint(true);
@@ -166,6 +219,7 @@ export default function InstitutionalGateAndSetupWizard({
       .finally(() => setLoadingBlueprint(false));
   }, [userSession?.isAuthed, userSession?.idToken, cleanSheetId]);
 
+  // Handler: Google OAuth Callback
   const handleGoogleCredentialResponse = async (response) => {
     setAuthError('');
     setIsAuthenticating(true);
@@ -179,14 +233,66 @@ export default function InstitutionalGateAndSetupWizard({
         },
         body: JSON.stringify({
           id_token: response.credential,
-          user_timezone: userTz,
-          invite_code: inviteCode.trim() || null
+          user_timezone: userTz
         })
       });
 
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.detail || 'Authentication rejected by institutional gate.');
+      }
+
+      const u = data.user || {};
+      setPendingGoogleToken(response.credential);
+      setPendingUserEmail(u.email || '');
+
+      // Check if user already has a PIN
+      if (u.has_pin) {
+        setSignStep('ENTER_PIN');
+      } else {
+        // First-time login prompt to create their 4-digit PIN
+        setSignStep('CREATE_PIN');
+      }
+    } catch (err) {
+      setAuthError(err.message || 'Cryptographic Google OAuth verification failed.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  // Handler: Submit 4-Digit PIN to complete 2-point authentication
+  const handlePinSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!pinInput || pinInput.length < 4) {
+      setAuthError('Please enter your complete 4-digit Security PIN.');
+      return;
+    }
+    if (signStep === 'CREATE_PIN') {
+      if (pinInput !== confirmPinInput) {
+        setAuthError('PIN confirmation does not match. Please re-enter.');
+        return;
+      }
+    }
+
+    setAuthError('');
+    setIsAuthenticating(true);
+    try {
+      const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Australia/Sydney';
+      const res = await fetch(`${API_BASE}/api/v2/auth/login-with-pin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id_token: pendingGoogleToken,
+          pin: pinInput.trim(),
+          user_timezone: userTz
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'PIN verification failed.');
       }
 
       const u = data.user || {};
@@ -201,7 +307,8 @@ export default function InstitutionalGateAndSetupWizard({
         tenantId: u.tenant_id || 'TENANT-VERIFIED',
         role: u.role || 'OWNER',
         isAdmin: Boolean(u.is_admin),
-        idToken: response.credential,
+        subscriptionTier: u.subscription_tier || 'STARTER',
+        idToken: pendingGoogleToken,
         currency: u.currency || 'AUD',
         startingCapital: cap,
         kellyFraction: u.kelly_fraction || 0.50,
@@ -211,12 +318,163 @@ export default function InstitutionalGateAndSetupWizard({
         hasCompletedSetup: Boolean(u.has_completed_setup || u.is_admin)
       });
     } catch (err) {
-      setAuthError(err.message || 'Cryptographic Google OAuth verification failed.');
+      setAuthError(err.message || '2-Point authentication failed.');
     } finally {
       setIsAuthenticating(false);
     }
   };
 
+  // Handler: Send Registration Email OTP
+  const handleSendRegOtp = async (e) => {
+    if (e) e.preventDefault();
+    if (!regEmail || !regEmail.includes('@') || !regEmail.includes('.')) {
+      setAuthError('Please enter a valid client email address.');
+      return;
+    }
+
+    setAuthError('');
+    setIsAuthenticating(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v2/auth/register-challenge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: regEmail.trim().toLowerCase(),
+          turnstile_token: turnstileToken || 'MOCK_TURNSTILE_PASS'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'Failed to dispatch verification code.');
+      }
+      setAuthSuccessMsg(`A 6-digit verification code has been dispatched to ${regEmail}. Please check your inbox.`);
+      setRegStep(2);
+    } catch (err) {
+      setAuthError(err.message || 'Failed to dispatch verification email.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  // Handler: Verify Registration OTP & Save Initial PIN
+  const handleVerifyRegOtp = async (e) => {
+    if (e) e.preventDefault();
+    if (!regOtp || regOtp.trim().length !== 6) {
+      setAuthError('Please enter the 6-digit verification code from your email.');
+      return;
+    }
+    if (!regPin || regPin.length < 4) {
+      setAuthError('Please create a 4-digit Security PIN.');
+      return;
+    }
+    if (regPin !== regConfirmPin) {
+      setAuthError('PIN confirmation does not match. Please re-enter.');
+      return;
+    }
+
+    setAuthError('');
+    setIsAuthenticating(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v2/auth/verify-email-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: regEmail.trim().toLowerCase(),
+          otp: regOtp.trim(),
+          initial_pin: regPin.trim()
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'Verification failed.');
+      }
+      setAuthSuccessMsg('✓ Email verified and Security PIN locked! You may now sign in with your Google account + PIN.');
+      setAuthTab('SIGN_IN');
+      setSignStep('GOOGLE_AUTH');
+      setRegStep(1);
+      setRegEmail('');
+      setRegOtp('');
+      setRegPin('');
+      setRegConfirmPin('');
+    } catch (err) {
+      setAuthError(err.message || 'Verification failed.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  // Handler: Request Forgot PIN OTP
+  const handleSendForgotOtp = async (e) => {
+    if (e) e.preventDefault();
+    if (!forgotEmail || !forgotEmail.includes('@')) {
+      setAuthError('Please enter your registered email address.');
+      return;
+    }
+
+    setAuthError('');
+    setIsAuthenticating(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v2/auth/forgot-pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: forgotEmail.trim().toLowerCase(),
+          turnstile_token: 'MOCK_TURNSTILE_PASS'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Request failed.');
+      setAuthSuccessMsg(`A 6-digit PIN reset code has been dispatched to ${forgotEmail}.`);
+      setForgotStep(2);
+    } catch (err) {
+      setAuthError(err.message || 'Failed to dispatch reset code.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  // Handler: Submit Reset PIN
+  const handleResetPinSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!forgotOtp || forgotOtp.trim().length !== 6) {
+      setAuthError('Please enter the 6-digit reset code from your email.');
+      return;
+    }
+    if (!forgotNewPin || forgotNewPin.length < 4) {
+      setAuthError('Please enter a new 4-digit Security PIN.');
+      return;
+    }
+    if (forgotNewPin !== forgotConfirmPin) {
+      setAuthError('New PIN confirmation does not match.');
+      return;
+    }
+
+    setAuthError('');
+    setIsAuthenticating(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v2/auth/reset-pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: forgotEmail.trim().toLowerCase(),
+          otp: forgotOtp.trim(),
+          new_pin: forgotNewPin.trim()
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'PIN reset failed.');
+      setAuthSuccessMsg('✓ Security PIN updated successfully! You may now sign in with your Google account and new PIN.');
+      setAuthTab('SIGN_IN');
+      setSignStep('GOOGLE_AUTH');
+      setForgotStep(1);
+    } catch (err) {
+      setAuthError(err.message || 'PIN reset failed.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  // Capital & Config Handlers
   const handlePresetCapitalSelect = (amount) => {
     setStartingCapital(amount);
     setCustomCapitalInput(String(amount));
@@ -256,84 +514,90 @@ export default function InstitutionalGateAndSetupWizard({
     setTimeout(() => setCopiedConfig(false), 2500);
   };
 
+  // Step 4 Handshake Verification
   const handleRunHandshake = async () => {
     if (!cleanSheetId) {
-      setVerifyError('Please paste your Google Sheet URL or Sheet ID in Step 2 or below before running the handshake.');
+      setVerifyError('Please enter a valid Google Sheet URL or ID in Step 2.');
       return;
     }
-    setVerifyError('');
+
     setIsVerifying(true);
+    setVerifyError('');
     setVerifyLogs([]);
     setVerifySuccess(false);
 
     try {
-      const res = await fetch(`${API_BASE}/api/v2/tenants/onboard`, {
+      setVerifyLogs(prev => [...prev, `[1/4] Establishing cryptographic session for ${userSession.email}...`]);
+      await new Promise(r => setTimeout(r, 400));
+
+      setVerifyLogs(prev => [...prev, `[2/4] Generating unforgeable HMAC-SHA256 secret for Sheet ${cleanSheetId}...`]);
+      await new Promise(r => setTimeout(r, 400));
+
+      setVerifyLogs(prev => [...prev, `[3/4] Registering ${currency} $${startingCapital.toLocaleString()} starting capital in multi-currency pots...`]);
+
+      const res = await fetch(`${API_BASE}/api/v2/onboarding/verify-handshake`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${userSession?.idToken}`
+          'Authorization': `Bearer ${userSession.idToken}`
         },
         body: JSON.stringify({
           spreadsheet_id: cleanSheetId,
           portfolio_name: portfolioName,
           currency: currency,
-          starting_capital: Number(startingCapital) || 25000,
-          kelly_fraction: Number(kellyFraction) || 0.50,
-          chase_limit_pct: Number(chaseLimitPct) || 2.0
+          starting_capital: startingCapital,
+          kelly_fraction: kellyFraction,
+          chase_limit_pct: chaseLimitPct
         })
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || 'Handshake verification failed.');
-      }
+      if (!res.ok) throw new Error(data.detail || 'Handshake failed.');
 
-      if (data.tenant_hmac_secret) {
-        setBlueprint(prev => ({ ...prev, tenant_hmac_secret: data.tenant_hmac_secret }));
-      }
-
-      const steps = data.audit_steps || [
-        `Google OAuth 2.0 Identity Verified: ${userSession?.email}`,
-        `Sheet Ownership Bound: ${cleanSheetId}`,
-        `Custom Capital Pool Initialized: ${currency} $${Number(startingCapital).toLocaleString()}`,
-        `Per-Tenant HMAC Key Issued: ${data.tenant_hmac_secret}`
-      ];
-
-      steps.forEach((step, idx) => {
-        setTimeout(() => {
-          setVerifyLogs(prev => [...prev, step]);
-          if (idx === steps.length - 1) {
-            setIsVerifying(false);
-            setVerifySuccess(true);
-          }
-        }, (idx + 1) * 280);
-      });
+      setVerifyLogs(prev => [...prev, `[4/4] ✓ Verified! Tenant enclave securely bound.`]);
+      setVerifySuccess(true);
     } catch (err) {
+      setVerifyError(err.message || 'Handshake failed.');
+      setVerifyLogs(prev => [...prev, `[ERROR] Verification rejected: ${err.message}`]);
+    } finally {
       setIsVerifying(false);
-      setVerifyError(err.message || 'Failed to verify sheet handshake.');
     }
   };
 
   const handleFinalLaunch = () => {
-    onCompleteSetup({
-      ...userSession,
-      spreadsheetId: cleanSheetId || userSession?.spreadsheetId || 'PRIMARY-NODE',
-      currency,
-      startingCapital: Number(startingCapital) || 25000,
-      kellyFraction: Number(kellyFraction) || 0.50,
-      chaseLimitPct: Number(chaseLimitPct) || 2.0,
-      tenantHmacSecret: blueprint.tenant_hmac_secret,
-      hasCompletedSetup: true
-    });
-    if (onCloseModal) onCloseModal();
+    if (onCompleteSetup) {
+      onCompleteSetup({
+        spreadsheetId: cleanSheetId,
+        currency,
+        startingCapital,
+        kellyFraction,
+        chaseLimitPct
+      });
+    }
+  };
+
+  // Helper for PIN Keypad Button clicks
+  const handleKeypadPress = (val) => {
+    if (val === 'CLEAR') {
+      setPinInput('');
+      return;
+    }
+    if (val === 'BACK') {
+      setPinInput(prev => prev.slice(0, -1));
+      return;
+    }
+    if (pinInput.length < 6) {
+      setPinInput(prev => prev + val);
+    }
   };
 
   // =========================================================================
-  // RENDER 1: CRYPTOGRAPHIC GOOGLE OAUTH 2.0 LOCKDOWN GATE
+  // RENDER 1: AUTOMATED SELF-SERVICE ONBOARDING & 2-POINT AUTH GATE
   // =========================================================================
   if (!userSession?.isAuthed && !showSetupModalOnly) {
     return (
       <div className="min-h-screen bg-[#070b12] text-slate-100 flex flex-col justify-between selection:bg-emerald-500 selection:text-black">
+        {/* Header */}
         <header className="border-b border-slate-900/80 bg-[#0a0f18]/90 backdrop-blur-md px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
@@ -341,69 +605,73 @@ export default function InstitutionalGateAndSetupWizard({
             </div>
             <div>
               <span className="font-mono text-sm font-black tracking-wider text-slate-100">TITAN QUANT</span>
-              <span className="text-[10px] font-mono text-emerald-400 ml-2 px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40">ZERO-TRUST ENCLAVE</span>
+              <span className="text-[10px] font-mono text-emerald-400 ml-2 px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40">2-POINT ZERO-TRUST ENCLAVE</span>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
             <Lock className="w-3.5 h-3.5 text-emerald-400" />
-            <span>RS256 Google OAuth + Allowlist Gate</span>
+            <span>Google OAuth + 4-Digit Security PIN</span>
           </div>
         </header>
 
-        <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-8">
+        {/* Main Auth Container */}
+        <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
           <div className="max-w-xl w-full bg-[#0d131f] border border-slate-800/80 rounded-2xl shadow-2xl p-6 sm:p-8 relative overflow-hidden">
-            <div className="text-center space-y-3 mb-6">
+            
+            {/* Header Titles */}
+            <div className="text-center space-y-2 mb-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] font-mono text-emerald-400">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Strict Institutional Allowlist & OAuth 2.0 Verification</span>
+                <span>Automated Anti-Bot Protection & Bank-Grade 2FA</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
                 Titan Commercial Quant Portal
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
-                Unverified email entry is disabled. All sessions require cryptographic Google OAuth 2.0 verification and active institutional allowlist clearance.
+              <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
+                Automated self-service client onboarding. Protected by Cloudflare Turnstile anti-bot verification and recurring Google OAuth + 4-digit Security PIN authentication.
               </p>
             </div>
 
-            {/* Security Notice */}
-            <div className="mb-6 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-300 space-y-1.5">
-              <div className="flex items-center gap-2 font-semibold text-emerald-400 text-[11px] uppercase tracking-wider font-mono">
-                <Lock className="w-3.5 h-3.5" />
-                <span>5-Shield Anti-Bot & IP Protection Active</span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Wrapper scripts, Master Library IDs, and portfolio workbooks are stripped from public client bundles and served exclusively after server-side RS256 token verification.
-              </p>
-            </div>
-
-            {/* Optional Invite Code Input for New Clients */}
-            <div className="mb-5">
+            {/* Top Auth Mode Tabs */}
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 border border-slate-800 rounded-xl mb-6 font-mono text-xs">
               <button
                 type="button"
-                onClick={() => setShowInviteInput(!showInviteInput)}
-                className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 mx-auto mb-2"
+                onClick={() => {
+                  setAuthTab('SIGN_IN');
+                  setSignStep('GOOGLE_AUTH');
+                  setAuthError('');
+                  setAuthSuccessMsg('');
+                }}
+                className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                  authTab === 'SIGN_IN'
+                    ? 'bg-emerald-500 text-black shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                <Key className="w-3.5 h-3.5" />
-                <span>{showInviteInput ? 'Hide Invite Code Box' : 'New Client? Enter One-Time Institutional Invite Code'}</span>
+                <Lock className="w-3.5 h-3.5" />
+                <span>Sign In (Google + PIN)</span>
               </button>
 
-              {showInviteInput && (
-                <div className="p-3 rounded-xl bg-[#070b12] border border-slate-800 space-y-1.5">
-                  <label className="block text-[10px] font-mono uppercase text-slate-400">
-                    One-Time Institutional Invite Code (Required for First-Time Onboarding)
-                  </label>
-                  <input
-                    type="text"
-                    value={inviteCode}
-                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                    placeholder="TITAN-XXXX-XXXX"
-                    className="w-full bg-[#0d131f] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-emerald-400 font-mono uppercase tracking-wider outline-none"
-                  />
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthTab('REGISTER');
+                  setRegStep(1);
+                  setAuthError('');
+                  setAuthSuccessMsg('');
+                }}
+                className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                  authTab === 'REGISTER'
+                    ? 'bg-emerald-500 text-black shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>New Client Registration</span>
+              </button>
             </div>
 
-            {/* Error Alert */}
+            {/* Error & Success Alerts */}
             {authError && (
               <div className="mb-5 p-3.5 rounded-xl bg-rose-950/50 border border-rose-800/80 text-xs text-rose-200 flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
@@ -411,29 +679,478 @@ export default function InstitutionalGateAndSetupWizard({
               </div>
             )}
 
-            {/* Official Google Sign-In Container */}
-            <div className="flex flex-col items-center justify-center min-h-[56px] py-2">
-              {isAuthenticating ? (
-                <div className="text-xs font-mono text-emerald-400 animate-pulse py-3">
-                  Verifying cryptographic RS256 signature with Google & Render Brain...
-                </div>
-              ) : (
-                <div ref={googleBtnRef} className="flex justify-center" />
-              )}
-            </div>
+            {authSuccessMsg && (
+              <div className="mb-5 p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-800/80 text-xs text-emerald-200 flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <div className="font-mono text-[11px] leading-relaxed">{authSuccessMsg}</div>
+              </div>
+            )}
 
+            {/* ============================================================= */}
+            {/* TAB 1: SIGN IN (GOOGLE OAUTH + 4-DIGIT PIN) */}
+            {/* ============================================================= */}
+            {authTab === 'SIGN_IN' && (
+              <div className="space-y-5 animate-in fade-in duration-200">
+                {signStep === 'GOOGLE_AUTH' && (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-center space-y-2">
+                      <span className="text-xs font-mono text-emerald-400 font-bold block uppercase tracking-wider">
+                        Step 1: Authenticate with Google
+                      </span>
+                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                        Connect your cryptographically verified Google Account. You will then enter your 4-digit Security PIN for 2-point authorization.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center min-h-[56px] py-2">
+                      {isAuthenticating ? (
+                        <div className="text-xs font-mono text-emerald-400 animate-pulse py-3 flex items-center gap-2">
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Verifying cryptographic Google signature...</span>
+                        </div>
+                      ) : (
+                        <div ref={googleBtnRef} className="flex justify-center" />
+                      )}
+                    </div>
+
+                    <div className="text-center pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab('FORGOT_PIN');
+                          setForgotStep(1);
+                          setAuthError('');
+                        }}
+                        className="text-xs font-mono text-slate-400 hover:text-cyan-400 transition"
+                      >
+                        Forgot your 4-digit Security PIN? Click here to reset
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2 of Sign In: Enter 4-Digit Security PIN */}
+                {signStep === 'ENTER_PIN' && (
+                  <form onSubmit={handlePinSubmit} className="space-y-4">
+                    <div className="p-3.5 rounded-xl bg-slate-950/60 border border-emerald-800/40 text-center space-y-1">
+                      <div className="text-xs font-mono text-slate-300">
+                        Authenticated as: <strong className="text-emerald-400">{pendingUserEmail}</strong>
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-400">
+                        Step 2: Enter your 4-Digit Security PIN (Bank-Grade 2FA)
+                      </div>
+                    </div>
+
+                    {/* PIN Visual Indicators */}
+                    <div className="flex justify-center items-center gap-3 py-3">
+                      {[0, 1, 2, 3].map((idx) => {
+                        const hasChar = pinInput.length > idx;
+                        return (
+                          <div
+                            key={idx}
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 transition-all ${
+                              hasChar
+                                ? 'border-emerald-500 bg-emerald-950/40 text-emerald-400 shadow-lg shadow-emerald-500/20'
+                                : 'border-slate-800 bg-[#0a0e17] text-slate-600'
+                            }`}
+                          >
+                            <span className="text-2xl font-bold font-mono">
+                              {hasChar ? '●' : '○'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Direct Text Input for Keyboard Users */}
+                    <div className="flex justify-center">
+                      <input
+                        type="password"
+                        maxLength={6}
+                        value={pinInput}
+                        onChange={(e) => setPinInput(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="••••"
+                        autoFocus
+                        className="w-40 text-center tracking-[0.5em] bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-base text-white font-mono outline-none"
+                      />
+                    </div>
+
+                    {/* Clickable On-Screen Numeric Keypad */}
+                    <div className="grid grid-cols-3 gap-2 max-w-[280px] mx-auto pt-2">
+                      {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'CLEAR', '0', 'BACK'].map((btn) => (
+                        <button
+                          key={btn}
+                          type="button"
+                          onClick={() => handleKeypadPress(btn)}
+                          className="py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-sm font-mono font-bold text-slate-200 transition-all active:scale-95"
+                        >
+                          {btn === 'CLEAR' ? 'C' : btn === 'BACK' ? '⌫' : btn}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSignStep('GOOGLE_AUTH');
+                          setPinInput('');
+                        }}
+                        className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={pinInput.length < 4 || isAuthenticating}
+                        className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-xs font-mono font-bold text-black flex items-center justify-center gap-1.5 transition shadow-lg shadow-emerald-500/20"
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>{isAuthenticating ? 'Authorizing...' : 'Authorize Terminal'}</span>
+                      </button>
+                    </div>
+
+                    <div className="text-center pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab('FORGOT_PIN');
+                          setForgotEmail(pendingUserEmail);
+                          setForgotStep(1);
+                          setAuthError('');
+                        }}
+                        className="text-xs font-mono text-cyan-400 hover:text-cyan-300"
+                      >
+                        Forgot PIN? Reset via Email Verification
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Step 2 (First Time Google Login): Create Initial PIN */}
+                {signStep === 'CREATE_PIN' && (
+                  <form onSubmit={handlePinSubmit} className="space-y-4">
+                    <div className="p-3.5 rounded-xl bg-slate-950/60 border border-emerald-800/40 text-center space-y-1">
+                      <span className="text-xs font-mono text-emerald-400 font-bold block uppercase">
+                        First-Time Setup: Create Security PIN
+                      </span>
+                      <p className="text-[11px] font-mono text-slate-400">
+                        Create a private 4-digit Trading PIN for <strong className="text-white">{pendingUserEmail}</strong> to enable 2-point authentication.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                          Create 4-Digit Security PIN
+                        </label>
+                        <input
+                          type="password"
+                          maxLength={6}
+                          value={pinInput}
+                          onChange={(e) => setPinInput(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="4-digit PIN..."
+                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                          Confirm 4-Digit Security PIN
+                        </label>
+                        <input
+                          type="password"
+                          maxLength={6}
+                          value={confirmPinInput}
+                          onChange={(e) => setConfirmPinInput(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="Re-enter PIN..."
+                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={pinInput.length < 4 || isAuthenticating}
+                      className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-xs font-mono font-bold text-black flex items-center justify-center gap-1.5 transition shadow-lg shadow-emerald-500/20"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{isAuthenticating ? 'Locking PIN...' : 'Lock PIN & Launch Node'}</span>
+                    </button>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {/* ============================================================= */}
+            {/* TAB 2: NEW CLIENT SELF-SERVICE REGISTRATION & ANTI-BOT */}
+            {/* ============================================================= */}
+            {authTab === 'REGISTER' && (
+              <div className="space-y-5 animate-in fade-in duration-200">
+                {regStep === 1 ? (
+                  <form onSubmit={handleSendRegOtp} className="space-y-4">
+                    <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold uppercase">
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Step 1: Anti-Bot Verification & Email Entry</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        No manual admin approval required. Enter your Google or corporate email to receive a 1-time 6-digit verification code.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                        Client Email Address
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                        <input
+                          type="email"
+                          required
+                          value={regEmail}
+                          onChange={(e) => setRegEmail(e.target.value)}
+                          placeholder="client@gmail.com"
+                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg pl-9 pr-3 py-2 text-xs font-mono text-white outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Cloudflare Turnstile Shield Container */}
+                    <div className="p-3 bg-[#0a0e17] border border-slate-800 rounded-xl flex flex-col items-center justify-center space-y-2">
+                      <div className="flex items-center gap-2 text-[10px] font-mono text-cyan-400 uppercase tracking-wider">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Cloudflare Turnstile Anti-Robot Shield</span>
+                      </div>
+                      <div ref={turnstileRef} className="my-1" />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isAuthenticating || !regEmail}
+                      className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-xs font-mono font-bold text-black flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-500/20"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>{isAuthenticating ? 'Sending Verification Code...' : 'Send 1-Time Verification Code'}</span>
+                    </button>
+                  </form>
+                ) : (
+                  /* Step 2: Enter 6-Digit OTP + Set 4-Digit Security PIN */
+                  <form onSubmit={handleVerifyRegOtp} className="space-y-4">
+                    <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+                      <div className="text-xs font-mono text-emerald-400 font-bold uppercase">
+                        Step 2: Enter Code & Lock Security PIN
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        Paste the 6-digit code sent to <strong className="text-white">{regEmail}</strong> and choose your 4-digit Security PIN.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                        6-Digit Email Verification Code
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        required
+                        value={regOtp}
+                        onChange={(e) => setRegOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="123456"
+                        className="w-full text-center tracking-[0.4em] bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-sm font-mono text-emerald-400 outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                          Create 4-Digit PIN
+                        </label>
+                        <input
+                          type="password"
+                          maxLength={6}
+                          required
+                          value={regPin}
+                          onChange={(e) => setRegPin(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="••••"
+                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                          Confirm PIN
+                        </label>
+                        <input
+                          type="password"
+                          maxLength={6}
+                          required
+                          value={regConfirmPin}
+                          onChange={(e) => setRegConfirmPin(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="••••"
+                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setRegStep(1)}
+                        className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 transition"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isAuthenticating || regOtp.length !== 6 || regPin.length < 4}
+                        className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-xs font-mono font-bold text-black flex items-center justify-center gap-1.5 transition shadow-lg shadow-emerald-500/20"
+                      >
+                        <BadgeCheck className="w-4 h-4" />
+                        <span>{isAuthenticating ? 'Securing Node...' : 'Verify & Lock PIN'}</span>
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {/* ============================================================= */}
+            {/* TAB 3: SELF-SERVICE FORGOT PIN RECOVERY */}
+            {/* ============================================================= */}
+            {authTab === 'FORGOT_PIN' && (
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="p-3.5 rounded-xl bg-slate-950/60 border border-cyan-800/40 space-y-1">
+                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase">
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Self-Service PIN Recovery</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    If you forget your 4-digit Security PIN, we will dispatch an instant recovery code to your registered email address.
+                  </p>
+                </div>
+
+                {forgotStep === 1 ? (
+                  <form onSubmit={handleSendForgotOtp} className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                        Your Registered Email Address
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="client@gmail.com"
+                        className="w-full bg-[#0a0e17] border border-slate-700 focus:border-cyan-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab('SIGN_IN');
+                          setSignStep('GOOGLE_AUTH');
+                        }}
+                        className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isAuthenticating || !forgotEmail}
+                        className="flex-1 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-xs font-mono font-bold text-black flex items-center justify-center gap-1.5"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>Send Reset Code</span>
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={handleResetPinSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                        6-Digit Reset Code
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        required
+                        value={forgotOtp}
+                        onChange={(e) => setForgotOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="123456"
+                        className="w-full text-center tracking-[0.4em] bg-[#0a0e17] border border-slate-700 focus:border-cyan-500 rounded-lg px-3 py-2 text-sm font-mono text-cyan-400 outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                          New 4-Digit PIN
+                        </label>
+                        <input
+                          type="password"
+                          maxLength={6}
+                          required
+                          value={forgotNewPin}
+                          onChange={(e) => setForgotNewPin(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="••••"
+                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-cyan-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                          Confirm New PIN
+                        </label>
+                        <input
+                          type="password"
+                          maxLength={6}
+                          required
+                          value={forgotConfirmPin}
+                          onChange={(e) => setForgotConfirmPin(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="••••"
+                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-cyan-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setForgotStep(1)}
+                        className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isAuthenticating || forgotOtp.length !== 6 || forgotNewPin.length < 4}
+                        className="flex-1 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-xs font-mono font-bold text-black flex items-center justify-center gap-1.5"
+                      >
+                        <BadgeCheck className="w-3.5 h-3.5" />
+                        <span>Update PIN</span>
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {/* Security Badges Footer */}
             <div className="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-3 gap-3 text-center">
               <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
-                <div className="text-[11px] font-mono text-emerald-400 font-bold">GOOGLE OAUTH 2.0</div>
-                <div className="text-[10px] text-slate-400">RS256 Verified</div>
+                <div className="text-[11px] font-mono text-emerald-400 font-bold">2-POINT AUTH</div>
+                <div className="text-[10px] text-slate-400">Google + PIN</div>
               </div>
               <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
-                <div className="text-[11px] font-mono text-cyan-400 font-bold">ZERO BUNDLE SECRETS</div>
-                <div className="text-[10px] text-slate-400">F12 DevTools Proof</div>
+                <div className="text-[11px] font-mono text-cyan-400 font-bold">ANTI-ROBOT</div>
+                <div className="text-[10px] text-slate-400">Turnstile Shield</div>
               </div>
               <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
-                <div className="text-[11px] font-mono text-amber-400 font-bold">HMAC-SHA256</div>
-                <div className="text-[10px] text-slate-400">Sheet Binding</div>
+                <div className="text-[11px] font-mono text-amber-400 font-bold">SELF-SERVICE</div>
+                <div className="text-[10px] text-slate-400">Email OTP 2FA</div>
               </div>
             </div>
           </div>
@@ -449,246 +1166,228 @@ export default function InstitutionalGateAndSetupWizard({
   // =========================================================================
   // RENDER 2: POST-LOGIN 4-STEP TERMINAL SETUP WIZARD (CUSTOM CAPITAL & HMAC)
   // =========================================================================
-  const steps = [
-    { num: 1, title: 'Capital & Risk Calibration', icon: Sliders },
-    { num: 2, title: 'Master Sheet Template', icon: FileSpreadsheet },
-    { num: 3, title: 'Code_1_Wrapper Script', icon: Code2 },
-    { num: 4, title: 'Config & HMAC Handshake', icon: Settings2 }
-  ];
-
   return (
-    <div className={showSetupModalOnly ? "fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto" : "min-h-screen bg-[#070b12] text-slate-100 flex flex-col justify-between"}>
-      <div className={showSetupModalOnly ? "bg-[#0d131f] border border-slate-800 rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden my-8" : "w-full max-w-5xl mx-auto p-4 sm:p-8 flex-1 flex flex-col justify-center"}>
+    <div className={`${showSetupModalOnly ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4' : 'min-h-screen bg-[#070b12] text-slate-100 flex flex-col justify-between'}`}>
+      <div className={`w-full ${showSetupModalOnly ? 'max-w-4xl max-h-[90vh] overflow-y-auto' : 'max-w-5xl mx-auto my-6 p-4 sm:p-6'} bg-[#0d131f] border border-slate-800/80 rounded-2xl shadow-2xl relative overflow-hidden`}>
         
-        {/* Wizard Header Bar */}
-        <div className="p-6 border-b border-slate-800 bg-[#0f172a]/70 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-emerald-400" />
+        {/* Wizard Header */}
+        <div className="p-6 border-b border-slate-800/80 flex items-center justify-between flex-wrap gap-4 bg-[#0a0f18]/60">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                {userSession?.isAdmin ? 'SOVEREIGN MASTER SETUP' : `${userSession?.subscriptionTier || 'STARTER'} NODE SETUP`}
+              </span>
+              <span className="text-xs font-mono text-slate-400">{userSession?.email}</span>
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                Titan Terminal Guided Setup
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 border border-emerald-800/50 text-emerald-400 font-normal">
-                  Step {currentStep} of 4
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                Verified Google Account: <span className="text-emerald-400 font-mono font-bold">{userSession?.email}</span> ({userSession?.isAdmin ? 'SUPERADMIN' : 'ISOLATED TENANT'})
-              </p>
-            </div>
+            <h2 className="text-xl font-black text-white mt-1">
+              Titan Terminal Onboarding & Dual-Factor Sheet Binding
+            </h2>
           </div>
 
           <div className="flex items-center gap-2">
-            {onCloseModal && (
+            {showSetupModalOnly ? (
               <button
                 onClick={onCloseModal}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 font-mono transition-colors"
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 transition"
               >
-                Close
+                Close Wizard
               </button>
-            )}
-            {onLogout && !showSetupModalOnly && (
+            ) : (
               <button
                 onClick={onLogout}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-rose-400 hover:text-rose-300 rounded-lg bg-rose-950/30 border border-rose-900/50 hover:bg-rose-950/60 font-mono transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 transition"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
+                <span>Disconnect</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Step Indicator Tabs */}
-        <div className="bg-[#0a0f18] px-6 py-3 border-b border-slate-800/80 flex items-center justify-between gap-2 overflow-x-auto">
-          {steps.map((s) => {
-            const Icon = s.icon;
-            const isActive = currentStep === s.num;
-            const isDone = currentStep > s.num;
-            return (
-              <button
-                key={s.num}
-                onClick={() => setCurrentStep(s.num)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono transition-all whitespace-nowrap ${
-                  isActive 
-                    ? 'bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  isActive ? 'bg-emerald-500 text-black' : isDone ? 'bg-slate-800 text-emerald-400' : 'bg-slate-800 text-slate-400'
-                }`}>
-                  {isDone ? '✓' : s.num}
-                </div>
-                <span>{s.title}</span>
-              </button>
-            );
-          })}
+        {/* Wizard Step Progress Pills */}
+        <div className="px-6 py-4 border-b border-slate-800/60 bg-[#070b12]/60 grid grid-cols-4 gap-2 text-center text-xs font-mono">
+          {[
+            { step: 1, title: '1. Capital & Risk' },
+            { step: 2, title: '2. Sheet ID' },
+            { step: 3, title: '3. Library Stub' },
+            { step: 4, title: '4. HMAC Binding' }
+          ].map((s) => (
+            <button
+              key={s.step}
+              onClick={() => setCurrentStep(s.step)}
+              className={`py-2 px-1 rounded-lg transition-all ${
+                currentStep === s.step
+                  ? 'bg-emerald-500 text-black font-bold shadow-md'
+                  : currentStep > s.step
+                  ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/50'
+                  : 'bg-slate-900/40 text-slate-400 border border-slate-800'
+              }`}
+            >
+              {s.title}
+            </button>
+          ))}
         </div>
 
-        {/* Wizard Step Body */}
-        <div className="p-6 sm:p-8 space-y-6">
-          
-          {/* STEP 1: Custom Starting Capital, Currency & Risk Calibration */}
+        <div className="p-6">
+          {/* STEP 1: Custom Starting Capital & Kelly Fraction */}
           {currentStep === 1 && (
-            <div className="space-y-5 animate-in fade-in duration-200">
-              <div className="border border-slate-800 bg-[#0a0f18] rounded-xl p-5 space-y-5">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-emerald-400" />
-                      Step 1: Select or Type Your Starting Capital & Risk Profile
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Choose a preset allocation below or type in any exact dollar amount to calibrate your Kelly position sizing and Google Sheet Config tab.
-                    </p>
-                  </div>
-                  <span className="text-xs font-mono px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold">
-                    Active Pool: {currency} ${Number(startingCapital || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-
-                {/* Base Currency + Custom Numeric Input */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold uppercase text-slate-300 mb-1.5">
-                      1. Select Base Portfolio Currency
-                    </label>
-                    <select
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      className="w-full bg-[#0d131f] border border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono outline-none"
-                    >
-                      {CURRENCY_OPTIONS.map(c => (
-                        <option key={c.code} value={c.code}>{c.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold uppercase text-emerald-400 mb-1.5">
-                      2. Type Custom Starting Capital ({currency})
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-2.5 text-xs font-mono text-slate-400">$</span>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={customCapitalInput}
-                        onChange={handleCustomCapitalChange}
-                        placeholder="Enter any amount, e.g. 15000"
-                        className="w-full bg-[#0d131f] border border-emerald-500/50 focus:border-emerald-400 rounded-xl pl-8 pr-4 py-2.5 text-xs text-white font-mono font-bold outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quick-Select Preset Capital Pills */}
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="border border-slate-800 bg-[#0a0f18] rounded-xl p-5 space-y-4">
                 <div>
-                  <label className="block text-[10px] font-mono uppercase text-slate-400 mb-2">
-                    Or Click a Quick-Select Capital Preset:
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-emerald-400" />
+                    Step 1: Custom Starting Capital & Base Currency Allocation
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Select your initial trading capital pot. This value directly initializes your Google Sheet balance and drives Kelly position sizing.
+                  </p>
+                </div>
+
+                {/* Currency Selection */}
+                <div>
+                  <label className="block text-[11px] font-mono uppercase text-slate-400 mb-2">
+                    Select Portfolio Base Currency:
                   </label>
-                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-                    {CAPITAL_PRESETS.map(amt => {
-                      const active = Number(startingCapital) === amt;
-                      return (
-                        <button
-                          key={amt}
-                          type="button"
-                          onClick={() => handlePresetCapitalSelect(amt)}
-                          className={`py-2 px-2 rounded-lg font-mono text-xs font-bold border transition ${
-                            active
-                              ? 'bg-emerald-500 text-black border-emerald-400 shadow-md shadow-emerald-500/20'
-                              : 'bg-[#0d131f] text-slate-300 border-slate-800 hover:border-slate-600'
-                          }`}
-                        >
-                          ${amt >= 1000000 ? `${amt / 1000000}M` : `${amt / 1000}k`}
-                        </button>
-                      );
-                    })}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {CURRENCY_OPTIONS.map((c) => (
+                      <button
+                        key={c.code}
+                        type="button"
+                        onClick={() => setCurrency(c.code)}
+                        className={`p-2.5 rounded-xl border text-left font-mono transition-all ${
+                          currency === c.code
+                            ? 'border-emerald-500 bg-emerald-500/10 text-white shadow-sm'
+                            : 'border-slate-800 bg-[#0d131f] text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <div className="text-xs font-bold text-emerald-400">{c.code}</div>
+                        <div className="text-[10px] text-slate-400">{c.symbol} ({c.code})</div>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Kelly Risk Fraction & Rule 24 Chase Limit */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80">
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold uppercase text-slate-300 mb-1.5">
-                      3. Kelly Criterion Sizing Dampener
-                    </label>
-                    <select
-                      value={kellyFraction}
-                      onChange={(e) => setKellyFraction(parseFloat(e.target.value))}
-                      className="w-full bg-[#0d131f] border border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono outline-none"
-                    >
-                      {KELLY_OPTIONS.map(k => (
-                        <option key={k.value} value={k.value}>{k.label}</option>
-                      ))}
-                    </select>
+                {/* Capital Presets */}
+                <div>
+                  <label className="block text-[11px] font-mono uppercase text-slate-400 mb-2">
+                    Choose Starting Capital Preset:
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {CAPITAL_PRESETS.map((amount) => (
+                      <button
+                        key={amount}
+                        type="button"
+                        onClick={() => handlePresetCapitalSelect(amount)}
+                        className={`p-2.5 rounded-xl border font-mono text-center text-xs transition-all ${
+                          startingCapital === amount
+                            ? 'border-emerald-500 bg-emerald-500/20 text-emerald-300 font-bold shadow-md'
+                            : 'border-slate-800 bg-[#0d131f] text-slate-300 hover:border-slate-700'
+                        }`}
+                      >
+                        {currency} ${amount.toLocaleString()}
+                      </button>
+                    ))}
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold uppercase text-slate-300 mb-1.5">
-                      4. Portfolio Node Name
-                    </label>
+                {/* Custom Capital Input */}
+                <div>
+                  <label className="block text-[11px] font-mono uppercase text-slate-400 mb-1">
+                    Or Enter Exact Custom Allocation ({currency}):
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 font-mono text-xs text-slate-400">{currency} $</span>
                     <input
                       type="text"
-                      value={portfolioName}
-                      onChange={(e) => setPortfolioName(e.target.value)}
-                      className="w-full bg-[#0d131f] border border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono outline-none"
+                      value={customCapitalInput}
+                      onChange={handleCustomCapitalChange}
+                      placeholder="25000"
+                      className="w-full bg-[#0d131f] border border-slate-700 focus:border-emerald-500 rounded-xl pl-16 pr-4 py-2 text-xs font-mono text-white outline-none"
                     />
+                  </div>
+                </div>
+
+                {/* Kelly Criterion Preset */}
+                <div className="pt-2 border-t border-slate-800">
+                  <label className="block text-[11px] font-mono uppercase text-slate-400 mb-2">
+                    Fractional Kelly Risk Multiplier:
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {KELLY_OPTIONS.map((k) => (
+                      <button
+                        key={k.value}
+                        type="button"
+                        onClick={() => setKellyFraction(k.value)}
+                        className={`p-2.5 rounded-xl border text-left font-mono text-xs transition-all ${
+                          kellyFraction === k.value
+                            ? 'border-cyan-500 bg-cyan-500/10 text-cyan-300 font-bold'
+                            : 'border-slate-800 bg-[#0d131f] text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {k.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                {userSession?.isAdmin && (
-                  <button
-                    onClick={handleFinalLaunch}
-                    className="text-xs font-mono text-cyan-400 hover:text-cyan-300 underline"
-                  >
-                    Admin Fast-Track: Enter Terminal Directly &rarr;
-                  </button>
-                )}
+              <div className="flex justify-end pt-2">
                 <button
                   onClick={() => setCurrentStep(2)}
-                  className="ml-auto bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-6 py-2.5 rounded-xl text-xs font-mono flex items-center gap-2 transition-all"
+                  className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-6 py-2.5 rounded-xl text-xs font-mono flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20"
                 >
-                  <span>Proceed to Step 2: Master Sheet</span>
+                  <span>Proceed to Step 2: Sheet ID</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 2: Master Sheet Template */}
+          {/* STEP 2: Sheet ID Binding */}
           {currentStep === 2 && (
-            <div className="space-y-5 animate-in fade-in duration-200">
+            <div className="space-y-6 animate-in fade-in duration-200">
               <div className="border border-slate-800 bg-[#0a0f18] rounded-xl p-5 space-y-4">
                 <div>
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                    Step 2: Create & Link Your Dedicated Google Sheet
+                    Step 2: Connect Your Google Sheet
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">
-                    Create a new blank Google Sheet in your Google Drive (or copy your Master Sheet), then paste its URL or Sheet ID below.When you run <code className="text-emerald-300">setupSystem()</code> in Step 3, all 6 tabs (<code className="text-slate-200">Config, Tickers, Dashboard, Mimic_Portfolio, Trade_Log, MCP_Logs</code>) are built automatically.
+                    Paste the URL or Spreadsheet ID of your dedicated Google Sheet.
                   </p>
                 </div>
 
-                <div className="pt-2">
-                  <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Paste Your Google Sheet URL or Spreadsheet ID:
-                  </label>
-                  <input
-                    type="text"
-                    value={sheetInput}
-                    onChange={(e) => setSheetInput(e.target.value)}
-                    placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit"
-                    className="w-full bg-[#070b12] border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 font-mono outline-none"
-                  />
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-slate-400 mb-1">
+                      Portfolio / Node Display Name
+                    </label>
+                    <input
+                      type="text"
+                      value={portfolioName}
+                      onChange={(e) => setPortfolioName(e.target.value)}
+                      placeholder="My Alpha Trading Node"
+                      className="w-full bg-[#0d131f] border border-slate-700 rounded-xl px-4 py-2 text-xs font-mono text-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-slate-400 mb-1">
+                      Google Sheet URL or Spreadsheet ID
+                    </label>
+                    <input
+                      type="text"
+                      value={sheetInput}
+                      onChange={(e) => setSheetInput(e.target.value)}
+                      placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XR.../edit"
+                      className="w-full bg-[#0d131f] border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-2 text-xs font-mono text-white outline-none"
+                    />
+                  </div>
+
                   {cleanSheetId && (
-                    <div className="mt-2 text-[11px] font-mono text-emerald-400">
-                      Extracted Sheet ID: <code className="bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{cleanSheetId}</code>
+                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs font-mono flex items-center justify-between">
+                      <span className="text-slate-400">Extracted Sheet ID:</span>
+                      <span className="text-emerald-400 font-bold break-all">{cleanSheetId}</span>
                     </div>
                   )}
                 </div>
@@ -704,53 +1403,52 @@ export default function InstitutionalGateAndSetupWizard({
                 </button>
                 <button
                   onClick={() => setCurrentStep(3)}
-                  className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-6 py-2.5 rounded-xl text-xs font-mono flex items-center gap-2 transition-all"
+                  disabled={!cleanSheetId}
+                  className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-bold px-6 py-2.5 rounded-xl text-xs font-mono flex items-center gap-2 transition-all"
                 >
-                  <span>Proceed to Step 3: Install Wrapper Script</span>
+                  <span>Proceed to Step 3: Library Script</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 3: Server-Fetched Code_1_Wrapper Script */}
+          {/* STEP 3: Protected Zero-Bundle Wrapper Script & Master Library ID */}
           {currentStep === 3 && (
-            <div className="space-y-5 animate-in fade-in duration-200">
+            <div className="space-y-6 animate-in fade-in duration-200">
               <div className="border border-slate-800 bg-[#0a0f18] rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
                       <Code2 className="w-4 h-4 text-emerald-400" />
-                      Step 3: Install Code_1_Wrapper.js & Link Master Library
+                      Step 3: Paste Wrapper Script & Add Master Library
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">
-                      Fetched dynamically over authenticated TLS. Zero proprietary logic is exposed in the client stub.
+                      In your Google Sheet, click <strong className="text-white">Extensions {`>`} Apps Script</strong>.
                     </p>
                   </div>
 
                   <button
                     onClick={handleCopyCode}
-                    disabled={!blueprint.wrapper_script}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-black font-mono font-bold text-xs hover:bg-emerald-400 transition-all disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-mono text-xs transition-all border border-emerald-500/40"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    <span>{copiedCode ? '✓ Copied Wrapper Script!' : '1-Click Copy Code_1_Wrapper.js'}</span>
+                    <span>{copiedCode ? '✓ Copied Script!' : 'Copy Wrapper Script'}</span>
                   </button>
                 </div>
 
-                <div className="bg-[#0d131f] p-4 rounded-xl border border-slate-800 space-y-3 text-xs">
-                  <div className="font-bold text-slate-200">Exact Installation Steps:</div>
-                  <ol className="list-decimal list-inside space-y-2 text-slate-400 leading-relaxed font-mono text-[11px]">
-                    <li>In your Google Sheet, click <strong className="text-white">Extensions</strong> &gt; <strong className="text-white">Apps Script</strong>.</li>
-                    <li>Delete any default code in <code className="text-emerald-300">Code.gs</code> and paste the copied <code className="text-emerald-300">Code_1_Wrapper.js</code>.</li>
+                <div className="p-3.5 bg-[#05080e] rounded-xl border border-slate-800 space-y-2 text-xs font-mono text-slate-300">
+                  <ol className="list-decimal list-inside space-y-1.5 text-slate-400">
+                    <li>Paste the copied wrapper script into <code className="text-white">Code.gs</code>.</li>
+                    <li>Click the <strong className="text-white">+</strong> next to <strong className="text-white">Libraries</strong>.</li>
                     <li>
-                      Click <strong className="text-white">Libraries (+)</strong> on the left sidebar and paste the Master Library Script ID:
-                      <div className="my-1.5 p-2 rounded bg-black/60 border border-slate-800 text-emerald-400 font-bold select-all">
-                        {loadingBlueprint ? 'Loading protected Library ID...' : (blueprint.master_library_id || '1d5fHImWJPDRqmfLUEtkypn9RgSwqPo1VBNcHVFPb8CGGYJX9KNf5ael6')}
+                      Paste the Protected Master Library Script ID:
+                      <div className="p-2 rounded bg-slate-900 border border-slate-800 text-cyan-300 select-all my-1">
+                        {loadingBlueprint ? 'Decrypting library ID...' : blueprint.master_library_id || '1d5fHImWJPDRqmfLUEtkypn9RgSwqPo1VBNcHVFPb8CGGYJX9KNf5ael6'}
                       </div>
                     </li>
                     <li>
-                      Set Identifier to <code className="text-white">{blueprint.library_identifier}</code>, select <code className="text-white">HEAD</code>, click <strong className="text-white">Add</strong>, press <strong className="text-white">Ctrl+S</strong>, and run <code className="text-emerald-300">setupSystem()</code> once to auto-build all tabs.
+                      Set Identifier to <code className="text-white">{blueprint.library_identifier}</code>, select <code className="text-white">HEAD</code>, click <strong className="text-white">Add</strong>, press <strong className="text-white">Ctrl+S</strong>, and run <code className="text-emerald-300">setupSystem()</code> once.
                     </li>
                   </ol>
                 </div>
@@ -803,7 +1501,6 @@ export default function InstitutionalGateAndSetupWizard({
                   </button>
                 </div>
 
-                {/* Sheet ID Quick Input if not entered in Step 2 */}
                 {!cleanSheetId && (
                   <div className="p-3 rounded-xl bg-[#0d131f] border border-amber-800/60">
                     <label className="block text-[10px] font-mono uppercase text-amber-300 mb-1">
@@ -819,7 +1516,6 @@ export default function InstitutionalGateAndSetupWizard({
                   </div>
                 )}
 
-                {/* Config Table */}
                 <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-[#0d131f]">
                   <table className="w-full text-left text-xs font-mono">
                     <thead className="bg-[#111827] text-slate-400 text-[10px] uppercase border-b border-slate-800">

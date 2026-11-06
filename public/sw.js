@@ -1,16 +1,7 @@
-// TITAN Service Worker — Offline Caching & PWA Fast Shell (Phase 5)
-const CACHE_NAME = 'titan-portal-v1';
-const STATIC_ASSETS = [
-  '/portal/',
-  '/portal/manifest.json'
-];
+// TITAN Service Worker — Offline Caching & Fast Shell (Network-First)
+const CACHE_NAME = 'titan-portal-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
-  );
   self.skipWaiting();
 });
 
@@ -26,9 +17,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  // Network-first for dynamic API routes
+  // Network-First for dynamic API calls & SSE
   if (url.pathname.startsWith('/api')) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
@@ -36,11 +28,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first, network-fallback for static shell
+  // Network-First for static assets so user always sees the latest updates immediately
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) return cachedResponse;
-      return fetch(event.request).then((networkResponse) => {
+    fetch(event.request)
+      .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -48,7 +39,7 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return networkResponse;
-      });
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });

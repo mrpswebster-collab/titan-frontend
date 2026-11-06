@@ -71,7 +71,9 @@ export default function InstitutionalGateAndSetupWizard({
 
   // Sign In Flow (Google OAuth + PIN)
   const [signStep, setSignStep] = useState('GOOGLE_AUTH'); // 'GOOGLE_AUTH' | 'ENTER_PIN' | 'CREATE_PIN'
-  const [pendingGoogleToken, setPendingGoogleToken] = useState('');
+  const [pendingGoogleToken, setPendingGoogleToken] = useState(() => {
+    try { return sessionStorage.getItem('titan_pending_google_token') || ''; } catch(e) { return ''; }
+  });
   const [pendingUserEmail, setPendingUserEmail] = useState('');
   const [pinInput, setPinInput] = useState('');
   const [confirmPinInput, setConfirmPinInput] = useState('');
@@ -247,6 +249,7 @@ export default function InstitutionalGateAndSetupWizard({
 
       const u = data.user || {};
       setPendingGoogleToken(response.credential);
+      try { sessionStorage.setItem('titan_pending_google_token', response.credential); } catch(e) {}
       setPendingUserEmail(u.email || '');
 
       // Check if user already has a PIN
@@ -314,7 +317,7 @@ export default function InstitutionalGateAndSetupWizard({
         hasCompletedSetup: Boolean(u.has_completed_setup || u.is_admin)
       });
     } catch (err) {
-      setAuthError(err.message || '2-Point authentication failed.');
+      setAuthError(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setIsAuthenticating(false);
     }
@@ -636,7 +639,7 @@ const handleCopyCode = () => {
           </div>
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
             <Lock className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Google OAuth + 4-Digit Security PIN</span>
+            <span>Institutional Access</span>
           </div>
         </header>
 
@@ -972,7 +975,7 @@ const handleCopyCode = () => {
                     <div className="p-3 bg-[#0a0e17] border border-slate-800 rounded-xl flex flex-col items-center justify-center space-y-2">
                       <div className="flex items-center gap-2 text-[10px] font-mono text-cyan-400 uppercase tracking-wider">
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Security Verification</span>
+                        <span>Verification Check</span>
                       </div>
                       <div ref={turnstileRef} className="my-1" />
                     </div>
@@ -1200,7 +1203,7 @@ const handleCopyCode = () => {
         </main>
 
         <footer className="border-t border-slate-900/80 bg-[#0a0f18]/60 p-4 text-center text-[10px] font-mono text-slate-400">
-          ASIC Statutory Disclaimer: Automated algorithmic research & risk-management tool. Strictly restricted to verified institutional allowlist tenants.
+          Institutional Quantitative Trading Systems • Sydney / Global Gateways
         </footer>
       </div>
     );

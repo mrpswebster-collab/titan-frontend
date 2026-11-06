@@ -427,7 +427,7 @@ const handleAddAllowlistEmail = async (e) => {
                 Self-Service Onboarding Active & VIP One-Time Invite Codes
               </h3>
               <p className="text-[11px] text-slate-400 mt-1">
-                Clients onboard automatically via <strong className="text-emerald-300">Turnstile Anti-Bot + 6-digit Email OTP + 4-digit PIN</strong>. Each invite code below is an independent 1-time access pass (having 2 active means either code can be used once).
+                Clients onboard automatically via <strong className="text-emerald-300">Email verification code and secure 4-digit PIN</strong>. Each invite code below is an independent 1-time access pass (having 2 active means either code can be used once).
               </p>
             </div>
             <button

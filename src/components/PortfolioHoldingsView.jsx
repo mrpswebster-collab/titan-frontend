@@ -33,6 +33,11 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
 
   // Workbook Auto-Builder & Global AI Hub Modal State
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [isMcpModalOpen, setIsMcpModalOpen] = useState(false);
+  const [mcpTokenData, setMcpTokenData] = useState(null);
+  const [mcpLoading, setMcpLoading] = useState(false);
+  const [copiedMcpConfig, setCopiedMcpConfig] = useState(false);
+  const [copiedCliCmd, setCopiedCliCmd] = useState(false);
   const [editingWorkbook, setEditingWorkbook] = useState(null);
   const [builderInitialTab, setBuilderInitialTab] = useState('WORKBOOK_BUILDER');
 
@@ -149,7 +154,36 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
     } catch (e) {}
   };
 
-  const handleAddAllowlistEmail = async (e) => {
+    const handleOpenMcpModal = async () => {
+    setIsMcpModalOpen(true);
+    if (mcpTokenData) return;
+    setMcpLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v2/auth/mcp-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userSession?.idToken}`
+        },
+        body: JSON.stringify({
+          spreadsheet_id: activeWb?.id || userSession?.spreadsheetId,
+          portfolio_name: activeWb?.name || 'Primary Trading Node',
+          currency: currencyInput,
+          starting_capital: userSession?.startingCapital || 25000
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMcpTokenData(data);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch FastMCP token:', e);
+    } finally {
+      setMcpLoading(false);
+    }
+  };
+
+const handleAddAllowlistEmail = async (e) => {
     e.preventDefault();
     if (!newEmailInput.trim()) return;
     try {
@@ -358,6 +392,15 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleOpenMcpModal}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-200 text-xs font-bold transition"
+            >
+              <Terminal className="w-3.5 h-3.5 text-cyan-400" />
+              <span>BYO Antigravity Agent (FastMCP)</span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
@@ -609,6 +652,127 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
           if (savedWb?.id) setSelectedWorkbook(savedWb.id);
         }}
       />
+    
+      {/* Track 1: BYO Antigravity Agent (FastMCP Gateway) Modal */}
+      {isMcpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="max-w-2xl w-full bg-[#0d131f] border border-cyan-800/60 rounded-2xl shadow-2xl p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+                  <Terminal className="w-4 h-4 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Track 1: Connect BYO Antigravity CLI & IDE (FastMCP)
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Dual-Track Hybrid Cloud • Rule 19 Zero-Trust Scoped Multi-Tenancy
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsMcpModalOpen(false)}
+                className="text-slate-400 hover:text-white text-xs font-mono px-2 py-1 rounded-lg bg-slate-800"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-300 space-y-1">
+                <span className="font-bold text-cyan-400 block font-mono text-[11px] uppercase">
+                  Zero Inference Host Cost
+                </span>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Your local Antigravity CLI (<code className="text-white">agy</code>) or Antigravity IDE connects directly to your scoped workbook on Render via FastMCP SSE. All reasoning executes using your own Google AI credits.
+                </p>
+              </div>
+
+              {mcpLoading ? (
+                <div className="py-8 text-center font-mono text-xs text-cyan-400 animate-pulse">
+                  Provisioning scoped FastMCP credentials...
+                </div>
+              ) : (
+                <div className="space-y-3 font-mono text-xs">
+                  <div>
+                    <label className="block text-[10px] uppercase text-slate-400 mb-1">
+                      Scoped FastMCP SSE Endpoint:
+                    </label>
+                    <div className="p-2.5 rounded-xl bg-[#070b12] border border-slate-800 text-cyan-300 break-all select-all text-[11px]">
+                      {mcpTokenData?.sse_endpoint || 'Loading endpoint...'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] uppercase text-slate-400">
+                        Drop into ~/.gemini/config/mcp_config.json:
+                      </label>
+                      <button
+                        onClick={() => {
+                          if (mcpTokenData?.mcp_config_json) {
+                            navigator.clipboard.writeText(JSON.stringify(mcpTokenData.mcp_config_json, null, 2));
+                            setCopiedMcpConfig(true);
+                            setTimeout(() => setCopiedMcpConfig(false), 2000);
+                          }
+                        }}
+                        className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>{copiedMcpConfig ? '✓ Copied JSON' : 'Copy Snippet'}</span>
+                      </button>
+                    </div>
+                    <pre className="p-3 rounded-xl bg-[#05080e] border border-slate-800 text-slate-300 text-[10px] overflow-x-auto max-h-40">
+                      {JSON.stringify(mcpTokenData?.mcp_config_json || {}, null, 2)}
+                    </pre>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] uppercase text-slate-400">
+                        Or Connect with 1-Line CLI Command:
+                      </label>
+                      <button
+                        onClick={() => {
+                          if (mcpTokenData?.cli_install_command) {
+                            navigator.clipboard.writeText(mcpTokenData.cli_install_command);
+                            setCopiedCliCmd(true);
+                            setTimeout(() => setCopiedCliCmd(false), 2000);
+                          }
+                        }}
+                        className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>{copiedCliCmd ? '✓ Copied Command' : 'Copy Command'}</span>
+                      </button>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#05080e] border border-slate-800 text-emerald-400 text-[11px] select-all">
+                      {mcpTokenData?.cli_install_command || 'agy mcp add titan-desk --url ...'}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800 grid grid-cols-3 gap-2 text-center text-[10px]">
+                    <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+                      <span className="text-slate-400 block">Scoped Sheet:</span>
+                      <span className="text-emerald-400 font-bold truncate block">{mcpTokenData?.spreadsheet_id?.slice(0, 12)}...</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+                      <span className="text-slate-400 block">Currency Pot:</span>
+                      <span className="text-cyan-400 font-bold">{mcpTokenData?.currency} ${Number(mcpTokenData?.cash_pot || 25000).toLocaleString()}</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+                      <span className="text-slate-400 block">Permissions:</span>
+                      <span className="text-purple-300 font-bold">{mcpTokenData?.permissions?.join(', ') || 'READ, EXECUTE'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -17,7 +17,12 @@ import {
   PlusCircle,
   Cpu,
   Settings2,
-  Rocket
+  Rocket,
+  Terminal,
+  Activity,
+  Radio,
+  Play,
+  Bot
 } from 'lucide-react';
 import WorkbookAutoBuilderModal from './WorkbookAutoBuilderModal';
 
@@ -38,6 +43,13 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
   const [mcpLoading, setMcpLoading] = useState(false);
   const [copiedMcpConfig, setCopiedMcpConfig] = useState(false);
   const [copiedCliCmd, setCopiedCliCmd] = useState(false);
+
+  // Phase 4: Cloud Sentinel Daemon & Live Stream State
+  const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
+  const [agentStatus, setAgentStatus] = useState(null);
+  const [agentEvents, setAgentEvents] = useState([]);
+  const [agentRunningAction, setAgentRunningAction] = useState('');
+  const [agentActionMsg, setAgentActionMsg] = useState('');
   const [editingWorkbook, setEditingWorkbook] = useState(null);
   const [builderInitialTab, setBuilderInitialTab] = useState('WORKBOOK_BUILDER');
 
@@ -154,7 +166,87 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
     } catch (e) {}
   };
 
-    const handleOpenMcpModal = async () => {
+    // Phase 4: Cloud Sentinel Runner Handlers
+  const handleOpenAgentModal = async () => {
+    setIsAgentModalOpen(true);
+    setAgentActionMsg('');
+    try {
+      const res = await fetch(`${API_BASE}/api/v2/agent/status`);
+      if (res.ok) {
+        const data = await res.json();
+        setAgentStatus(data);
+      }
+    } catch (err) {
+      console.error('Failed to load agent status', err);
+    }
+  };
+
+  useEffect(() => {
+    if (!isAgentModalOpen) return;
+    let eventSource = null;
+    try {
+      eventSource = new EventSource(`${API_BASE}/api/v2/agent/stream`);
+      eventSource.onmessage = (e) => {
+        try {
+          const parsed = JSON.parse(e.data);
+          setAgentEvents((prev) => [parsed, ...prev.slice(0, 99)]);
+        } catch (jsonErr) {}
+      };
+    } catch (err) {
+      console.warn('SSE connection notice:', err);
+    }
+    return () => {
+      if (eventSource) eventSource.close();
+    };
+  }, [isAgentModalOpen]);
+
+  const handleTriggerPremarket = async () => {
+    setAgentRunningAction('premarket');
+    setAgentActionMsg('Executing 09:15 Pre-Market Kinematic Scan across universe...');
+    try {
+      const token = userSession?.token || 'machine_internal';
+      const res = await fetch(`${API_BASE}/api/v2/agent/run-premarket`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      setAgentActionMsg(`Scan Complete! Found ${data.results?.[0]?.targets_found || 0} Rule 53 Coiled Springs.`);
+      const stRes = await fetch(`${API_BASE}/api/v2/agent/status`);
+      if (stRes.ok) setAgentStatus(await stRes.json());
+    } catch (err) {
+      setAgentActionMsg('Pre-market scan trigger failed.');
+    } finally {
+      setAgentRunningAction('');
+    }
+  };
+
+  const handleTriggerEodHarvest = async () => {
+    setAgentRunningAction('eod');
+    setAgentActionMsg('Executing 16:15 EOD Audit & Rule 42 Harvest...');
+    try {
+      const token = userSession?.token || 'machine_internal';
+      const res = await fetch(`${API_BASE}/api/v2/agent/run-eod-harvest`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      setAgentActionMsg(`EOD Audit Complete! ${data.harvest_actions_count || 0} Rule 42 Harvests executed.`);
+      const stRes = await fetch(`${API_BASE}/api/v2/agent/status`);
+      if (stRes.ok) setAgentStatus(await stRes.json());
+    } catch (err) {
+      setAgentActionMsg('EOD audit trigger failed.');
+    } finally {
+      setAgentRunningAction('');
+    }
+  };
+
+  const handleOpenMcpModal = async () => {
     setIsMcpModalOpen(true);
     if (mcpTokenData) return;
     setMcpLoading(true);
@@ -392,6 +484,15 @@ const handleAddAllowlistEmail = async (e) => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleOpenAgentModal}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-200 text-xs font-bold transition shadow-sm shadow-emerald-500/10"
+            >
+              <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <span>Cloud Sentinel Daemon & Stream</span>
+            </button>
+
             <button
               type="button"
               onClick={handleOpenMcpModal}

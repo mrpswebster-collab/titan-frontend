@@ -277,13 +277,20 @@ export default function InstitutionalGateAndSetupWizard({
     setIsAuthenticating(true);
     try {
       const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Australia/Sydney';
+      const activeToken = pendingGoogleToken || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('titan_pending_google_token') : '');
+      if (!activeToken) {
+        setAuthError('Google authentication expired. Please sign in with Google again.');
+        setSignStep('GOOGLE_AUTH');
+        setIsAuthenticating(false);
+        return;
+      }
       const res = await fetch(`${API_BASE}/api/v2/auth/login-with-pin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          id_token: pendingGoogleToken,
+          id_token: activeToken,
           pin: pinInput.trim(),
           user_timezone: userTz
         })

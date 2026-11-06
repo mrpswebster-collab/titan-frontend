@@ -223,6 +223,46 @@ export default function PortfolioHoldingsView({ userSession, onSelectTicker, onU
     }
   };
 
+  const handleTriggerSandboxDryRun = async () => {
+    setAgentRunningAction('sandbox');
+    setAgentActionMsg('Executing Staging Sandbox Dry-Run (Law 0 Sovereign Risk Verification)...');
+    try {
+      const token = userSession?.token || 'machine_internal';
+      const res = await fetch(`${API_BASE}/api/v2/sandbox/simulate-trade`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ticker: 'DRO',
+          action: 'AI BUY',
+          shares: 2000,
+          price: 1.20,
+          signal_price: 1.20,
+          kinematics: {
+            macd_slope_3bar: 0.045,
+            cmf: 0.18,
+            atr: 0.05,
+            target_price: 1.45,
+            stop_loss: 1.10
+          },
+          rationale: 'Web Cockpit Staging Sandbox Dry-Run'
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'simulated_fill') {
+        setAgentActionMsg(`Simulation Filled! ${data.shares}x ${data.ticker} @ $${data.fill_price} AUD (Paper Cash: $${data.remaining_paper_cash?.toLocaleString()} AUD). Audit: SIMULATED_SANDBOX.`);
+      } else {
+        setAgentActionMsg(`Law 0 Gate Notice: ${data.reason || 'Check parameters'}`);
+      }
+    } catch (err) {
+      setAgentActionMsg('Sandbox simulation dry-run failed.');
+    } finally {
+      setAgentRunningAction('');
+    }
+  };
+
   const handleTriggerEodHarvest = async () => {
     setAgentRunningAction('eod');
     setAgentActionMsg('Executing 16:15 EOD Audit & Rule 42 Harvest...');

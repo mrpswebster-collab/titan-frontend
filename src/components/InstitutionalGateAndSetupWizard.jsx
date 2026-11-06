@@ -257,7 +257,7 @@ export default function InstitutionalGateAndSetupWizard({
         setSignStep('CREATE_PIN');
       }
     } catch (err) {
-      setAuthError(err.message || 'Cryptographic Google OAuth verification failed.');
+      setAuthError(err.message || 'Authentication failed. Please verify your credentials.');
     } finally {
       setIsAuthenticating(false);
     }
@@ -311,7 +311,7 @@ export default function InstitutionalGateAndSetupWizard({
         role: u.role || 'OWNER',
         isAdmin: Boolean(u.is_admin),
         subscriptionTier: u.subscription_tier || 'STARTER',
-        idToken: pendingGoogleToken,
+        idToken: data.token || pendingGoogleToken,
         currency: u.currency || 'AUD',
         startingCapital: cap,
         kellyFraction: u.kelly_fraction || 0.50,
@@ -530,8 +530,8 @@ const handleCopyCode = () => {
   };
 
   const configTableRows = [
-    { key: 'TITAN_AUTH_EMAIL', value: userSession?.email || '', desc: 'Cryptographically verified Google Account owner' },
-    { key: 'TITAN_TENANT_SECRET', value: blueprint.tenant_hmac_secret || 'PENDING_HANDSHAKE', desc: 'Unforgeable HMAC-SHA256 key binding Sheet to Tenant' },
+    { key: 'TITAN_AUTH_EMAIL', value: userSession?.email || '', desc: 'Authorized Account Email' },
+    { key: 'TITAN_TENANT_SECRET', value: blueprint.tenant_hmac_secret || 'PENDING_HANDSHAKE', desc: 'Dedicated Workbook Key' },
     { key: 'TITAN_STARTING_CAPITAL', value: `${startingCapital.toFixed(2)}`, desc: `Custom Starting Capital Allocation (${currency})` },
     { key: 'TITAN_BASE_CURRENCY', value: currency, desc: 'Primary accounting & position sizing currency' },
     { key: 'TITAN_KELLY_FRACTION', value: `${kellyFraction}`, desc: 'Fractional Kelly Criterion risk dampener' },
@@ -560,10 +560,10 @@ const handleCopyCode = () => {
     setVerifySuccess(false);
 
     try {
-      setVerifyLogs(prev => [...prev, `[1/4] Establishing cryptographic session for ${userSession.email}...`]);
+      setVerifyLogs(prev => [...prev, `[1/4] Connecting session for ${userSession.email}...`]);
       await new Promise(r => setTimeout(r, 400));
 
-      setVerifyLogs(prev => [...prev, `[2/4] Generating unforgeable HMAC-SHA256 secret for Sheet ${cleanSheetId}...`]);
+      setVerifyLogs(prev => [...prev, `[2/4] Configuring sheet access for Sheet ${cleanSheetId}...`]);
       await new Promise(r => setTimeout(r, 400));
 
       setVerifyLogs(prev => [...prev, `[3/4] Registering ${currency} $${startingCapital.toLocaleString()} starting capital in multi-currency pots...`]);
@@ -638,7 +638,7 @@ const handleCopyCode = () => {
             </div>
             <div>
               <span className="font-mono text-sm font-black tracking-wider text-slate-100">TITAN QUANT</span>
-              <span className="text-[10px] font-mono text-emerald-400 ml-2 px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40">2-POINT ZERO-TRUST ENCLAVE</span>
+              <span className="text-[10px] font-mono text-slate-400 ml-2 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">CLIENT ACCESS</span>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
@@ -731,7 +731,7 @@ const handleCopyCode = () => {
                         Step 1: Authenticate with Google
                       </span>
                       <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-                        Connect your cryptographically verified Google Account. You will then enter your 4-digit Security PIN for 2-point authorization.
+                        Sign in with your authorized Google Account, then enter your 4-digit PIN.
                       </p>
                     </div>
 
@@ -739,7 +739,7 @@ const handleCopyCode = () => {
                       {isAuthenticating ? (
                         <div className="text-xs font-mono text-emerald-400 animate-pulse py-3 flex items-center gap-2">
                           <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>Verifying cryptographic Google signature...</span>
+                          <span>Signing in...</span>
                         </div>
                       ) : (
                         <div ref={googleBtnRef} className="flex justify-center" />
@@ -953,7 +953,7 @@ const handleCopyCode = () => {
                     <div className="p-3 bg-[#0a0e17] border border-slate-800 rounded-xl flex flex-col items-center justify-center space-y-2">
                       <div className="flex items-center gap-2 text-[10px] font-mono text-cyan-400 uppercase tracking-wider">
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Cloudflare Turnstile Anti-Robot Shield</span>
+                        <span>Security Verification</span>
                       </div>
                       <div ref={turnstileRef} className="my-1" />
                     </div>
@@ -1178,8 +1178,8 @@ const handleCopyCode = () => {
                 <div className="text-[10px] text-slate-400">Google + PIN</div>
               </div>
               <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
-                <div className="text-[11px] font-mono text-cyan-400 font-bold">ANTI-ROBOT</div>
-                <div className="text-[10px] text-slate-400">Turnstile Shield</div>
+                <div className="text-[11px] font-mono text-slate-300 font-bold">VERIFICATION</div>
+                <div className="text-[10px] text-slate-400">Security Check</div>
               </div>
               <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800">
                 <div className="text-[11px] font-mono text-amber-400 font-bold">SELF-SERVICE</div>
@@ -1585,7 +1585,7 @@ const handleCopyCode = () => {
                       Step 4: Bind Sheet Ownership & Copy Config Parameters
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">
-                      Includes your custom <strong className="text-emerald-300">{currency} ${Number(startingCapital).toLocaleString()}</strong> capital allocation and unforgeable <code className="text-emerald-300">TITAN_TENANT_SECRET</code>.
+                      Includes your custom <strong className="text-emerald-300">{currency} ${Number(startingCapital).toLocaleString()}</strong> capital allocation and dedicated <code className="text-emerald-300">TITAN_TENANT_SECRET</code>.
                     </p>
                   </div>
 
@@ -1674,7 +1674,7 @@ const handleCopyCode = () => {
                       <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
                       <div>
                         <span className="font-bold block">Dual-Factor Sheet Handshake Complete!</span>
-                        <span className="text-[11px] text-emerald-400/80">Your Google Sheet is cryptographically bound with {currency} ${Number(startingCapital).toLocaleString()} starting capital.</span>
+                        <span className="text-[11px] text-emerald-400/80">Your Google Sheet is connected with {currency} ${Number(startingCapital).toLocaleString()} starting capital.</span>
                       </div>
                     </div>
                   )}

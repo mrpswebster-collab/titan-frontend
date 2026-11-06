@@ -692,10 +692,10 @@ const handleAddAllowlistEmail = async (e) => {
         </div>
 
         <div className="bg-[#111827] border border-slate-800 rounded-xl p-4">
-          <div className="text-[11px] font-mono text-slate-400 uppercase">Enclave Protection</div>
+          <div className="text-[11px] font-mono text-slate-400 uppercase">Connection Status</div>
           <div className="text-lg font-bold font-mono text-emerald-400 mt-1 flex items-center gap-1.5">
             <CheckCircle2 className="w-5 h-5" />
-            <span>HMAC-SHA256 Bound</span>
+            <span>Connected & Active</span>
           </div>
           <div className="text-[11px] font-mono text-slate-400 mt-2">
             Rule 24 & {userSession?.chaseLimitPct || 2.0}% Chase Cap Active
@@ -808,7 +808,7 @@ const handleAddAllowlistEmail = async (e) => {
                     Track 1: Connect BYO Antigravity CLI & IDE (FastMCP)
                   </h3>
                   <p className="text-[11px] text-slate-400">
-                    Dual-Track Hybrid Cloud • Rule 19 Zero-Trust Scoped Multi-Tenancy
+                    Dual-Track Hybrid Cloud • FastMCP Multi-Tenant Bridge
                   </p>
                 </div>
               </div>

@@ -34,10 +34,10 @@ import {
 const MOCK_TICKERS = {
   ASX: {
     TIER_3: [
-      { ticker: 'WA1', name: 'WA1 Resources Ltd', price: 14.50, change: 8.4, conviction: 'C:9', rsi: 48.2, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'AUD', sector: 'Niobium / Critical Minerals' },
-      { ticker: 'WIA', name: 'Wia Gold Limited', price: 0.145, change: 11.5, conviction: 'C:8', rsi: 41.5, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'AUD', sector: 'Gold Exploration (Kokoseb)' },
-      { ticker: 'LTR', name: 'Liontown Resources', price: 0.72, change: 3.2, conviction: 'C:7', rsi: 39.0, macd: 'COILED', obv: 'FLAT', currency: 'AUD', sector: 'Lithium Spodumene' },
-      { ticker: 'SXG', name: 'Southern Cross Gold', price: 3.10, change: 6.8, conviction: 'C:8', rsi: 44.1, macd: 'BULLISH_HOOK', obv: 'ACCUMULATING', currency: 'AUD', sector: 'Sunday Creek Assay' }
+      { ticker: 'FAU', name: 'First Au Ltd (ACTIVE)', price: 0.160, change: 6.7, conviction: 'C:9', rsi: 49.5, macd: 'BULLISH_HOOK', obv: 'ACCUMULATING', currency: 'AUD', sector: 'Victorian Goldfields Exploration' },
+      { ticker: 'UM1', name: 'Unity Metals Ltd (ACTIVE)', price: 0.110, change: 4.8, conviction: 'C:8', rsi: 46.2, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'AUD', sector: 'Base & Precious Metals' },
+      { ticker: 'SCP', name: 'Scalare Partners Holdings Ltd', price: 4.84, change: 0.0, conviction: 'C:10', rsi: 50.1, macd: 'FLAT', obv: 'FLAT', currency: 'AUD', sector: 'Tech Investment / Dilution Veto' },
+      { ticker: 'ARN', name: 'Aldoro Resources Limited', price: 0.340, change: 5.2, conviction: 'C:7', rsi: 45.8, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'AUD', sector: 'Lithium & Rubidium Exploration' }
     ],
     TIER_1: [
       { ticker: 'BHP', name: 'BHP Group Limited', price: 41.25, change: 0.8, conviction: 'C:10', rsi: 52.0, macd: 'STABLE', obv: 'NEUTRAL', currency: 'AUD', sector: 'Diversified Metals' },
@@ -49,7 +49,7 @@ const MOCK_TICKERS = {
       { ticker: 'NST', name: 'Northern Star Resources', price: 17.80, change: 2.1, conviction: 'C:9', rsi: 55.2, macd: 'EXPANDING', obv: 'NEUTRAL', currency: 'AUD', sector: 'Gold Producer' }
     ],
     POI_SNIPER: [
-      { ticker: 'DEG', name: 'De Grey Mining Ltd', price: 1.42, change: 5.1, conviction: 'C:9', rsi: 45.0, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'AUD', sector: 'Hemi Gold Discovery' },
+      { ticker: 'NST', name: 'Northern Star Resources', price: 25.65, change: 3.8, conviction: 'C:9', rsi: 55.4, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'AUD', sector: 'Tier-1 Gold Producer (Hemi Acquired)' },
       { ticker: 'EMR', name: 'Emerald Resources', price: 3.95, change: 1.8, conviction: 'C:9', rsi: 51.2, macd: 'STEADY', obv: 'NEUTRAL', currency: 'AUD', sector: 'Okvau Gold Project' }
     ]
   },

@@ -28,7 +28,8 @@ import {
   Moon,
   FlaskConical,
   Briefcase,
-  LayoutGrid
+  LayoutGrid,
+  ExternalLink
 } from 'lucide-react';
 
 const MOCK_TICKERS = {
@@ -127,6 +128,7 @@ export default function App() {
   const [stagedNotification, setStagedNotification] = useState(null);
 
   // Workspace Layout Mode: 'COCKPIT' (Admin Pro) vs. 'STANDARD' (Retail Multi-Tab)
+  const [cockpitSubView, setCockpitSubView] = useState('V156_NATIVE');
   const [layoutMode, setLayoutMode] = useState(() => {
     try {
       return localStorage.getItem('titan_layout_mode') || 'STANDARD';
@@ -267,6 +269,43 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Workspace Layout Mode Toggle: Standard (Enclave) vs. Cockpit (Pro) */}
+            <div className="flex items-center bg-[#070c12] p-0.5 rounded-lg border border-slate-800 shadow-inner">
+              <button
+                type="button"
+                onClick={() => {
+                  setLayoutMode('STANDARD');
+                  try { localStorage.setItem('titan_layout_mode', 'STANDARD'); } catch(e) {}
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono font-bold transition ${
+                  layoutMode === 'STANDARD'
+                    ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="TITAN | Institutional Quant Enclave (Standard Multi-Tab Layout)"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="inline">Standard</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLayoutMode('COCKPIT');
+                  try { localStorage.setItem('titan_layout_mode', 'COCKPIT'); } catch(e) {}
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono font-bold transition ${
+                  layoutMode === 'COCKPIT'
+                    ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/50'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="TITAN V156 Dashboard - Quant Cockpit (https://asx-quant-brain.onrender.com/ui)"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="inline">Cockpit (Pro)</span>
+              </button>
+            </div>
+
             {/* 1-Click Workbook Auto-Builder & Global AI (Antigravity MCP) Hub */}
             <button
               onClick={() => setShowSetupModal(true)}
@@ -381,27 +420,117 @@ export default function App() {
 
       {/* WORKSPACE CONTENT: PRO COCKPIT VS. STANDARD (RETAIL) TABS */}
       {layoutMode === 'COCKPIT' ? (
-        <main className="w-full flex-1">
-          <ProCockpitView
-            userSession={userSession}
-            activeExchange={activeExchange}
-            onSelectExchange={setActiveExchange}
-            activeTier={activeTier}
-            onSelectTier={setActiveTier}
-            activePersona={activePersona}
-            onSelectPersona={setActivePersona}
-            tickerList={tickerList}
-            exchangeData={exchangeData}
-            onSelectTicker={(item) => setSelectedTicker(item)}
-            onOpenWorkbookBuilder={() => setShowSetupModal(true)}
-            onOpenBacktest={() => setIsBacktestOpen(true)}
-            stagedNotification={stagedNotification}
-            onStageOrder={handleStageOrder}
-            onOpenAIAnalyst={() => {
-              setLayoutMode('STANDARD');
-              setActiveMainTab('AI_TERMINAL');
-            }}
-          />
+        <main className="w-full flex-1 flex flex-col bg-[#070b12]">
+          {/* Cockpit Sub-Bar */}
+          <div className="bg-[#0b1320] border-b border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold font-mono tracking-wider text-emerald-400 uppercase">
+                  TITAN V156 Dashboard — Quant Cockpit
+                </span>
+                <span className="hidden md:inline-block text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700">
+                  Target: https://asx-quant-brain.onrender.com/ui
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Cockpit Mode Toggle (Native V156 Cockpit vs High-Density React Grid) */}
+              <div className="bg-[#080d14] p-0.5 rounded-lg border border-slate-800 flex items-center text-[11px] font-mono">
+                <button
+                  type="button"
+                  onClick={() => setCockpitSubView('V156_NATIVE')}
+                  className={`px-2.5 py-1 rounded transition ${
+                    cockpitSubView === 'V156_NATIVE'
+                      ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Direct Native V156 Backend Cockpit Dashboard"
+                >
+                  Native V156 UI
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCockpitSubView('PRO_GRID')}
+                  className={`px-2.5 py-1 rounded transition ${
+                    cockpitSubView === 'PRO_GRID'
+                      ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="High-Density React Grid Cockpit"
+                >
+                  React Grid
+                </button>
+              </div>
+
+              {/* Refresh Iframe button */}
+              {cockpitSubView === 'V156_NATIVE' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const iframe = document.getElementById('titan-v156-iframe');
+                    if (iframe) iframe.src = iframe.src;
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition border border-slate-700"
+                  title="Reload Backend Quant Cockpit Telemetry"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
+              )}
+
+              {/* Direct Fullscreen / External Window Popout */}
+              <a
+                href={`https://asx-quant-brain.onrender.com/ui?token=${encodeURIComponent(userSession?.idToken || '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition"
+                title="Launch TITAN V156 Dashboard in Fullscreen Browser Tab"
+              >
+                <span>Launch Fullscreen</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+
+          {/* Body */}
+          {cockpitSubView === 'V156_NATIVE' ? (
+            <div className="w-full flex-1 relative bg-[#080d14]" style={{ minHeight: 'calc(100vh - 120px)' }}>
+              <iframe
+                id="titan-v156-iframe"
+                src={`https://asx-quant-brain.onrender.com/ui?token=${encodeURIComponent(userSession?.idToken || '')}`}
+                title="TITAN V156 Dashboard - Quant Cockpit"
+                className="w-full h-full border-0"
+                style={{ minHeight: 'calc(100vh - 120px)' }}
+                allow="clipboard-read; clipboard-write; fullscreen"
+              />
+            </div>
+          ) : (
+            <ProCockpitView
+              userSession={userSession}
+              activeExchange={activeExchange}
+              onSelectExchange={setActiveExchange}
+              activeTier={activeTier}
+              onSelectTier={setActiveTier}
+              activePersona={activePersona}
+              onSelectPersona={setActivePersona}
+              tickerList={tickerList}
+              exchangeData={exchangeData}
+              onSelectTicker={(item) => setSelectedTicker(item)}
+              onOpenWorkbookBuilder={() => setShowSetupModal(true)}
+              onOpenBacktest={() => setIsBacktestOpen(true)}
+              stagedNotification={stagedNotification}
+              onStageOrder={handleStageOrder}
+              onOpenAIAnalyst={() => {
+                setLayoutMode('STANDARD');
+                setActiveMainTab('AI_TERMINAL');
+              }}
+            />
+          )}
         </main>
       ) : (
         <>

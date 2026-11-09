@@ -124,8 +124,26 @@ const PERSONAS = [
   { id: 'RISK_OFFICER', label: '🛡️ Institutional Risk Officer', desc: 'Balance sheet durability, FCF yield & drawdown gates' }
 ];
 
+// Helper: resolve initial tab from URL pathname or hash
+const resolveInitialTab = () => {
+  try {
+    if (typeof window !== 'undefined') {
+      const path = (window.location.pathname || '').toLowerCase();
+      const hash = (window.location.hash || '').toLowerCase();
+      if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
+        return 'AUTH';
+      }
+      if (path === '/setup' || hash === '#/setup' || hash === '#setup') {
+        return 'FLEET_SETUP';
+      }
+    }
+  } catch (e) {}
+  return 'SCANNER';
+};
+
 export default function App() {
-  // Institutional Theme Engine: 'dark' (Obsidian Desk) vs 'light' (Swiss Crisp White)
+  // 1. Primary View State Declarations
+  const [activeMainTab, setActiveMainTab] = useState(resolveInitialTab);
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem('titan_theme') || 'dark';
@@ -134,88 +152,6 @@ export default function App() {
     }
   });
   const [isGuideOpen, setIsGuideOpen] = useState(false);
-
-  // Sync URL history on navigation
-
-  useEffect(() => {
-
-    const handlePopState = () => {
-
-      try {
-
-        const path = (window.location.pathname || '').toLowerCase();
-
-        const hash = (window.location.hash || '').toLowerCase();
-
-        if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
-
-          setActiveMainTab('AUTH');
-
-        } else if (activeMainTab === 'AUTH') {
-
-          setActiveMainTab('SCANNER');
-
-        }
-
-      } catch (e) {}
-
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    window.addEventListener('hashchange', handlePopState);
-
-    return () => {
-
-      window.removeEventListener('popstate', handlePopState);
-
-      window.removeEventListener('hashchange', handlePopState);
-
-    };
-
-  }, [activeMainTab]);
-
-
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    try {
-      localStorage.setItem('titan_theme', nextTheme);
-    } catch (e) {}
-  };
-
-  const isLight = theme === 'light';
-
-  // URL Slash Route: /auth support
-
-  const getInitialTab = () => {
-
-    try {
-
-      if (typeof window !== 'undefined') {
-
-        const path = (window.location.pathname || '').toLowerCase();
-
-        const hash = (window.location.hash || '').toLowerCase();
-
-        if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
-
-          return 'AUTH';
-
-        }
-
-      }
-
-    } catch (e) {}
-
-    return 'SCANNER';
-
-  };
-
-
-
-  const [activeMainTab, setActiveMainTab] = useState(getInitialTab); // 'SCANNER', 'PORTFOLIO', 'AI_TERMINAL', 'AUTH'
   const [activeExchange, setActiveExchange] = useState('ASX');
   const [activeTier, setActiveTier] = useState('TIER_3');
   const [activePersona, setActivePersona] = useState('GEOLOGIST');
@@ -235,6 +171,40 @@ export default function App() {
       return 'STANDARD';
     }
   });
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    try {
+      localStorage.setItem('titan_theme', nextTheme);
+    } catch (e) {}
+  };
+
+  const isLight = theme === 'light';
+
+  // 2. Sync URL history on navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      try {
+        const path = (window.location.pathname || '').toLowerCase();
+        const hash = (window.location.hash || '').toLowerCase();
+        if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
+          setActiveMainTab('AUTH');
+        } else if (path === '/setup' || hash === '#/setup' || hash === '#setup') {
+          setActiveMainTab('FLEET_SETUP');
+        } else if (activeMainTab === 'AUTH' || activeMainTab === 'FLEET_SETUP') {
+          setActiveMainTab('SCANNER');
+        }
+      } catch (e) {}
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
+  }, [activeMainTab]);
 
   // User session with persistent localStorage authentication (requires cryptographic idToken)
   const [userSession, setUserSession] = useState(() => {

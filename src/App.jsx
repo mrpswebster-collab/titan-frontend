@@ -227,7 +227,7 @@ export default function App() {
   const [stagedNotification, setStagedNotification] = useState(null);
 
   // Workspace Layout Mode: 'COCKPIT' (Admin Pro) vs. 'STANDARD' (Retail Multi-Tab)
-  const [cockpitSubView, setCockpitSubView] = useState('V156_NATIVE');
+  const [cockpitSubView, setCockpitSubView] = useState('PRO_GRID');
   const [layoutMode, setLayoutMode] = useState(() => {
     try {
       return localStorage.getItem('titan_layout_mode') || 'STANDARD';
@@ -323,7 +323,7 @@ export default function App() {
   // ZERO-TRUST GATE: Require cryptographic Google OAuth login, then go straight
   // into the live Terminal (no clumsy 4-step setup blocker!)
   // =========================================================================
-  if (!userSession.isAuthed) {
+  if (!userSession?.isAuthed) {
     if (activeMainTab === 'AUTH') {
       return (
         <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${isLight ? "bg-slate-50 text-slate-900" : "bg-[#0a0e17] text-slate-100"}`}>
@@ -408,7 +408,7 @@ export default function App() {
                 </h1>
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  AUTHENTICATED FLEET: {userSession.name}
+                  AUTHENTICATED FLEET: {userSession?.name || 'Authorized Fleet'}
                 </span>
               </div>
             </div>
@@ -1023,7 +1023,7 @@ export default function App() {
               <span className="font-bold text-slate-300">TITAN QUANTITATIVE SYSTEMS</span>
               <span className="text-slate-600">|</span>
               <span className="text-[11px] font-mono text-emerald-400 font-bold">
-                AUTHENTICATED FLEET: {userSession.name}
+                AUTHENTICATED FLEET: {userSession?.name || 'Authorized Fleet'}
               </span>
             </div>
             <div className="text-[11px] font-mono text-slate-400">
@@ -1040,7 +1040,7 @@ export default function App() {
       <InteractiveKinematicDrawer
         ticker={selectedTicker?.ticker}
         data={selectedTicker}
-        userEquity={userSession.startingCapital || 25000}
+        userEquity={userSession?.startingCapital || 25000}
         onClose={() => setSelectedTicker(null)}
         onExecuteOrder={handleStageOrder}
       />

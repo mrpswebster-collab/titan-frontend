@@ -115,13 +115,13 @@ export default function DualClockTelemetryBar({ activeExchange, exchangeData, on
         <div className="flex flex-col items-center justify-center gap-1">
           <div className="flex items-center gap-2">
             <Globe className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-slate-400 font-medium">{exMeta.name || activeExchange} Bell:</span>
-            {exMeta.local_time && (
+            <span className="text-slate-400 font-medium">{exMeta?.name || activeExchange} Bell:</span>
+            {exMeta?.local_time && (
               <span className="font-mono font-semibold text-cyan-300">
-                {exMeta.local_time.split(' ')[1]}
+                {String(exMeta.local_time).includes(' ') ? String(exMeta.local_time).split(' ')[1] : String(exMeta.local_time)}
               </span>
             )}
-            {getStatusBadge(exMeta.session_phase, exMeta.is_open)}
+            {getStatusBadge(exMeta?.session_phase, exMeta?.is_open)}
           </div>
           {tenantId && (
             <div className="flex items-center gap-1.5 text-[11px] font-mono">

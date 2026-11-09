@@ -22,7 +22,8 @@ import {
   RefreshCw,
   HelpCircle,
   Hash,
-  BadgeCheck
+  BadgeCheck,
+  Rocket
 } from 'lucide-react';
 
 const API_BASE = 'https://asx-quant-brain.onrender.com';

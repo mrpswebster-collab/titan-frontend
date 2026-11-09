@@ -38,7 +38,8 @@ import {
   Briefcase,
   LayoutGrid,
   ExternalLink,
-  Key
+  Key,
+  Database
 } from 'lucide-react';
 
 const MOCK_TICKERS = {

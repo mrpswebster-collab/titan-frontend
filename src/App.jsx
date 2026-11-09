@@ -14,6 +14,7 @@ import HelpTooltip from './components/HelpTooltip';
 import GuidedTourModal from './components/GuidedTourModal';
 import SystemAuthSlashPage from './components/SystemAuthSlashPage';
 import FleetSetupView from './components/FleetSetupView';
+import EnclaveDropdownMenu from './components/EnclaveDropdownMenu';
 
 import { 
   Zap, 
@@ -414,6 +415,17 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Intuitive Enclave Navigation & Setup Dropdown Menu */}
+            <EnclaveDropdownMenu
+              activeMainTab={activeMainTab}
+              onSelectTab={setActiveMainTab}
+              layoutMode={layoutMode}
+              onToggleLayoutMode={setLayoutMode}
+              onOpenGuide={() => setIsGuideOpen(true)}
+              onOpenBacktest={() => setIsBacktestOpen(true)}
+              theme={theme}
+            />
+
             {/* Workspace Layout Mode Toggle: Standard (Enclave) vs. Cockpit (Pro) */}
             <div className="flex items-center bg-[#070c12] p-0.5 rounded-lg border border-slate-800 shadow-inner">
               <button

@@ -171,17 +171,20 @@ export default function EnclaveDropdownMenu({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-bold font-mono transition shadow-sm ${
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
           isOpen
             ? 'bg-emerald-500 text-black border-emerald-400 shadow-md shadow-emerald-500/20'
             : isLight
               ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
               : 'bg-[#0f172a] hover:bg-slate-800 text-slate-200 border-slate-700'
         }`}
+        title="Open Enclave Navigation & Setup Dropdown Menu"
       >
-        <Menu className="w-3.5 h-3.5" />
-        <span className="font-sans font-semibold hidden xs:inline">{getCurrentLabel()}</span>
-        <span className="font-sans font-semibold xs:hidden">Menu</span>
+        <Menu className="w-3.5 h-3.5 text-emerald-400" />
+        <span className="font-sans font-semibold">Menu</span>
+        <span className="hidden sm:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-emerald-300 border border-slate-700">
+          {getCurrentLabel()}
+        </span>
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 

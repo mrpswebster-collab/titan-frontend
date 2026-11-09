@@ -426,6 +426,26 @@ export default function App() {
               theme={theme}
             />
 
+            {/* Direct Dedicated Setup Hub Button */}
+            <button
+              onClick={() => {
+                setLayoutMode('STANDARD');
+                setActiveMainTab('FLEET_SETUP');
+                try { window.history.pushState(null, '', '/setup'); } catch (e) {}
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+                activeMainTab === 'FLEET_SETUP' && layoutMode !== 'COCKPIT'
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-cyan-500/10'
+                  : isLight
+                    ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+              }`}
+              title="Open Dedicated Fleet Setup & Superadmin Hub (/setup)"
+            >
+              <Database className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">Setup Hub</span>
+            </button>
+
             {/* Workspace Layout Mode Toggle: Standard (Enclave) vs. Cockpit (Pro) */}
             <div className="flex items-center bg-[#070c12] p-0.5 rounded-lg border border-slate-800 shadow-inner">
               <button
@@ -966,6 +986,9 @@ export default function App() {
       {/* TAB 3: AI ANALYST TERMINAL */}
       {activeMainTab === 'AI_TERMINAL' && (
         <AIAnalystTerminalView
+          userSession={userSession}
+          activeExchange={activeExchange}
+          theme={theme}
           onStageFromAI={(t) => {
             setSelectedTicker({
               ticker: t,

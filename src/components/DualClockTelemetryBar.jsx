@@ -111,23 +111,26 @@ export default function DualClockTelemetryBar({ activeExchange, exchangeData, on
           </span>
         </div>
 
-        {/* Center: Live Exchange Bell Clock & Scoped Tenant */}
-        <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2.5">
-          <div className="flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-slate-400">{exMeta.name || activeExchange} Bell:</span>
-            <span className="font-mono font-semibold text-cyan-300">
-              {exMeta.local_time ? exMeta.local_time.split(' ')[1] : '--:--:--'}
-            </span>
-          </div>
+        {/* Center: Live Exchange Bell Clock & Scoped Tenant (Positioned cleanly below Exchange Bell status) */}
+        <div className="flex flex-col items-center justify-center gap-1">
           <div className="flex items-center gap-2">
-            {getStatusBadge(exMeta.session_phase, exMeta.is_open)}
-            {tenantId && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono bg-slate-800/90 border border-slate-700/80 text-slate-300">
-                Tenant: <strong className="text-emerald-400">{tenantId}</strong>
+            <Globe className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-slate-400 font-medium">{exMeta.name || activeExchange} Bell:</span>
+            {exMeta.local_time && (
+              <span className="font-mono font-semibold text-cyan-300">
+                {exMeta.local_time.split(' ')[1]}
               </span>
             )}
+            {getStatusBadge(exMeta.session_phase, exMeta.is_open)}
           </div>
+          {tenantId && (
+            <div className="flex items-center gap-1.5 text-[11px] font-mono">
+              <span className="text-slate-400">Scoped Tenant:</span>
+              <span className="px-2 py-0.5 rounded-md bg-slate-800/90 border border-slate-700/80 text-emerald-400 font-bold tracking-wider">
+                {tenantId}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Right: Security Standard & Tri-Timestamp Verification */}

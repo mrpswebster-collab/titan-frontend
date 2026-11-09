@@ -35,7 +35,8 @@ export default function FleetSetupView({
   onUpdateSession,
   theme = 'dark',
   onOpenBacktest,
-  onOpenScanner
+  onOpenScanner,
+  onOpenFinTechPro
 }) {
   const isLight = theme === 'light';
 
@@ -479,18 +480,31 @@ export default function FleetSetupView({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingWorkbook(null);
-                  setBuilderInitialTab('WORKBOOK_BUILDER');
-                  setIsBuilderOpen(true);
-                }}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>+ New Dedicated Workbook</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {onOpenFinTechPro && (
+                  <button
+                    type="button"
+                    onClick={onOpenFinTechPro}
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-300 font-bold text-xs shadow-sm transition"
+                  >
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <span>FinTech Pro Add-Ons</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingWorkbook(null);
+                    setBuilderInitialTab('WORKBOOK_BUILDER');
+                    setIsBuilderOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>+ New Dedicated Workbook</span>
+                </button>
+              </div>
             </div>
 
             {/* Workbook Cards Grid */}

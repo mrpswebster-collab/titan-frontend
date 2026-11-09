@@ -13,6 +13,7 @@ import ProCockpitView from './components/ProCockpitView';
 import HelpTooltip from './components/HelpTooltip';
 import GuidedTourModal from './components/GuidedTourModal';
 import SystemAuthSlashPage from './components/SystemAuthSlashPage';
+import FleetSetupView from './components/FleetSetupView';
 
 import { 
   Zap, 
@@ -131,27 +132,48 @@ export default function App() {
       return 'dark';
     }
   });
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
-  // Sync URL history on navigation
-  useEffect(() => {
-    const handlePopState = () => {
-      try {
-        const path = (window.location.pathname || '').toLowerCase();
-        const hash = (window.location.hash || '').toLowerCase();
-        if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
-          setActiveMainTab('AUTH');
-        } else if (activeMainTab === 'AUTH') {
-          setActiveMainTab('SCANNER');
-        }
-      } catch (e) {}
-    };
-    window.addEventListener('popstate', handlePopState);
-    window.addEventListener('hashchange', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      window.removeEventListener('hashchange', handlePopState);
-    };
-  }, [activeMainTab]);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+
+  // Sync URL history on navigation
+
+  useEffect(() => {
+
+    const handlePopState = () => {
+
+      try {
+
+        const path = (window.location.pathname || '').toLowerCase();
+
+        const hash = (window.location.hash || '').toLowerCase();
+
+        if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
+
+          setActiveMainTab('AUTH');
+
+        } else if (activeMainTab === 'AUTH') {
+
+          setActiveMainTab('SCANNER');
+
+        }
+
+      } catch (e) {}
+
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    window.addEventListener('hashchange', handlePopState);
+
+    return () => {
+
+      window.removeEventListener('popstate', handlePopState);
+
+      window.removeEventListener('hashchange', handlePopState);
+
+    };
+
+  }, [activeMainTab]);
+
 
 
   const toggleTheme = () => {
@@ -164,20 +186,34 @@ export default function App() {
 
   const isLight = theme === 'light';
 
-  // URL Slash Route: /auth support
-  const getInitialTab = () => {
-    try {
-      if (typeof window !== 'undefined') {
-        const path = (window.location.pathname || '').toLowerCase();
-        const hash = (window.location.hash || '').toLowerCase();
-        if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
-          return 'AUTH';
-        }
-      }
-    } catch (e) {}
-    return 'SCANNER';
-  };
-
+  // URL Slash Route: /auth support
+
+  const getInitialTab = () => {
+
+    try {
+
+      if (typeof window !== 'undefined') {
+
+        const path = (window.location.pathname || '').toLowerCase();
+
+        const hash = (window.location.hash || '').toLowerCase();
+
+        if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
+
+          return 'AUTH';
+
+        }
+
+      }
+
+    } catch (e) {}
+
+    return 'SCANNER';
+
+  };
+
+
+
   const [activeMainTab, setActiveMainTab] = useState(getInitialTab); // 'SCANNER', 'PORTFOLIO', 'AI_TERMINAL', 'AUTH'
   const [activeExchange, setActiveExchange] = useState('ASX');
   const [activeTier, setActiveTier] = useState('TIER_3');
@@ -513,6 +549,22 @@ export default function App() {
             >
               <Cpu className="w-4 h-4" />
               <span>AI Analyst Terminal</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveMainTab('FLEET_SETUP');
+                try { window.history.pushState(null, '', '/setup'); } catch(e) {}
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition ${
+                activeMainTab === 'FLEET_SETUP'
+                  ? 'bg-emerald-500/15 text-emerald-400 border-b-2 border-emerald-500'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Database className="w-4 h-4 text-emerald-400" />
+              <span>Fleet & Setup</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">Enclave</span>
             </button>
 
             <button
@@ -874,10 +926,15 @@ export default function App() {
         </main>
       )}
 
-      {/* TAB 2: PORTFOLIO & WORKBOOK FLEET */}
+      {/* TAB 2: PORTFOLIO HOLDINGS */}
       {activeMainTab === 'PORTFOLIO' && (
         <PortfolioHoldingsView
           userSession={userSession}
+          theme={theme}
+          onNavigateToFleetSetup={() => {
+            setActiveMainTab('FLEET_SETUP');
+            try { window.history.pushState(null, '', '/setup'); } catch(e) {}
+          }}
           onUpdateSession={(updated) => {
             setUserSession(updated);
             try { localStorage.setItem('titan_user_session', JSON.stringify(updated)); } catch(e) {}
@@ -893,6 +950,20 @@ export default function App() {
             };
             setSelectedTicker(found);
           }}
+        />
+      )}
+
+      {/* TAB: FLEET COMMAND & ENCLAVE SETUP */}
+      {activeMainTab === 'FLEET_SETUP' && (
+        <FleetSetupView
+          userSession={userSession}
+          theme={theme}
+          onUpdateSession={(updated) => {
+            setUserSession(updated);
+            try { localStorage.setItem('titan_user_session', JSON.stringify(updated)); } catch(e) {}
+          }}
+          onOpenBacktest={() => setIsBacktestOpen(true)}
+          onOpenScanner={() => setActiveMainTab('SCANNER')}
         />
       )}
 

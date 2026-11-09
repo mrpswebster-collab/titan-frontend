@@ -10,6 +10,9 @@ import AIAnalystTerminalView from './components/AIAnalystTerminalView';
 import InstitutionalGateAndSetupWizard from './components/InstitutionalGateAndSetupWizard';
 import WorkbookAutoBuilderModal from './components/WorkbookAutoBuilderModal';
 import ProCockpitView from './components/ProCockpitView';
+import HelpTooltip from './components/HelpTooltip';
+import GuidedTourModal from './components/GuidedTourModal';
+
 import { 
   Zap, 
   ShieldCheck, 
@@ -26,6 +29,8 @@ import {
   BarChart3,
   Cpu,
   Moon,
+  Sun,
+  BookOpen,
   FlaskConical,
   Briefcase,
   LayoutGrid,
@@ -116,6 +121,26 @@ const PERSONAS = [
 ];
 
 export default function App() {
+  // Institutional Theme Engine: 'dark' (Obsidian Desk) vs 'light' (Swiss Crisp White)
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('titan_theme') || 'dark';
+    } catch (e) {
+      return 'dark';
+    }
+  });
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    try {
+      localStorage.setItem('titan_theme', nextTheme);
+    } catch (e) {}
+  };
+
+  const isLight = theme === 'light';
+
   const [activeMainTab, setActiveMainTab] = useState('SCANNER'); // 'SCANNER', 'PORTFOLIO', 'AI_TERMINAL'
   const [activeExchange, setActiveExchange] = useState('ASX');
   const [activeTier, setActiveTier] = useState('TIER_3');
@@ -240,7 +265,8 @@ export default function App() {
   const tickerList = MOCK_TICKERS[activeExchange]?.[activeTier] || [];
 
   return (
-    <div className="min-h-screen bg-[#0a0e17] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-black">
+    <div className={`min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-black transition-colors duration-200 ${isLight ? "bg-slate-50 text-slate-900" : "bg-[#0a0e17] text-slate-100"}`}>
+
       {/* 1. Dual-Clock World Exchange Telemetry Bar */}
       <DualClockTelemetryBar
         activeExchange={activeExchange}
@@ -249,7 +275,8 @@ export default function App() {
       />
 
       {/* 2. Top Portal Header */}
-      <header className="bg-[#111827] border-b border-slate-800 px-4 py-3 sticky top-0 z-40 backdrop-blur">
+      <header className={`border-b px-4 py-3 sticky top-0 z-40 backdrop-blur transition-colors duration-200 ${isLight ? "bg-white/95 border-slate-200 shadow-sm" : "bg-[#111827] border-slate-800"}`}>
+
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-950 font-bold text-slate-950">
@@ -257,7 +284,8 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-base tracking-tight text-slate-100">
+                <h1 className={`font-bold text-base tracking-tight ${isLight ? "text-slate-900" : "text-slate-100"}`}>
+
                   TITAN <span className="text-emerald-400 font-mono text-xs font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">SAAS V2</span>
                 </h1>
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
@@ -306,6 +334,34 @@ export default function App() {
               </button>
             </div>
 
+                        {/* Institutional Help & Quick Guide */}
+            <button
+              onClick={() => setIsGuideOpen(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+                isLight 
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100' 
+                  : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25'
+              }`}
+              title="Open Institutional User Guide"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Guide</span>
+            </button>
+
+            {/* Dark / Light Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+                isLight 
+                  ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200' 
+                  : 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
+              }`}
+              title={isLight ? "Switch to Obsidian Dark Mode" : "Switch to Swiss Crisp Light Mode"}
+            >
+              {isLight ? <Moon className="w-3.5 h-3.5 text-slate-700" /> : <Sun className="w-3.5 h-3.5 text-amber-400" />}
+              <span className="hidden sm:inline">{isLight ? 'Dark' : 'Light'}</span>
+            </button>
+
             {/* 1-Click Workbook Auto-Builder & Global AI (Antigravity MCP) Hub */}
             <button
               onClick={() => setShowSetupModal(true)}
@@ -339,7 +395,8 @@ export default function App() {
       </header>
 
       {/* 3. Primary App Navigation Bar */}
-      <nav className="bg-[#0f172a] border-b border-slate-800 px-4">
+      <nav className={`border-b px-4 transition-colors duration-200 ${isLight ? "bg-white border-slate-200" : "bg-[#0f172a] border-slate-800"}`}>
+
         <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto scrollbar-none py-1">
           <div className="flex items-center gap-1">
             <button
@@ -559,10 +616,10 @@ export default function App() {
                 <button
                   key={p.id}
                   onClick={() => setActivePersona(p.id)}
-                  className={`text-left p-2.5 rounded-lg border transition ${
+                  className={`text-left p-2.5 rounded-xl border transition-all duration-150 shadow-sm ${
                     activePersona === p.id
-                      ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300 shadow-sm'
-                      : 'bg-[#0f172a] border-slate-800 text-slate-300 hover:border-slate-700'
+                      ? isLight ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-emerald-500/10' : 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
+                      : isLight ? 'bg-slate-50 border-slate-200/80 text-slate-700 hover:bg-slate-100/80' : 'bg-[#0f172a] border-slate-800 text-slate-300 hover:border-slate-700'
                   }`}
                 >
                   <div className="text-xs font-bold truncate">{p.label}</div>
@@ -576,6 +633,7 @@ export default function App() {
           <UniversalTierSelector
             activeTier={activeTier}
             onSelectTier={setActiveTier}
+            theme={theme}
             counts={{
               TIER_3: MOCK_TICKERS[activeExchange]?.TIER_3?.length || 0,
               TIER_1: MOCK_TICKERS[activeExchange]?.TIER_1?.length || 0,
@@ -585,8 +643,10 @@ export default function App() {
           />
 
           {/* Asset Scanner Table */}
-          <div className="bg-[#111827] border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-[#131b2e]">
+          <div className={`border rounded-2xl overflow-hidden shadow-xl transition-colors duration-200 ${isLight ? "bg-white border-slate-200 shadow-slate-200/60" : "bg-[#111827] border-slate-800 shadow-black/40"}`}>
+
+            <div className={`p-4 border-b flex items-center justify-between ${isLight ? "bg-slate-50/90 border-slate-200 text-slate-900" : "bg-[#131b2e] border-slate-800 text-slate-100"}`}>
+
               <div>
                 <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
                   <span>{activeExchange} {activeTier.replace('_', ' ')} Watchlist</span>
@@ -610,27 +670,38 @@ export default function App() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-[#0f172a] text-slate-400 text-[10px] uppercase tracking-wider border-b border-slate-800">
+                <thead className={`text-[10px] uppercase tracking-wider border-b ${isLight ? "bg-slate-100/90 text-slate-600 border-slate-200" : "bg-[#0f172a] text-slate-400 border-slate-800"}`}>
                   <tr>
                     <th className="py-3 px-4">Symbol / Name</th>
                     <th className="py-3 px-4">Sector</th>
-                    <th className="py-3 px-4 text-right">Price</th>
+                    <th className="py-3 px-4 text-right">
+                      Price <HelpTooltip title="Price" text="Signal price with Rule 24 (+2% marketable limit cap) enforced." theme={theme} />
+                    </th>
                     <th className="py-3 px-4 text-right">Change</th>
-                    <th className="py-3 px-4 text-center">Score</th>
-                    <th className="py-3 px-4">RSI (14)</th>
-                    <th className="py-3 px-4">MACD Hook</th>
-                    <th className="py-3 px-4">Volume OBV</th>
+                    <th className="py-3 px-4 text-center">
+                      Score <HelpTooltip title="Conviction Score" text="1-10 rating evaluating Volatility Compression (NR7), Chaikin Flow, and MACD slope." theme={theme} />
+                    </th>
+                    <th className="py-3 px-4">
+                      RSI (14) <HelpTooltip title="RSI Velocity" text="Relative Strength Index: Values below 40 denote deep compression; above 70 denote power thrust." theme={theme} />
+                    </th>
+                    <th className="py-3 px-4">
+                      MACD Hook <HelpTooltip title="MACD Slope" text="Bullish Kinematic Hook: Confirms momentum vector slope expansion (> 0)." theme={theme} />
+                    </th>
+                    <th className="py-3 px-4">
+                      Volume OBV <HelpTooltip title="On-Balance Volume" text="Confirms institutional accumulation prior to retail breakout." theme={theme} />
+                    </th>
                     <th className="py-3 px-4 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className={`divide-y ${isLight ? "divide-slate-100" : "divide-slate-800/60"}`}>
+
                   {tickerList.map((item) => (
                     <tr
                       key={item.ticker}
                       onClick={() => setSelectedTicker(item)}
-                      className="hover:bg-slate-800/40 cursor-pointer transition"
+                      className={`cursor-pointer transition-colors duration-150 ${isLight ? "hover:bg-slate-50/90 text-slate-900" : "hover:bg-slate-800/40 text-slate-100"}`}
                     >
-                      <td className="py-3 px-4 font-bold text-slate-100">
+                      <td className="py-3 px-4 font-bold">
                         <div className="flex items-center gap-2">
                           <span className="text-emerald-400 font-mono text-sm">{item.ticker}</span>
                           <span className="text-[11px] text-slate-400 font-normal truncate max-w-[140px]">{item.name}</span>
@@ -799,6 +870,13 @@ export default function App() {
         onClose={() => setIsBacktestOpen(false)}
         defaultTicker={selectedTicker?.ticker || 'WA1'}
         defaultExchange={activeExchange}
+      />
+
+      {/* Institutional Guided Tour & Help Modal */}
+      <GuidedTourModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+        theme={theme}
       />
     </div>
   );

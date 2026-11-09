@@ -12,6 +12,7 @@ import WorkbookAutoBuilderModal from './components/WorkbookAutoBuilderModal';
 import ProCockpitView from './components/ProCockpitView';
 import HelpTooltip from './components/HelpTooltip';
 import GuidedTourModal from './components/GuidedTourModal';
+import SystemAuthSlashPage from './components/SystemAuthSlashPage';
 
 import { 
   Zap, 
@@ -34,7 +35,8 @@ import {
   FlaskConical,
   Briefcase,
   LayoutGrid,
-  ExternalLink
+  ExternalLink,
+  Key
 } from 'lucide-react';
 
 const MOCK_TICKERS = {
@@ -129,7 +131,28 @@ export default function App() {
       return 'dark';
     }
   });
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  // Sync URL history on navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      try {
+        const path = (window.location.pathname || '').toLowerCase();
+        const hash = (window.location.hash || '').toLowerCase();
+        if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
+          setActiveMainTab('AUTH');
+        } else if (activeMainTab === 'AUTH') {
+          setActiveMainTab('SCANNER');
+        }
+      } catch (e) {}
+    };
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
+  }, [activeMainTab]);
+
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -141,7 +164,21 @@ export default function App() {
 
   const isLight = theme === 'light';
 
-  const [activeMainTab, setActiveMainTab] = useState('SCANNER'); // 'SCANNER', 'PORTFOLIO', 'AI_TERMINAL'
+  // URL Slash Route: /auth support
+  const getInitialTab = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        const path = (window.location.pathname || '').toLowerCase();
+        const hash = (window.location.hash || '').toLowerCase();
+        if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
+          return 'AUTH';
+        }
+      }
+    } catch (e) {}
+    return 'SCANNER';
+  };
+
+  const [activeMainTab, setActiveMainTab] = useState(getInitialTab); // 'SCANNER', 'PORTFOLIO', 'AI_TERMINAL', 'AUTH'
   const [activeExchange, setActiveExchange] = useState('ASX');
   const [activeTier, setActiveTier] = useState('TIER_3');
   const [activePersona, setActivePersona] = useState('GEOLOGIST');
@@ -250,12 +287,55 @@ export default function App() {
   // into the live Terminal (no clumsy 4-step setup blocker!)
   // =========================================================================
   if (!userSession.isAuthed) {
+    if (activeMainTab === 'AUTH') {
+      return (
+        <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${isLight ? "bg-slate-50 text-slate-900" : "bg-[#0a0e17] text-slate-100"}`}>
+          <header className={`border-b px-4 py-3 sticky top-0 z-40 backdrop-blur transition-colors duration-200 ${isLight ? "bg-white/95 border-slate-200 shadow-sm" : "bg-[#111827] border-slate-800"}`}>
+            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 shadow-md">
+                  ⚡
+                </div>
+                <div>
+                  <h1 className="font-bold text-base tracking-tight">
+                    TITAN <span className="text-emerald-400 font-mono text-xs font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">SAAS V2</span>
+                  </h1>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setActiveMainTab('SCANNER');
+                    try { window.history.pushState(null, '', '/'); } catch(e) {}
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono transition shadow-lg shadow-emerald-500/20"
+                >
+                  Enter Sign-In Gate
+                </button>
+              </div>
+            </div>
+          </header>
+          <SystemAuthSlashPage
+            userSession={userSession}
+            theme={theme}
+            onNavigateHome={() => {
+              setActiveMainTab('SCANNER');
+              try { window.history.pushState(null, '', '/'); } catch(e) {}
+            }}
+          />
+        </div>
+      );
+    }
     return (
       <InstitutionalGateAndSetupWizard
         userSession={userSession}
         onLoginSuccess={handleLoginSuccess}
         onCompleteSetup={handleCompleteSetup}
         onLogout={handleLogout}
+        onViewAuthKeys={() => {
+          setActiveMainTab('AUTH');
+          try { window.history.pushState(null, '', '/auth'); } catch(e) {}
+        }}
       />
     );
   }
@@ -277,7 +357,7 @@ export default function App() {
       {/* 2. Top Portal Header */}
       <header className={`border-b px-4 py-3 sticky top-0 z-40 backdrop-blur transition-colors duration-200 ${isLight ? "bg-white/95 border-slate-200 shadow-sm" : "bg-[#111827] border-slate-800"}`}>
 
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-950 font-bold text-slate-950">
               ⚡
@@ -397,7 +477,7 @@ export default function App() {
       {/* 3. Primary App Navigation Bar */}
       <nav className={`border-b px-4 transition-colors duration-200 ${isLight ? "bg-white border-slate-200" : "bg-[#0f172a] border-slate-800"}`}>
 
-        <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto scrollbar-none py-1">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 py-1">
           <div className="flex items-center gap-1">
             <button
               onClick={() => setActiveMainTab('SCANNER')}
@@ -441,6 +521,23 @@ export default function App() {
             >
               <FlaskConical className="w-4 h-4 text-cyan-400" />
               <span>Backtest Lab</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveMainTab('AUTH');
+                try { window.history.pushState(null, '', '/auth'); } catch(e) {}
+              }}
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs font-bold font-mono transition ${
+                activeMainTab === 'AUTH'
+                  ? 'bg-amber-500/15 text-amber-300 border-b-2 border-amber-500'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+              title="System Authentication & Cryptographic Keys (/auth)"
+            >
+              <Key className="w-4 h-4 text-amber-400" />
+              <span>/auth</span>
+              <span className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">System Keys</span>
             </button>
           </div>
 
@@ -810,6 +907,18 @@ export default function App() {
               conviction: 'C:9',
               currency: 'AUD'
             });
+          }}
+        />
+      )}
+
+      {/* TAB 4: SYSTEM AUTHENTICATION SLASH PAGE (/auth) */}
+      {activeMainTab === 'AUTH' && (
+        <SystemAuthSlashPage
+          userSession={userSession}
+          theme={theme}
+          onNavigateHome={() => {
+            setActiveMainTab('SCANNER');
+            try { window.history.pushState(null, '', '/'); } catch(e) {}
           }}
         />
       )}

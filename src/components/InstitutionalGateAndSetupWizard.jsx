@@ -57,7 +57,8 @@ export default function InstitutionalGateAndSetupWizard({
   onLogout,
   onCompleteSetup, 
   showSetupModalOnly = false,
-  onCloseModal
+  onCloseModal,
+  onViewAuthKeys
 }) {
   // Navigation Tabs: 'SIGN_IN' | 'REGISTER' | 'FORGOT_PIN'
   const [authTab, setAuthTab] = useState('SIGN_IN');
@@ -1201,7 +1202,17 @@ const handleCopyCode = () => {
             )}
 
             {/* Institutional Footer */}
-            <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
+            <div className="mt-6 pt-5 border-t border-slate-800/80 text-center space-y-2">
+              {onViewAuthKeys && (
+                <button
+                  type="button"
+                  onClick={onViewAuthKeys}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-mono font-bold transition shadow-sm"
+                >
+                  <Key className="w-3.5 h-3.5 text-amber-400" />
+                  <span>View System Authentication & Keys (/auth)</span>
+                </button>
+              )}
               <div className="text-[11px] font-mono text-slate-500">
                 Institutional Quant Terminal • Sovereign Multi-Asset Gateway
               </div>

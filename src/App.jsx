@@ -387,6 +387,7 @@ export default function App() {
       <DualClockTelemetryBar
         activeExchange={activeExchange}
         exchangeData={exchangeData}
+        tenantId={userSession?.tenantId || 'ADMIN-SOVEREIGN-NODE'}
         onRefresh={fetchExchangeStatus}
       />
 
@@ -493,7 +494,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* 3. Primary App Navigation Bar */}
+      {/* 3. Primary App Navigation Bar (Hidden when Cockpit Pro is Active) */}
+      {layoutMode !== 'COCKPIT' && (
       <nav className={`border-b px-4 transition-colors duration-200 ${isLight ? "bg-white border-slate-200" : "bg-[#0f172a] border-slate-800"}`}>
 
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 py-1">
@@ -576,11 +578,9 @@ export default function App() {
             </button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-400">
-            <span>Tenant: <strong className="text-slate-200">{userSession.tenantId || 'TENANT-ALPHA'}</strong></span>
-          </div>
         </div>
       </nav>
+      )}
 
       {/* Notification Toast for Staged Orders */}
       {stagedNotification && (

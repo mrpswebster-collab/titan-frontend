@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, Clock, ShieldCheck, Sun, Moon, AlertCircle } from 'lucide-react';
 
-export default function DualClockTelemetryBar({ activeExchange, exchangeData, onRefresh }) {
+export default function DualClockTelemetryBar({ activeExchange, exchangeData, onRefresh, tenantId }) {
   const [clientTime, setClientTime] = useState(new Date());
   const [userTz, setUserTz] = useState('Australia/Sydney');
 
@@ -111,8 +111,8 @@ export default function DualClockTelemetryBar({ activeExchange, exchangeData, on
           </span>
         </div>
 
-        {/* Center: Live Exchange Bell Clock */}
-        <div className="flex items-center gap-3">
+        {/* Center: Live Exchange Bell Clock & Scoped Tenant */}
+        <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2.5">
           <div className="flex items-center gap-1.5">
             <Globe className="w-3.5 h-3.5 text-cyan-400" />
             <span className="text-slate-400">{exMeta.name || activeExchange} Bell:</span>
@@ -120,7 +120,14 @@ export default function DualClockTelemetryBar({ activeExchange, exchangeData, on
               {exMeta.local_time ? exMeta.local_time.split(' ')[1] : '--:--:--'}
             </span>
           </div>
-          {getStatusBadge(exMeta.session_phase, exMeta.is_open)}
+          <div className="flex items-center gap-2">
+            {getStatusBadge(exMeta.session_phase, exMeta.is_open)}
+            {tenantId && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono bg-slate-800/90 border border-slate-700/80 text-slate-300">
+                Tenant: <strong className="text-emerald-400">{tenantId}</strong>
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Right: Security Standard & Tri-Timestamp Verification */}

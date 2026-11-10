@@ -26,7 +26,7 @@ export default class ErrorBoundary extends React.Component {
         });
       }
     } catch (e) {}
-    window.location.href = '/';
+    window.location.href = '/?ts=' + Date.now();
   };
 
   render() {
@@ -98,7 +98,7 @@ export default class ErrorBoundary extends React.Component {
                   try {
                     localStorage.setItem('titan_layout_mode', 'STANDARD');
                   } catch (e) {}
-                  window.location.reload();
+                  window.location.href = '/?mode=STANDARD&ts=' + Date.now();
                 }}
                 style={{
                   backgroundColor: '#1f2937',

@@ -127,18 +127,6 @@ export default function EnclaveDropdownMenu({
       category: 'GOVERNANCE & HELP',
       items: [
         {
-          id: 'AUTH',
-          label: '/auth System Keys',
-          desc: 'Zero-Trust cryptographic tokens & policies',
-          icon: Key,
-          action: () => {
-            onToggleLayoutMode('STANDARD');
-            onSelectTab('AUTH');
-            try { window.history.pushState(null, '', '/auth'); } catch (e) {}
-            setIsOpen(false);
-          }
-        },
-        {
           id: 'GUIDE',
           label: 'Platform User Guide',
           desc: 'Step-by-step enclave navigation tutorial',
@@ -160,7 +148,6 @@ export default function EnclaveDropdownMenu({
       case 'PORTFOLIO': return 'My Portfolio & Holdings';
       case 'AI_TERMINAL': return 'AI Analyst Terminal';
       case 'FLEET_SETUP': return 'Fleet & Setup';
-      case 'AUTH': return '/auth System Keys';
       default: return 'Enclave Menu';
     }
   };

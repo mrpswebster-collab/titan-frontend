@@ -12,7 +12,6 @@ import WorkbookAutoBuilderModal from './components/WorkbookAutoBuilderModal';
 import ProCockpitView from './components/ProCockpitView';
 import HelpTooltip from './components/HelpTooltip';
 import GuidedTourModal from './components/GuidedTourModal';
-import SystemAuthSlashPage from './components/SystemAuthSlashPage';
 import FleetSetupView from './components/FleetSetupView';
 import EnclaveDropdownMenu from './components/EnclaveDropdownMenu';
 import SequencedTradingRunwayModal from './components/SequencedTradingRunwayModal';
@@ -132,9 +131,6 @@ const resolveInitialTab = () => {
     if (typeof window !== 'undefined') {
       const path = (window.location.pathname || '').toLowerCase();
       const hash = (window.location.hash || '').toLowerCase();
-      if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
-        return 'AUTH';
-      }
       if (path === '/setup' || hash === '#/setup' || hash === '#setup') {
         return 'FLEET_SETUP';
       }
@@ -191,11 +187,9 @@ export default function App() {
       try {
         const path = (window.location.pathname || '').toLowerCase();
         const hash = (window.location.hash || '').toLowerCase();
-        if (path === '/auth' || hash === '#/auth' || hash === '#auth') {
-          setActiveMainTab('AUTH');
-        } else if (path === '/setup' || hash === '#/setup' || hash === '#setup') {
+        if (path === '/setup' || hash === '#/setup' || hash === '#setup') {
           setActiveMainTab('FLEET_SETUP');
-        } else if (activeMainTab === 'AUTH' || activeMainTab === 'FLEET_SETUP') {
+        } else if (activeMainTab === 'FLEET_SETUP') {
           setActiveMainTab('SCANNER');
         }
       } catch (e) {}
@@ -297,55 +291,12 @@ export default function App() {
   // into the live Terminal (no clumsy 4-step setup blocker!)
   // =========================================================================
   if (!userSession?.isAuthed) {
-    if (activeMainTab === 'AUTH') {
-      return (
-        <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${isLight ? "bg-slate-50 text-slate-900" : "bg-[#0a0e17] text-slate-100"}`}>
-          <header className={`border-b px-4 py-3 sticky top-0 z-40 backdrop-blur transition-colors duration-200 ${isLight ? "bg-white/95 border-slate-200 shadow-sm" : "bg-[#111827] border-slate-800"}`}>
-            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 shadow-md">
-                  ⚡
-                </div>
-                <div>
-                  <h1 className="font-bold text-base tracking-tight">
-                    TITAN <span className="text-emerald-400 font-mono text-xs font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">SAAS V2</span>
-                  </h1>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setActiveMainTab('SCANNER');
-                    try { window.history.pushState(null, '', '/'); } catch(e) {}
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono transition shadow-lg shadow-emerald-500/20"
-                >
-                  Enter Sign-In Gate
-                </button>
-              </div>
-            </div>
-          </header>
-          <SystemAuthSlashPage
-            userSession={userSession}
-            theme={theme}
-            onNavigateHome={() => {
-              setActiveMainTab('SCANNER');
-              try { window.history.pushState(null, '', '/'); } catch(e) {}
-            }}
-          />
-        </div>
-      );
-    }
     return (
       <InstitutionalGateAndSetupWizard
         userSession={userSession}
         onLoginSuccess={handleLoginSuccess}
         onCompleteSetup={handleCompleteSetup}
         onLogout={handleLogout}
-        onViewAuthKeys={() => {
-          setActiveMainTab('AUTH');
-          try { window.history.pushState(null, '', '/auth'); } catch(e) {}
-        }}
       />
     );
   }
@@ -571,22 +522,6 @@ export default function App() {
               <span>Backtest Lab</span>
             </button>
 
-            <button
-              onClick={() => {
-                setActiveMainTab('AUTH');
-                try { window.history.pushState(null, '', '/auth'); } catch(e) {}
-              }}
-              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs font-bold font-mono transition ${
-                activeMainTab === 'AUTH'
-                  ? 'bg-amber-500/15 text-amber-300 border-b-2 border-amber-500'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-              title="System Authentication & Cryptographic Keys (/auth)"
-            >
-              <Key className="w-4 h-4 text-amber-400" />
-              <span>/auth</span>
-              <span className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">System Keys</span>
-            </button>
           </div>
 
         </div>
@@ -991,17 +926,7 @@ export default function App() {
         />
       )}
 
-      {/* TAB 4: SYSTEM AUTHENTICATION SLASH PAGE (/auth) */}
-      {activeMainTab === 'AUTH' && (
-        <SystemAuthSlashPage
-          userSession={userSession}
-          theme={theme}
-          onNavigateHome={() => {
-            setActiveMainTab('SCANNER');
-            try { window.history.pushState(null, '', '/'); } catch(e) {}
-          }}
-        />
-      )}
+
         </>
       )}
 

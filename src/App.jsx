@@ -15,6 +15,7 @@ import GuidedTourModal from './components/GuidedTourModal';
 import SystemAuthSlashPage from './components/SystemAuthSlashPage';
 import FleetSetupView from './components/FleetSetupView';
 import EnclaveDropdownMenu from './components/EnclaveDropdownMenu';
+import SequencedTradingRunwayModal from './components/SequencedTradingRunwayModal';
 
 import { 
   Zap, 
@@ -161,6 +162,7 @@ export default function App() {
   const [isFinTechProOpen, setIsFinTechProOpen] = useState(false);
   const [isBacktestOpen, setIsBacktestOpen] = useState(false);
   const [showSetupModal, setShowSetupModal] = useState(false);
+  const [isRunwayOpen, setIsRunwayOpen] = useState(false);
   const [stagedNotification, setStagedNotification] = useState(null);
 
   // Workspace Layout Mode: 'COCKPIT' (Admin Pro) vs. 'STANDARD' (Retail Multi-Tab)
@@ -397,21 +399,27 @@ export default function App() {
               theme={theme}
             />
 
-            {/* Direct Dedicated Setup Hub Button */}
+            {/* Sequenced Trading Action Runway Launch Button */}
             <button
-              onClick={() => {
-                setLayoutMode('STANDARD');
-                setActiveMainTab('FLEET_SETUP');
-                try { window.history.pushState(null, '', '/setup'); } catch (e) {}
-              }}
+              onClick={() => setIsRunwayOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 border-emerald-500/50 hover:bg-emerald-500/30 shadow-emerald-950/20"
+              title="Launch Sequenced 4-Step Trading Action Runway"
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="font-mono">Action Runway</span>
+            </button>
+
+            {/* Direct Dedicated Setup Hub Button (Sequenced Pop-Up Modal) */}
+            <button
+              onClick={() => setShowSetupModal(true)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
-                activeMainTab === 'FLEET_SETUP' && layoutMode !== 'COCKPIT'
+                showSetupModal
                   ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-cyan-500/10'
                   : isLight
                     ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
                     : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
               }`}
-              title="Open Dedicated Fleet Setup & Superadmin Hub (/setup)"
+              title="Open Dedicated Fleet Setup & Workbook Wizard (Pop-Up Modal)"
             >
               <Database className="w-3.5 h-3.5 text-cyan-400" />
               <span className="hidden sm:inline">Setup Hub</span>
@@ -631,6 +639,17 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Primary Sequenced Trading Runway Action Trigger */}
+              <button
+                type="button"
+                onClick={() => setIsRunwayOpen(true)}
+                className="flex items-center gap-2 px-3.5 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 text-xs font-mono font-extrabold shadow-md transition"
+                title="Launch 4-Step Sequenced Trade Execution Runway"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>Start Trading Runway (4-Step)</span>
+              </button>
+
               {/* Cockpit Mode Toggle (Native V156 Cockpit vs High-Density React Grid) */}
               <div className="bg-[#080d14] p-0.5 rounded-lg border border-slate-800 flex items-center text-[11px] font-mono">
                 <button
@@ -1046,6 +1065,20 @@ export default function App() {
       <GuidedTourModal
         isOpen={isGuideOpen}
         onClose={() => setIsGuideOpen(false)}
+        theme={theme}
+      />
+
+      {/* Sequenced Trading Action Runway Modal */}
+      <SequencedTradingRunwayModal
+        isOpen={isRunwayOpen}
+        onClose={() => setIsRunwayOpen(false)}
+        activeExchange={activeExchange}
+        exchangeData={exchangeData}
+        userSession={userSession}
+        onStageOrder={(order) => {
+          handleStageOrder(order);
+          setStagedNotification(order);
+        }}
         theme={theme}
       />
     </div>

@@ -880,15 +880,15 @@ export default function App() {
             try { localStorage.setItem('titan_user_session', JSON.stringify(updated)); } catch(e) {}
           }}
           onSelectTicker={(t) => {
-            const found = {
+            setSelectedTicker({
+              ...t,
               ticker: t.ticker,
-              name: t.company,
-              price: t.livePrice,
-              change: t.plPct,
-              conviction: 'C:9',
-              currency: t.currency
-            };
-            setSelectedTicker(found);
+              name: t.name || t.company || t.ticker,
+              price: t.price ?? t.livePrice ?? 0,
+              change: t.plPct ?? t.change ?? 0,
+              conviction: t.conviction || 'C:9',
+              currency: t.currency || userSession?.currency || 'AUD'
+            });
           }}
         />
       )}
@@ -956,6 +956,8 @@ export default function App() {
         ticker={selectedTicker?.ticker}
         data={selectedTicker}
         userEquity={userSession?.startingCapital || 25000}
+        userSession={userSession}
+        theme={theme}
         onClose={() => setSelectedTicker(null)}
         onExecuteOrder={handleStageOrder}
       />

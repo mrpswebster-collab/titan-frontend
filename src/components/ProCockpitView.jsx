@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Briefcase, 
-  TrendingUp, 
-  DollarSign, 
-  ShieldCheck, 
-  Layers, 
-  ArrowUpRight, 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Briefcase,
+  TrendingUp,
+  DollarSign,
+  ShieldCheck,
+  Layers,
+  ArrowUpRight,
   ArrowDownRight,
   CheckCircle2,
   Database,
@@ -23,18 +23,14 @@ import {
   ChevronRight,
   Filter,
   BarChart3,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Sparkles
 } from 'lucide-react';
 import WorkbookAutoBuilderModal from './WorkbookAutoBuilderModal';
+import SignalInceptionView, { formatVerifiedVolMult, computeDaysSince } from './SignalInceptionView';
+import { resolveAntiChurnShield } from './PortfolioHoldingsView';
 
 const API_BASE = 'https://asx-quant-brain.onrender.com';
-
-const PERSONAS = [
-  { id: 'GEOLOGIST', label: '⛏️ Mining Geologist', desc: 'Assay grade-thickness & critical minerals' },
-  { id: 'BIOTECH', label: '🧬 Biotech Clinical Auditor', desc: 'FDA/TGA clinical runway & endpoints' },
-  { id: 'TECH', label: '💻 Tech & Defense Momentum', desc: 'ARR growth & sovereign contract momentum' },
-  { id: 'RISK_OFFICER', label: '🛡️ Institutional Risk Officer', desc: 'Balance sheet durability & drawdown gates' }
-];
 
 export default function ProCockpitView({
   userSession,
@@ -54,6 +50,7 @@ export default function ProCockpitView({
   onOpenAIAnalyst
 }) {
   const [selectedWorkbook, setSelectedWorkbook] = useState('ALL');
+  const [leftPaneTab, setLeftPaneTab] = useState('HOLDINGS'); // 'HOLDINGS' | 'INCEPTION'
   const [workbooks, setWorkbooks] = useState([]);
   const [holdings, setHoldings] = useState([]);
   const [accessTier, setAccessTier] = useState('ISOLATED_CLIENT_ENCLAVE');
@@ -106,23 +103,40 @@ export default function ProCockpitView({
   };
 
   const activeWb = workbooks.find(w => w.id === selectedWorkbook) || workbooks[0] || fallbackSheet;
-  const filteredHoldings = selectedWorkbook === 'ALL'
-    ? holdings
-    : holdings.filter(h => h.workbook === selectedWorkbook);
+  const filteredHoldings = useMemo(() => {
+    return selectedWorkbook === 'ALL'
+      ? holdings
+      : holdings.filter(h => h.workbook === selectedWorkbook);
+  }, [holdings, selectedWorkbook]);
 
-  const totalEquity = activeWb.equity || userSession?.startingCapital || 25000;
-  const totalCash = activeWb.cash || userSession?.startingCapital || 25000;
+  const totalEquity = Number(activeWb.equity || userSession?.startingCapital || 25000);
+  const totalCash = Number(activeWb.cash || userSession?.startingCapital || 25000);
   const investedValue = Math.max(0, totalEquity - totalCash);
   const curr = userSession?.currency || 'AUD';
   const exMeta = exchangeData?.[activeExchange] || {};
 
+  // Compute Total Since-Purchase P&L across filtered holdings
+  const totalSincePurchase = useMemo(() => {
+    let cost = 0;
+    let pl = 0;
+    filteredHoldings.forEach((pos) => {
+      const u = Number(pos.units || 0);
+      const a = Number(pos.avgCost || 0);
+      const l = Number(pos.livePrice || 0);
+      const cb = Number(pos.costBasis || (u * a));
+      const mv = Number(pos.marketValue || (u * l));
+      cost += cb;
+      pl += pos.plDollar !== undefined ? Number(pos.plDollar) : (mv - cb);
+    });
+    const pct = cost > 0 ? (pl / cost) * 100 : 0;
+    return { plDollar: pl, plPct: pct };
+  }, [filteredHoldings]);
+
   return (
     <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-4 py-4 space-y-4 font-sans">
-      
-      {/* 1. TOP METRIC RIBBON (Ultra-Compact Bloomberg Style) */}
+      {/* 1. TOP METRIC RIBBON (Westpac + Institutional Cockpit Style) */}
       <div className="bg-[#0d1520] border border-slate-800 rounded-xl p-3 shadow-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          
           {/* Left: Workbook Selector & Node Identity */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
@@ -165,7 +179,7 @@ export default function ProCockpitView({
             </button>
           </div>
 
-          {/* Right: Quick Action Launchers */}
+          {/* Right: Quick Action Launchers (1-Click Google Sheets Auto-Builder & AI Hub) */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => {
@@ -188,7 +202,7 @@ export default function ProCockpitView({
               className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-300 text-xs font-bold transition"
             >
               <Cpu className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">AI & MCP Config</span>
+              <span className="hidden sm:inline">AI &amp; MCP Config</span>
             </button>
 
             {onOpenBacktest && (
@@ -203,7 +217,7 @@ export default function ProCockpitView({
           </div>
         </div>
 
-        {/* High-Density Key Financial Metrics Bar */}
+        {/* High-Density Key Financial Metrics Bar (6 Westpac Banking Strip Cards) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mt-3 pt-3 border-t border-slate-800/80">
           <div className="bg-[#070c12] p-2.5 rounded-lg border border-slate-800">
             <div className="text-[10px] font-mono uppercase text-slate-400">Total Net Equity</div>
@@ -213,39 +227,38 @@ export default function ProCockpitView({
           </div>
 
           <div className="bg-[#070c12] p-2.5 rounded-lg border border-slate-800">
-            <div className="text-[10px] font-mono uppercase text-slate-400">Liquid Cash Pool</div>
+            <div className="text-[10px] font-mono uppercase text-slate-400">Available Cash</div>
             <div className="text-base font-bold font-mono text-emerald-400 mt-0.5">
               {curr} ${totalCash.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
 
           <div className="bg-[#070c12] p-2.5 rounded-lg border border-slate-800">
-            <div className="text-[10px] font-mono uppercase text-slate-400">Deployed Valuation</div>
+            <div className="text-[10px] font-mono uppercase text-slate-400">Market Value Invested</div>
             <div className="text-base font-bold font-mono text-cyan-400 mt-0.5">
               {curr} ${investedValue.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
 
           <div className="bg-[#070c12] p-2.5 rounded-lg border border-slate-800">
-            <div className="text-[10px] font-mono uppercase text-slate-400">Day P&L</div>
+            <div className="text-[10px] font-mono uppercase text-slate-400">Today&apos;s P&amp;L ($ &amp; %)</div>
             <div className={`text-base font-bold font-mono mt-0.5 ${activeWb.dayPl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {activeWb.dayPl >= 0 ? '+' : ''}${Number(activeWb.dayPl || 0).toFixed(2)} ({activeWb.dayPlPct >= 0 ? '+' : ''}{activeWb.dayPlPct || 0}%)
             </div>
           </div>
 
           <div className="bg-[#070c12] p-2.5 rounded-lg border border-slate-800">
-            <div className="text-[10px] font-mono uppercase text-slate-400">Active Positions</div>
-            <div className="text-base font-bold font-mono text-slate-200 mt-0.5 flex items-center gap-1.5">
-              <span>{filteredHoldings.length} Active</span>
-              <span className="text-[10px] font-normal text-slate-400 font-sans">({workbooks.length} Workbooks)</span>
+            <div className="text-[10px] font-mono uppercase text-slate-400">Since-Purchase P&amp;L</div>
+            <div className={`text-base font-bold font-mono mt-0.5 ${totalSincePurchase.plDollar >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {totalSincePurchase.plDollar >= 0 ? '+' : ''}${totalSincePurchase.plDollar.toFixed(2)} ({totalSincePurchase.plPct >= 0 ? '+' : ''}{totalSincePurchase.plPct.toFixed(1)}%)
             </div>
           </div>
 
           <div className="bg-[#070c12] p-2.5 rounded-lg border border-slate-800 flex flex-col justify-center">
-            <div className="text-[10px] font-mono uppercase text-slate-400">Session & Enclave</div>
+            <div className="text-[10px] font-mono uppercase text-slate-400">Shield &amp; Enclave</div>
             <div className="text-xs font-bold font-mono mt-0.5 flex items-center gap-1 text-emerald-400">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>HMAC Bound • {exMeta.session_phase || 'REGULAR'}</span>
+              <span>Closing-Basis • {exMeta.session_phase || 'REGULAR'}</span>
             </div>
           </div>
         </div>
@@ -266,17 +279,38 @@ export default function ProCockpitView({
         </div>
       )}
 
-      {/* 3. DUAL-PANE COCKPIT GRID (High Density) */}
+      {/* 3. DUAL-PANE COCKPIT GRID */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        
-        {/* LEFT PANE (XL: 6 cols): ACTIVE PORTFOLIO HOLDINGS */}
+        {/* LEFT PANE (XL: 6 cols): ACTIVE PORTFOLIO HOLDINGS OR SIGNAL INCEPTION */}
         <div className="xl:col-span-6 bg-[#0d1520] border border-slate-800 rounded-xl overflow-hidden shadow-xl flex flex-col">
-          <div className="p-3 border-b border-slate-800 bg-[#101b2a] flex items-center justify-between">
+          <div className="p-3 border-b border-slate-800 bg-[#101b2a] flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-xs font-bold text-slate-100 font-mono uppercase tracking-wider">
-                Live Holdings ({filteredHoldings.length})
-              </h3>
+              <div className="flex bg-[#070c12] rounded-lg p-0.5 border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setLeftPaneTab('HOLDINGS')}
+                  className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold transition flex items-center gap-1 ${
+                    leftPaneTab === 'HOLDINGS'
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Briefcase className="w-3 h-3" />
+                  <span>Holdings ({filteredHoldings.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLeftPaneTab('INCEPTION')}
+                  className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold transition flex items-center gap-1 ${
+                    leftPaneTab === 'INCEPTION'
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>Day-0 Inception</span>
+                </button>
+              </div>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
                 {activeWb.name}
               </span>
@@ -298,69 +332,135 @@ export default function ProCockpitView({
             )}
           </div>
 
-          <div className="overflow-x-auto flex-1">
-            {filteredHoldings.length === 0 ? (
-              <div className="p-8 text-center font-mono text-xs text-slate-400 space-y-2">
-                <div className="text-slate-300">No active positions currently open in this node.</div>
-                <div className="text-emerald-400">
-                  {curr} ${totalCash.toLocaleString('en-AU', { minimumFractionDigits: 2 })} liquid cash ready for allocation.
+          {leftPaneTab === 'INCEPTION' ? (
+            <div className="flex-1 overflow-x-auto">
+              <SignalInceptionView
+                userSession={userSession}
+                selectedWorkbook={selectedWorkbook}
+                onSelectTicker={onSelectTicker}
+                theme="dark"
+                compact={true}
+              />
+            </div>
+          ) : (
+            <div className="overflow-x-auto flex-1">
+              {filteredHoldings.length === 0 ? (
+                <div className="p-8 text-center font-mono text-xs text-slate-400 space-y-2">
+                  <div className="text-slate-300">No active positions currently open in this node.</div>
+                  <div className="text-emerald-400">
+                    {curr} ${totalCash.toLocaleString('en-AU', { minimumFractionDigits: 2 })} liquid cash ready for allocation.
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-[#070c12] text-slate-400 text-[10px] uppercase tracking-wider border-b border-slate-800 sticky top-0">
-                  <tr>
-                    <th className="py-2.5 px-3">Ticker</th>
-                    <th className="py-2.5 px-2 text-right">Units</th>
-                    <th className="py-2.5 px-2 text-right">Entry</th>
-                    <th className="py-2.5 px-2 text-right">Live</th>
-                    <th className="py-2.5 px-2 text-right">Mkt Value</th>
-                    <th className="py-2.5 px-2 text-right">P&L ($ / %)</th>
-                    <th className="py-2.5 px-2 text-right">Stop</th>
-                    <th className="py-2.5 px-2 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {filteredHoldings.map((pos) => (
-                    <tr
-                      key={`${pos.workbook}-${pos.ticker}`}
-                      onClick={() => onSelectTicker && onSelectTicker({
-                        ticker: pos.ticker,
-                        name: pos.company || pos.ticker,
-                        price: pos.livePrice,
-                        change: pos.plPct,
-                        conviction: 'C:9',
-                        currency: pos.currency || curr
-                      })}
-                      className="hover:bg-slate-800/50 cursor-pointer transition"
-                    >
-                      <td className="py-2 px-3 font-bold text-slate-100">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-emerald-400 font-bold">{pos.ticker}</span>
-                          <span className="text-[10px] text-slate-400 font-normal truncate max-w-[90px]">{pos.company}</span>
-                        </div>
-                      </td>
-                      <td className="py-2 px-2 text-right text-slate-200">{Number(pos.units).toLocaleString()}</td>
-                      <td className="py-2 px-2 text-right text-slate-400">${Number(pos.avgCost).toFixed(pos.avgCost < 1 ? 3 : 2)}</td>
-                      <td className="py-2 px-2 text-right font-bold text-slate-100">${Number(pos.livePrice).toFixed(pos.livePrice < 1 ? 3 : 2)}</td>
-                      <td className="py-2 px-2 text-right font-bold text-slate-100">${Number(pos.marketValue).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
-                      <td className="py-2 px-2 text-right font-bold">
-                        <span className={pos.plDollar >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                          {pos.plDollar >= 0 ? '+' : ''}${Math.round(pos.plDollar)} ({pos.plPct >= 0 ? '+' : ''}{Number(pos.plPct).toFixed(1)}%)
-                        </span>
-                      </td>
-                      <td className="py-2 px-2 text-right text-amber-400">${Number(pos.stopLoss).toFixed(pos.stopLoss < 1 ? 3 : 2)}</td>
-                      <td className="py-2 px-2 text-center">
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                          {pos.status || 'ACTIVE'}
-                        </span>
-                      </td>
+              ) : (
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="bg-[#070c12] text-slate-400 text-[10px] uppercase tracking-wider border-b border-slate-800 sticky top-0">
+                    <tr>
+                      <th className="py-2.5 px-3">Ticker</th>
+                      <th className="py-2.5 px-2 text-right">Entry &amp; Cost</th>
+                      <th className="py-2.5 px-2 text-right">Live &amp; Vol</th>
+                      <th className="py-2.5 px-2 text-right">Day P&amp;L</th>
+                      <th className="py-2.5 px-2 text-right">Total P&amp;L</th>
+                      <th className="py-2.5 px-2 text-right">Stop &amp; Shield</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {filteredHoldings.map((pos) => {
+                      const units = Number(pos.units || 0);
+                      const avgCost = Number(pos.avgCost || 0);
+                      const livePrice = Number(pos.livePrice || 0);
+                      const costBasis = Number(pos.costBasis || (units * avgCost));
+                      const marketValue = Number(pos.marketValue || (units * livePrice));
+                      const plDollar = pos.plDollar !== undefined ? Number(pos.plDollar) : (marketValue - costBasis);
+                      const plPct = pos.plPct !== undefined ? Number(pos.plPct) : (costBasis > 0 ? (plDollar / costBasis) * 100 : 0);
+                      const dayChangePct = Number(pos.dayChangePct ?? pos.day_change_pct ?? 0);
+                      const dayChangeDollar = pos.dayPlDollar !== undefined
+                        ? Number(pos.dayPlDollar)
+                        : pos.dayChangeDollar !== undefined
+                          ? Number(pos.dayChangeDollar)
+                          : (marketValue * (dayChangePct / 100));
+                      const volInfo = formatVerifiedVolMult(pos.vol_mult ?? pos.volMult, pos.vol_verified);
+                      const shield = resolveAntiChurnShield(pos);
+                      const rawBoughtAt = pos.bought_at || pos.boughtAt || null;
+                      const daysHeld = pos.daysHeld ?? computeDaysSince(rawBoughtAt);
+
+                      return (
+                        <tr
+                          key={`${pos.workbook}-${pos.ticker}`}
+                          onClick={() =>
+                            onSelectTicker &&
+                            onSelectTicker({
+                              ...pos,
+                              ticker: pos.ticker,
+                              name: pos.company || pos.ticker,
+                              price: livePrice,
+                              avgCost,
+                              units,
+                              costBasis,
+                              marketValue,
+                              plDollar,
+                              plPct,
+                              dayChangeDollar,
+                              dayChangePct,
+                              volInfo,
+                              shield,
+                              conviction: pos.conviction || 'C:9',
+                              currency: pos.currency || curr,
+                              initialDrawerTab: 'POSITION'
+                            })
+                          }
+                          className="hover:bg-slate-800/50 cursor-pointer transition"
+                        >
+                          <td className="py-2.5 px-3 font-bold text-slate-100">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-emerald-400 font-bold">{pos.ticker}</span>
+                              <span className="text-[10px] text-slate-400 font-normal truncate max-w-[80px]">{pos.company}</span>
+                            </div>
+                            <div className="text-[9px] text-slate-500 mt-0.5">
+                              {units.toLocaleString()}u {daysHeld !== null ? `• ${daysHeld}d` : ''}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-2 text-right">
+                            <div className="text-slate-200">${avgCost.toFixed(avgCost < 1 ? 3 : 2)}</div>
+                            <div className="text-[9px] text-slate-500">${Math.round(costBasis).toLocaleString()}</div>
+                          </td>
+                          <td className="py-2.5 px-2 text-right">
+                            <div className="font-bold text-slate-100">${livePrice.toFixed(livePrice < 1 ? 3 : 2)}</div>
+                            <div className={`text-[9px] ${volInfo.verified ? 'text-cyan-400' : 'text-amber-400'}`}>
+                              {volInfo.label}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-2 text-right font-bold">
+                            <div className={dayChangeDollar >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                              {dayChangeDollar >= 0 ? '+' : ''}${Math.round(dayChangeDollar)}
+                            </div>
+                            <div className={`text-[9px] ${dayChangePct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {dayChangePct >= 0 ? '+' : ''}{dayChangePct.toFixed(1)}%
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-2 text-right font-bold">
+                            <div className={plDollar >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                              {plDollar >= 0 ? '+' : ''}${Math.round(plDollar)}
+                            </div>
+                            <div className={`text-[9px] ${plPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              ({plPct >= 0 ? '+' : ''}{plPct.toFixed(1)}%)
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-2 text-right">
+                            <div className="text-amber-400 font-bold">
+                              ${Number(pos.stopLoss || 0).toFixed(pos.stopLoss < 1 ? 3 : 2)}
+                            </div>
+                            <div className="text-[9px] text-emerald-400 truncate max-w-[110px] ml-auto">
+                              {shield.label}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
         </div>
 
         {/* RIGHT PANE (XL: 6 cols): REAL-TIME QUANT SCANNER & RADAR */}

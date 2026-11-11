@@ -197,9 +197,24 @@ export default function App() {
 
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('hashchange', handlePopState);
+
+    const handleCockpitMessage = (event) => {
+      if (
+        event.origin === 'https://asx-quant-brain.onrender.com' &&
+        event.data?.type === 'TITAN_EXIT_COCKPIT'
+      ) {
+        setLayoutMode('STANDARD');
+        try {
+          localStorage.setItem('titan_layout_mode', 'STANDARD');
+        } catch (e) {}
+      }
+    };
+    window.addEventListener('message', handleCockpitMessage);
+
     return () => {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('hashchange', handlePopState);
+      window.removeEventListener('message', handleCockpitMessage);
     };
   }, [activeMainTab]);
 

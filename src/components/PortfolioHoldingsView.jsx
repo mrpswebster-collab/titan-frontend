@@ -58,6 +58,7 @@ export default function PortfolioHoldingsView({
   onSelectTicker,
   onUpdateSession,
   onNavigateToFleetSetup,
+  isMobileMode = false,
   theme = 'dark'
 }) {
   const isLight = theme === 'light';
@@ -218,7 +219,8 @@ export default function PortfolioHoldingsView({
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      {/* 1. Direct Banner to Fleet & Setup Menu (Google Sheets Auto-Builder & Enclave) */}
+      {/* 1. Direct Banner to Fleet & Setup Menu (Hidden in Mobile Phone Mode) */}
+      {!isMobileMode && (
       <div className={`rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
         isLight
           ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 border-emerald-200 shadow-sm'
@@ -254,6 +256,7 @@ export default function PortfolioHoldingsView({
           </button>
         )}
       </div>
+      )}
 
       {/* 2. Workbook Filter Pills & Sub-View Switcher */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -462,6 +465,126 @@ export default function PortfolioHoldingsView({
               <div className="text-emerald-400 font-bold">
                 Available Cash Pool: {currencyInput} ${summaryStats.cash.toLocaleString('en-AU', { minimumFractionDigits: 2 })} ready for staged deployment.
               </div>
+            </div>
+          ) : isMobileMode ? (
+            <div className="p-3 space-y-3 font-mono text-xs">
+              {filteredHoldings.map((pos) => {
+                const units = Number(pos.units || 0);
+                const avgCost = Number(pos.avgCost || pos.entryPrice || 0);
+                const livePrice = Number(pos.livePrice || pos.price || 0);
+                const costBasis = Number(pos.costBasis || (units * avgCost));
+                const marketValue = Number(pos.marketValue || (units * livePrice));
+                const plDollar = pos.plDollar !== undefined ? Number(pos.plDollar) : (marketValue - costBasis);
+                const plPct = pos.plPct !== undefined
+                  ? Number(pos.plPct)
+                  : costBasis > 0
+                    ? (plDollar / costBasis) * 100
+                    : 0;
+                const hasDayChange =
+                  pos.dayPlDollar !== undefined ||
+                  pos.dayChangeDollar !== undefined ||
+                  pos.dayChangePct !== undefined ||
+                  pos.day_change_pct !== undefined;
+                const dayChangePct = Number(pos.dayChangePct ?? pos.day_change_pct ?? 0);
+                const dayChangeDollar =
+                  pos.dayPlDollar !== undefined
+                    ? Number(pos.dayPlDollar)
+                    : pos.dayChangeDollar !== undefined
+                      ? Number(pos.dayChangeDollar)
+                      : (marketValue * (dayChangePct / 100));
+                const rawBoughtAt = pos.bought_at || pos.boughtAt || pos.entryDate || pos.entry_date || null;
+                const computedDays = pos.daysHeld ?? pos.days_held ?? computeDaysSince(rawBoughtAt);
+                const volInfo = formatVerifiedVolMult(
+                  pos.vol_mult ?? pos.volMult ?? pos.volumeMultiplier,
+                  pos.vol_verified ?? pos.is_vol_verified
+                );
+                const stopLoss = Number(pos.stopLoss || pos.chandelierStop || 0);
+                const catastropheFloor = Number(pos.catastropheStop || (avgCost > 0 ? avgCost * 0.75 : 0));
+                const shield = resolveAntiChurnShield(pos);
+
+                return (
+                  <div
+                    key={`mob-${pos.workbook}-${pos.ticker}`}
+                    onClick={() =>
+                      onSelectTicker &&
+                      onSelectTicker({
+                        ...pos,
+                        ticker: pos.ticker,
+                        name: pos.company || pos.ticker,
+                        price: livePrice,
+                        avgCost,
+                        units,
+                        costBasis,
+                        marketValue,
+                        plDollar,
+                        plPct,
+                        dayChangeDollar,
+                        dayChangePct,
+                        hasDayChange,
+                        bought_at: rawBoughtAt,
+                        daysHeld: computedDays,
+                        stopLoss,
+                        catastropheFloor,
+                        shield,
+                        volInfo,
+                        conviction: pos.conviction || 'C:9',
+                        currency: pos.currency || currencyInput,
+                        initialDrawerTab: 'POSITION'
+                      })
+                    }
+                    className={`rounded-xl border p-3.5 cursor-pointer transition space-y-2.5 ${
+                      isLight
+                        ? 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                        : 'bg-[#0b1220] border-slate-800 hover:border-emerald-500/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-400 font-bold text-sm">{pos.ticker}</span>
+                          <span className={`text-[11px] truncate max-w-[150px] ${textMuted}`}>
+                            {pos.company || '—'}
+                          </span>
+                        </div>
+                        <div className={`text-[10px] mt-0.5 ${textMuted}`}>
+                          {units.toLocaleString()} units • Entry ${avgCost.toFixed(avgCost < 1 ? 3 : 2)}
+                          {computedDays !== null && computedDays !== undefined ? ` • ${computedDays}d held` : ''}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`font-bold text-sm ${textPrimary}`}>
+                          ${livePrice.toFixed(livePrice < 1 ? 3 : 2)}
+                        </div>
+                        <div className={`text-[11px] font-bold ${plDollar >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {plDollar >= 0 ? '+' : ''}${plDollar.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({plPct >= 0 ? '+' : ''}{plPct.toFixed(1)}%)
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/60 text-[10px]">
+                      <div>
+                        <span className="text-slate-400 block">Mkt Value</span>
+                        <span className={`font-bold ${textPrimary}`}>
+                          ${marketValue.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">ATR / Floor</span>
+                        <span className="text-amber-400 font-bold">
+                          ${stopLoss > 0 ? stopLoss.toFixed(stopLoss < 1 ? 3 : 2) : '—'}
+                        </span>
+                        <span className="text-rose-400 ml-1">
+                          / ${catastropheFloor > 0 ? catastropheFloor.toFixed(catastropheFloor < 1 ? 3 : 2) : '—'}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-slate-400 block">Shield</span>
+                        <span className="text-emerald-400 font-bold">{shield.label}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="overflow-x-auto">

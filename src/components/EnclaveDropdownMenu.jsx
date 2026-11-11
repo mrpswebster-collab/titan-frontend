@@ -13,7 +13,9 @@ import {
   Sparkles,
   ExternalLink,
   ShieldCheck,
-  Check
+  Check,
+  Smartphone,
+  Monitor
 } from 'lucide-react';
 
 export default function EnclaveDropdownMenu({
@@ -28,6 +30,7 @@ export default function EnclaveDropdownMenu({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const isLight = theme === 'light';
+  const isMobileMode = layoutMode === 'MOBILE';
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -39,30 +42,37 @@ export default function EnclaveDropdownMenu({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const setPersistedLayout = (nextMode) => {
+    try {
+      localStorage.setItem('titan_layout_mode', nextMode);
+    } catch (e) {}
+    onToggleLayoutMode(nextMode);
+  };
+
   const menuItems = [
     {
-      category: 'WORKSPACES',
+      category: 'ANALYTICS & TRADE SCREENS',
       items: [
         {
           id: 'SCANNER',
-          label: 'Markets & Scanner',
+          label: 'Markets & Trade Scanner',
           desc: 'Rule 53 Coiled Spring breakouts & live signals',
           icon: LayoutGrid,
           badge: 'Live',
           badgeColor: 'emerald',
           action: () => {
-            onToggleLayoutMode('STANDARD');
+            if (layoutMode === 'COCKPIT') setPersistedLayout('STANDARD');
             onSelectTab('SCANNER');
             setIsOpen(false);
           }
         },
         {
           id: 'PORTFOLIO',
-          label: 'My Portfolio & Holdings',
-          desc: 'Real-time equity, P&L, and trailing stops',
+          label: 'Portfolio & P&L Analytics',
+          desc: 'Real-time equity, P&L, and Day-0 Signal Inception',
           icon: Briefcase,
           action: () => {
-            onToggleLayoutMode('STANDARD');
+            if (layoutMode === 'COCKPIT') setPersistedLayout('STANDARD');
             onSelectTab('PORTFOLIO');
             setIsOpen(false);
           }
@@ -75,39 +85,8 @@ export default function EnclaveDropdownMenu({
           badge: '4 Agents',
           badgeColor: 'purple',
           action: () => {
-            onToggleLayoutMode('STANDARD');
+            if (layoutMode === 'COCKPIT') setPersistedLayout('STANDARD');
             onSelectTab('AI_TERMINAL');
-            setIsOpen(false);
-          }
-        }
-      ]
-    },
-    {
-      category: 'ADMIN & SETUP',
-      items: [
-        {
-          id: 'FLEET_SETUP',
-          label: 'Fleet & Enclave Setup',
-          desc: 'Multi-workbooks, VIP invites, FastMCP & Sentinel',
-          icon: Database,
-          badge: 'Setup Hub',
-          badgeColor: 'cyan',
-          action: () => {
-            onToggleLayoutMode('STANDARD');
-            onSelectTab('FLEET_SETUP');
-            try { window.history.pushState(null, '', '/setup'); } catch (e) {}
-            setIsOpen(false);
-          }
-        },
-        {
-          id: 'COCKPIT',
-          label: 'Quant Cockpit (Pro)',
-          desc: 'Direct full-screen institutional terminal',
-          icon: SlidersHorizontal,
-          badge: 'Pro Mode',
-          badgeColor: 'amber',
-          action: () => {
-            onToggleLayoutMode('COCKPIT');
             setIsOpen(false);
           }
         },
@@ -123,9 +102,71 @@ export default function EnclaveDropdownMenu({
         }
       ]
     },
+    ...(isMobileMode
+      ? []
+      : [
+          {
+            category: 'ADMIN & SETUP (WEBPAGE ONLY)',
+            items: [
+              {
+                id: 'FLEET_SETUP',
+                label: 'Fleet & Enclave Setup',
+                desc: 'Multi-workbooks, VIP invites, FastMCP & Sentinel',
+                icon: Database,
+                badge: 'Setup Hub',
+                badgeColor: 'cyan',
+                action: () => {
+                  setPersistedLayout('STANDARD');
+                  onSelectTab('FLEET_SETUP');
+                  try {
+                    window.history.pushState(null, '', '/setup');
+                  } catch (e) {}
+                  setIsOpen(false);
+                }
+              },
+              {
+                id: 'COCKPIT',
+                label: 'Quant Cockpit (Pro)',
+                desc: 'Direct full-screen institutional terminal',
+                icon: SlidersHorizontal,
+                badge: 'Pro Mode',
+                badgeColor: 'amber',
+                action: () => {
+                  setPersistedLayout('COCKPIT');
+                  setIsOpen(false);
+                }
+              }
+            ]
+          }
+        ]),
     {
-      category: 'GOVERNANCE & HELP',
+      category: 'DISPLAY MODE & WEBPAGE SWITCH',
       items: [
+        {
+          id: 'MOBILE_MODE',
+          label: 'Mobile Phone Mode',
+          desc: 'Limited display: Analytics & Trade screens only',
+          icon: Smartphone,
+          badge: 'Pocket UI',
+          badgeColor: 'cyan',
+          action: () => {
+            setPersistedLayout('MOBILE');
+            if (activeMainTab === 'FLEET_SETUP') onSelectTab('SCANNER');
+            setIsOpen(false);
+          }
+        },
+        {
+          id: 'STANDARD_MODE',
+          label: 'Full Webpage Mode',
+          desc: 'Complete Enclave, Google Sheets Auto-Builder & Setup',
+          icon: Monitor,
+          badge: 'Desktop',
+          badgeColor: 'emerald',
+          action: () => {
+            setPersistedLayout('STANDARD');
+            setIsOpen(false);
+          }
+        },
         {
           id: 'GUIDE',
           label: 'Platform User Guide',
@@ -143,6 +184,14 @@ export default function EnclaveDropdownMenu({
   // Get label of current active view
   const getCurrentLabel = () => {
     if (layoutMode === 'COCKPIT') return 'Quant Cockpit (Pro)';
+    if (layoutMode === 'MOBILE') {
+      switch (activeMainTab) {
+        case 'SCANNER': return '📱 Trade Scanner';
+        case 'PORTFOLIO': return '📱 Portfolio P&L';
+        case 'AI_TERMINAL': return '📱 AI Analytics';
+        default: return '📱 Mobile Mode';
+      }
+    }
     switch (activeMainTab) {
       case 'SCANNER': return 'Markets & Scanner';
       case 'PORTFOLIO': return 'My Portfolio & Holdings';
@@ -193,6 +242,8 @@ export default function EnclaveDropdownMenu({
                     const Icon = item.icon;
                     const isCurrent = 
                       (item.id === 'COCKPIT' && layoutMode === 'COCKPIT') ||
+                      (item.id === 'MOBILE_MODE' && layoutMode === 'MOBILE') ||
+                      (item.id === 'STANDARD_MODE' && layoutMode === 'STANDARD') ||
                       (layoutMode !== 'COCKPIT' && activeMainTab === item.id);
 
                     return (

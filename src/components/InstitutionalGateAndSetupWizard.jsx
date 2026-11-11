@@ -23,7 +23,9 @@ import {
   HelpCircle,
   Hash,
   BadgeCheck,
-  Rocket
+  Rocket,
+  Smartphone,
+  Monitor
 } from 'lucide-react';
 
 const API_BASE = 'https://asx-quant-brain.onrender.com';
@@ -58,10 +60,21 @@ export default function InstitutionalGateAndSetupWizard({
   onLogout,
   onCompleteSetup, 
   showSetupModalOnly = false,
-  onCloseModal
+  onCloseModal,
+  layoutMode = 'STANDARD',
+  onSelectLayoutMode
 }) {
   // Navigation Tabs: 'SIGN_IN' | 'REGISTER' | 'FORGOT_PIN'
   const [authTab, setAuthTab] = useState('SIGN_IN');
+
+  const handleModeSwitch = (nextMode) => {
+    try {
+      localStorage.setItem('titan_layout_mode', nextMode);
+    } catch (e) {}
+    if (onSelectLayoutMode) {
+      onSelectLayoutMode(nextMode);
+    }
+  };
 
   // Gate & Config State
   const [googleClientId, setGoogleClientId] = useState('');
@@ -632,10 +645,11 @@ const handleCopyCode = () => {
   // RENDER 1: AUTOMATED SELF-SERVICE ONBOARDING & 2-POINT AUTH GATE
   // =========================================================================
   if (!userSession?.isAuthed && !showSetupModalOnly) {
+    const isMobileSelected = layoutMode === 'MOBILE';
     return (
       <div className="min-h-screen bg-[#070b12] text-slate-100 flex flex-col justify-between selection:bg-emerald-500 selection:text-black">
         {/* Header */}
-        <header className="border-b border-slate-900/80 bg-[#0a0f18]/90 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+        <header className="border-b border-slate-900/80 bg-[#0a0f18]/90 backdrop-blur-md px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
@@ -645,24 +659,121 @@ const handleCopyCode = () => {
               <span className="text-[10px] font-mono text-slate-400 ml-2 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">CLIENT ACCESS</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-            <Lock className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Institutional Access</span>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Top Bar Quick Display Mode & Webpage Switcher */}
+            <div className="flex items-center bg-[#070c12] p-0.5 rounded-lg border border-slate-800 text-[11px] font-mono">
+              <button
+                type="button"
+                onClick={() => handleModeSwitch('STANDARD')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-bold transition ${
+                  layoutMode !== 'MOBILE'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Launch Full Desktop Webpage Mode (Complete Enclave, Google Sheets Auto-Builder & Fleet Setup)"
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                <span>Full Webpage</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModeSwitch('MOBILE')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-bold transition ${
+                  layoutMode === 'MOBILE'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Launch Mobile Phone Mode (Limited Display: Analytics & Trade Screens Only)"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>Mobile Mode</span>
+              </button>
+            </div>
+
+            <a
+              href="https://asx-quant-brain.onrender.com/ui"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-800 text-[11px] font-mono font-bold transition"
+              title="Switch directly to V156 Fullscreen Pro Trader Webpage"
+            >
+              <span>V156 Pro Webpage</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </header>
 
         {/* Main Auth Container */}
-        <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
-          <div className="max-w-xl w-full bg-[#0d131f] border border-slate-800/80 rounded-2xl shadow-2xl p-6 sm:p-8 relative overflow-hidden">
+        <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-4">
+          <div className={`${isMobileSelected ? 'max-w-md' : 'max-w-xl'} w-full bg-[#0d131f] border border-slate-800/80 rounded-2xl shadow-2xl p-5 sm:p-8 relative overflow-hidden transition-all duration-200`}>
             
             {/* Header Titles */}
-            <div className="text-center space-y-2 mb-6">
+            <div className="text-center space-y-2 mb-5">
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
                 Titan Institutional Terminal
               </h1>
               <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
-                Quantitative Trading Desk & Multi-Asset Intelligence
+                Quantitative Trading Desk &amp; Multi-Asset Intelligence
               </p>
+            </div>
+
+            {/* Display Mode & Webpage Switcher on Main Login */}
+            <div className="mb-5 p-3 rounded-xl bg-slate-950/90 border border-slate-800/90 space-y-2.5">
+              <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                <span>Select Terminal Display Mode</span>
+                <a
+                  href="https://asx-quant-brain.onrender.com/ui"
+                  className="text-emerald-400 hover:text-emerald-300 font-bold inline-flex items-center gap-1"
+                >
+                  <span>Open V156 Pro Webpage</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-xs">
+                <button
+                  type="button"
+                  onClick={() => handleModeSwitch('STANDARD')}
+                  className={`p-2.5 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                    !isMobileSelected
+                      ? 'bg-emerald-950/40 border-emerald-500/60 text-emerald-300 shadow-md shadow-emerald-950/40'
+                      : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Monitor className={`w-4 h-4 mt-0.5 shrink-0 ${!isMobileSelected ? 'text-emerald-400' : 'text-slate-500'}`} />
+                  <div>
+                    <div className="font-bold text-xs">🖥️ Full Webpage Mode</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">
+                      Complete Enclave, Google Sheets Auto-Builder &amp; Pro Cockpit
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleModeSwitch('MOBILE')}
+                  className={`p-2.5 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                    isMobileSelected
+                      ? 'bg-cyan-950/40 border-cyan-500/60 text-cyan-300 shadow-md shadow-cyan-950/40'
+                      : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Smartphone className={`w-4 h-4 mt-0.5 shrink-0 ${isMobileSelected ? 'text-cyan-400' : 'text-slate-500'}`} />
+                  <div>
+                    <div className="font-bold text-xs">📱 Mobile Phone Mode</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">
+                      Limited Display: Strictly Analytics &amp; Trade Screens Only
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              {isMobileSelected && (
+                <div className="px-3 py-2 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-[11px] font-mono text-cyan-200 flex items-center justify-between gap-2">
+                  <span>
+                    <strong>📱 Mobile Mode Active:</strong> Restricted to Trade Scanner, Portfolio P&amp;L &amp; AI Analytics.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Top Auth Mode Tabs */}

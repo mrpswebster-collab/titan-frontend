@@ -30,15 +30,14 @@ export default function InteractiveKinematicDrawer({
   onClose,
   onExecuteOrder
 }) {
-  if (!ticker || !data) return null;
-
   const isLight = theme === 'light';
-  const [activeTab, setActiveTab] = useState(data.initialDrawerTab || 'POSITION'); // 'POSITION' | 'INCEPTION' | 'DOSSIER'
-  const [orderUnits, setOrderUnits] = useState(Number(data.units) > 0 ? Number(data.units) : 10000);
+  const [activeTab, setActiveTab] = useState(data?.initialDrawerTab || 'POSITION'); // 'POSITION' | 'INCEPTION' | 'DOSSIER'
+  const [orderUnits, setOrderUnits] = useState(Number(data?.units) > 0 ? Number(data.units) : 10000);
   const [inceptionRecord, setInceptionRecord] = useState(null);
   const [loadingInception, setLoadingInception] = useState(false);
 
   useEffect(() => {
+    if (!ticker || !data) return;
     setActiveTab(data.initialDrawerTab || 'POSITION');
     if (Number(data.units) > 0) {
       setOrderUnits(Number(data.units));
@@ -47,6 +46,10 @@ export default function InteractiveKinematicDrawer({
 
   // Query live /api/v2/portfolio/inception for this ticker when drawer opens
   useEffect(() => {
+    if (!ticker || !data) {
+      setInceptionRecord(null);
+      return;
+    }
     let cancelled = false;
     const fetchTickerInception = async () => {
       if (data.first_ranked_at || data.firstRankedAt) {
@@ -91,6 +94,9 @@ export default function InteractiveKinematicDrawer({
       cancelled = true;
     };
   }, [ticker, userSession?.idToken, data]);
+
+  // Strict sequential guard: only return null AFTER all React hooks have been registered
+  if (!ticker || !data) return null;
 
   const livePrice = Number(data.price ?? data.livePrice ?? 0);
   const avgCost = Number(data.avgCost ?? data.entryPrice ?? 0);

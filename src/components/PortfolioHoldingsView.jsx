@@ -17,7 +17,8 @@ import {
   ExternalLink,
   Clock,
   Activity,
-  ChevronDown
+  ChevronDown,
+  AlertTriangle
 } from 'lucide-react';
 import SignalInceptionView, { formatVerifiedVolMult, computeDaysSince } from './SignalInceptionView';
 
@@ -122,6 +123,51 @@ export default function PortfolioHoldingsView({
     }
     setTouchStartX(null);
     setTouchStartY(null);
+  };
+
+  // Emergency Stopped Workbook Tracking (Persisted in localStorage)
+  const [stoppedWorkbookIds, setStoppedWorkbookIds] = useState(() => {
+    try {
+      const stored = localStorage.getItem('titan_emergency_stopped_workbooks');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch (e) {
+      return new Set();
+    }
+  });
+
+  const isWorkbookHalted = (wb) => {
+    if (!wb) return false;
+    return (
+      wb.emergency_stop === true ||
+      wb.is_stopped === true ||
+      wb.execution_mode === 'EMERGENCY_STOP' ||
+      wb.execution_mode === 'HALTED' ||
+      wb.status === 'STOPPED' ||
+      wb.status === 'EMERGENCY_STOP' ||
+      stoppedWorkbookIds.has(wb.id)
+    );
+  };
+
+  const handleToggleEmergencyHalt = (wbId) => {
+    setStoppedWorkbookIds(prev => {
+      const next = new Set(prev);
+      if (next.has(wbId)) {
+        next.delete(wbId);
+      } else {
+        next.add(wbId);
+      }
+      try {
+        localStorage.setItem('titan_emergency_stopped_workbooks', JSON.stringify([...next]));
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  const handleClearAllHalts = () => {
+    setStoppedWorkbookIds(new Set());
+    try {
+      localStorage.removeItem('titan_emergency_stopped_workbooks');
+    } catch (e) {}
   };
 
   // Capital Calibration
@@ -277,157 +323,103 @@ export default function PortfolioHoldingsView({
   const textPrimary = isLight ? 'text-slate-900' : 'text-slate-100';
   const textMuted = isLight ? 'text-slate-500' : 'text-slate-400';
 
+  const haltedWorkbooks = workbooks.filter(w => w.id !== 'ALL' && isWorkbookHalted(w));
+  const hasHaltedWorkbooks = haltedWorkbooks.length > 0;
+
   return (
     <div
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       className="max-w-7xl mx-auto px-4 py-6 space-y-6"
     >
-      {/* 1. Direct Banner to Fleet & Setup Menu (Hidden in Mobile Phone Mode) */}
-      {!isMobileMode && (
-      <div className={`rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
-        isLight
-          ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 border-emerald-200 shadow-sm'
-          : 'bg-gradient-to-r from-emerald-950/40 via-slate-900 to-cyan-950/40 border-emerald-800/40 shadow-md'
-      }`}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
-            <Database className="w-5 h-5 text-emerald-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-emerald-400 font-mono uppercase tracking-wider">
-                Fleet Architecture Hub
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                Rule 19 Isolated
-              </span>
+      {/* 1. Emergency Stopped Workbooks Sentinel Status Bar */}
+      {hasHaltedWorkbooks ? (
+        <div className="rounded-2xl border border-rose-500/60 bg-rose-950/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-rose-950/30 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5 text-rose-400 animate-pulse" />
             </div>
-            <p className={`text-xs mt-0.5 ${textPrimary}`}>
-              Multi-Workbook Google Sheets building, VIP invite codes, Cloud Sentinel daemons, and FastMCP developer keys are managed in the dedicated <strong>Fleet & Setup</strong> menu.
-            </p>
+            <div>
+              <div className="text-xs font-mono font-bold text-rose-300 flex items-center gap-2">
+                <span>🚨 EMERGENCY STOPPED WORKBOOKS DETECTED ({haltedWorkbooks.length}):</span>
+              </div>
+              <p className="text-[11px] font-mono text-rose-200/90 mt-0.5">
+                Autonomous trading halted on: <strong>{haltedWorkbooks.map(w => w.name).join(', ')}</strong>
+              </p>
+            </div>
           </div>
-        </div>
-
-        {onNavigateToFleetSetup && (
           <button
             type="button"
-            onClick={onNavigateToFleetSetup}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition shrink-0"
+            onClick={handleClearAllHalts}
+            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-mono font-bold text-xs transition shrink-0 shadow-md shadow-rose-950 active:scale-95"
           >
-            <span>Open Fleet & Setup Menu</span>
-            <ArrowRight className="w-4 h-4" />
+            Clear Halt &amp; Resume All Nodes
           </button>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className={`rounded-xl border px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs font-mono transition ${
+          isLight ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900' : 'bg-[#0a121d] border-slate-800 text-slate-300'
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="font-bold text-emerald-400">Emergency Stop Status:</span>
+            <span>0 of {workbooks.filter(w => w.id !== 'ALL').length || 6} Workbooks Halted • All Execution Engines Armed</span>
+          </div>
+          {activeWb.id !== 'ALL' && (
+            <button
+              type="button"
+              onClick={() => handleToggleEmergencyHalt(activeWb.id)}
+              className="text-[11px] font-bold font-mono px-2.5 py-1 rounded-lg border border-rose-800/60 bg-rose-950/30 text-rose-400 hover:bg-rose-900/50 hover:border-rose-600 transition"
+              title={`Emergency Halt ${activeWb.name}`}
+            >
+              🛑 Emergency Halt Active Node
+            </button>
+          )}
+        </div>
       )}
 
-      {/* 2. Ledger Selection Dropdown (Mobile Mode) & Rolling Bar Left-to-Right Sub-View Selector */}
+      {/* 2. Ledger Selection Dropdown (Web & Mobile) & Rolling Bar Left-to-Right Sub-View Selector */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
-        {/* Ledger Selector: In Mobile Mode (or on mobile screens), strictly a clean Dropdown Selection */}
-        {isMobileMode ? (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto">
-            <div className="flex items-center justify-between sm:justify-start gap-2">
-              <span className={`text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 ${textMuted}`}>
-                <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Banking Ledger:</span>
-              </span>
-              <span className="text-[10px] font-mono text-emerald-400 sm:hidden">
-                {activeWb.name}
-              </span>
-            </div>
-            <div className="relative w-full sm:w-80">
-              <select
-                value={selectedWorkbook}
-                onChange={(e) => setSelectedWorkbook(e.target.value)}
-                className={`w-full rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold outline-none cursor-pointer border transition shadow-sm appearance-none pr-8 ${
-                  isLight
-                    ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-500'
-                    : 'bg-[#080e18] border-slate-700 text-emerald-400 focus:border-emerald-500 shadow-inner'
-                }`}
-              >
-                {accessTier === 'SUPERADMIN_FLEET' && (
-                  <option value="ALL">🌐 All Connected Workbooks (Consolidated Fleet)</option>
-                )}
-                {workbooks.map(wb => (
-                  <option key={wb.id} value={wb.id}>
-                    📁 {wb.name} ({wb.exchange || 'ASX'} • ${Number(wb.equity || 0).toLocaleString()})
-                  </option>
-                ))}
-                {workbooks.length === 0 && (
-                  <option value={fallbackSheet.id}>📁 {fallbackSheet.name}</option>
-                )}
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+        {/* Ledger Selector: Clean Dropdown Selection across both Web & Mobile */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full lg:w-auto">
+          <div className="flex items-center justify-between sm:justify-start gap-2">
+            <span className={`text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 ${textMuted}`}>
+              <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>Ledger:</span>
+            </span>
+            <span className="text-[10px] font-mono text-emerald-400 sm:hidden">
+              {activeWb.name}
+            </span>
           </div>
-        ) : (
-          /* Desktop Ledger Selector with Mobile-Fallback Dropdown & Quick Pills */
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto">
-            {/* Mobile Breakpoint Dropdown Fallback */}
-            <div className="sm:hidden w-full relative">
-              <select
-                value={selectedWorkbook}
-                onChange={(e) => setSelectedWorkbook(e.target.value)}
-                className={`w-full rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold outline-none cursor-pointer border appearance-none pr-8 ${
-                  isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-[#080e18] border-slate-700 text-emerald-400'
-                }`}
-              >
-                <option value="ALL">🌐 All Connected Workbooks (Consolidated)</option>
-                {workbooks.map(wb => (
+          <div className="relative w-full sm:w-96">
+            <select
+              value={selectedWorkbook}
+              onChange={(e) => setSelectedWorkbook(e.target.value)}
+              className={`w-full rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold outline-none cursor-pointer border transition shadow-sm appearance-none pr-8 ${
+                isLight
+                  ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-500'
+                  : 'bg-[#080e18] border-slate-700 text-emerald-400 focus:border-emerald-500 shadow-inner'
+              }`}
+            >
+              {accessTier === 'SUPERADMIN_FLEET' && (
+                <option value="ALL">🌐 All Fleet Workbooks (Consolidated)</option>
+              )}
+              {workbooks.map(wb => {
+                const isHalted = isWorkbookHalted(wb);
+                return (
                   <option key={wb.id} value={wb.id}>
-                    📁 {wb.name} ({wb.exchange || 'ASX'} • ${Number(wb.equity || 0).toLocaleString()})
+                    {isHalted ? '🛑 [EMERGENCY STOPPED] ' : '📁 '}
+                    {wb.name} ({wb.exchange || 'ASX'} • ${Number(wb.equity || 0).toLocaleString()})
                   </option>
-                ))}
-                {workbooks.length === 0 && (
-                  <option value={fallbackSheet.id}>📁 {fallbackSheet.name}</option>
-                )}
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-
-            {/* Desktop Pill Selector */}
-            <div className="hidden sm:flex items-center gap-2 overflow-x-auto pb-1">
-              <span className={`text-xs font-mono font-bold uppercase shrink-0 flex items-center gap-1 ${textMuted}`}>
-                <Database className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Ledger:</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedWorkbook('ALL')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition shadow-sm ${
-                  selectedWorkbook === 'ALL'
-                    ? 'bg-emerald-500 text-black shadow-emerald-500/20'
-                    : isLight
-                      ? 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                Consolidated (All Nodes)
-              </button>
-
-              {workbooks.map(wb => (
-                <button
-                  key={wb.id}
-                  type="button"
-                  onClick={() => setSelectedWorkbook(wb.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition shadow-sm shrink-0 flex items-center gap-1.5 ${
-                    selectedWorkbook === wb.id
-                      ? 'bg-emerald-500 text-black shadow-emerald-500/20'
-                      : isLight
-                        ? 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                  }`}
-                >
-                  <span>{wb.name}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${selectedWorkbook === wb.id ? 'bg-black/20 text-black' : 'bg-slate-700 text-emerald-300'}`}>
-                    {wb.exchange || 'ASX'}
-                  </span>
-                </button>
-              ))}
-            </div>
+                );
+              })}
+              {workbooks.length === 0 && (
+                <option value={fallbackSheet.id}>📁 {fallbackSheet.name}</option>
+              )}
+            </select>
+            <ChevronDown className="w-4 h-4 text-emerald-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
-        )}
+        </div>
 
         {/* Rolling Bar Left-to-Right Sub-View Selector (Active Holdings vs Day Zero Tracker) */}
         <div className="w-full lg:w-auto">
@@ -576,12 +568,9 @@ export default function PortfolioHoldingsView({
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-emerald-400" />
                 <h2 className={`text-sm font-bold ${textPrimary}`}>
-                  Institutional Holdings &amp; Anti-Churn Shield Ledger — {activeWb.name}
+                  Portfolio Holdings
                 </h2>
               </div>
-              <p className={`text-[11px] font-mono mt-0.5 ${textMuted}`}>
-                Click any position row to inspect its AI Dossier ([SCHEMA:V2]), Exit-Shield floors, and Day-0 Signal Inception Post-Mortem.
-              </p>
             </div>
             <button
               type="button"

@@ -184,6 +184,31 @@ export default function App() {
   const isLight = theme === 'light';
   const isMobileMode = layoutMode === 'MOBILE';
 
+  // Track Emergency Stopped Workbooks count across tabs/pages
+  const [emergencyStoppedCount, setEmergencyStoppedCount] = useState(() => {
+    try {
+      const stored = localStorage.getItem('titan_emergency_stopped_workbooks');
+      return stored ? JSON.parse(stored).length : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      try {
+        const stored = localStorage.getItem('titan_emergency_stopped_workbooks');
+        setEmergencyStoppedCount(stored ? JSON.parse(stored).length : 0);
+      } catch (e) {}
+    };
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(handleStorageChange, 2000);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
   // Enforce Mobile Phone Mode restriction: strictly Analytics & Trade screens only
   useEffect(() => {
     if (layoutMode === 'MOBILE' && activeMainTab === 'FLEET_SETUP') {
@@ -349,26 +374,31 @@ export default function App() {
   return (
     <div className={`min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-black transition-colors duration-200 ${isMobileMode ? 'pb-16' : ''} ${isLight ? "bg-slate-50 text-slate-900" : "bg-[#0a0e17] text-slate-100"}`}>
 
-      {/* 1. Dual-Clock World Exchange Telemetry Bar */}
+      {/* 1. Dual-Clock World Exchange Telemetry Bar with Top-Left Page Menu Dropdown & Top-Right Logout */}
       <DualClockTelemetryBar
         activeExchange={activeExchange}
         exchangeData={exchangeData}
-        tenantId={userSession?.tenantId || 'ADMIN-SOVEREIGN-NODE'}
+        tenantId={userSession?.tenantId}
         onRefresh={fetchExchangeStatus}
+        activeMainTab={activeMainTab}
+        onSelectTab={setActiveMainTab}
+        layoutMode={layoutMode}
+        onToggleLayoutMode={setLayoutMode}
+        onOpenGuide={() => setIsGuideOpen(true)}
+        onOpenBacktest={() => setIsBacktestOpen(true)}
+        theme={theme}
+        onLogout={handleLogout}
+        emergencyStoppedCount={emergencyStoppedCount}
       />
 
       {/* 2. Top Portal Header */}
-      <header className={`border-b px-4 py-3 sticky top-0 z-40 backdrop-blur transition-colors duration-200 ${isLight ? "bg-white/95 border-slate-200 shadow-sm" : "bg-[#111827] border-slate-800"}`}>
-
+      <header className={`border-b px-4 py-2.5 sticky top-0 z-40 backdrop-blur transition-colors duration-200 ${isLight ? "bg-white/95 border-slate-200 shadow-sm" : "bg-[#111827] border-slate-800"}`}>
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-950 font-bold text-slate-950">
-              ⚡
-            </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className={`font-bold text-base tracking-tight ${isLight ? "text-slate-900" : "text-slate-100"}`}>
-                  TITAN <span className="text-emerald-400 font-mono text-xs font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">SAAS V2</span>
+                <h1 className={`font-bold text-base tracking-tight font-mono ${isLight ? "text-slate-900" : "text-emerald-400"}`}>
+                  TITAN
                 </h1>
                 {isMobileMode ? (
                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
@@ -376,9 +406,9 @@ export default function App() {
                     MOBILE MODE: ANALYTICS &amp; TRADE ONLY
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    AUTHENTICATED FLEET: {userSession?.name || 'Authorized Fleet'}
+                    {userSession?.name || 'Authorized Fleet'}
                   </span>
                 )}
               </div>
@@ -386,17 +416,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Intuitive Enclave Navigation & Setup Dropdown Menu */}
-            <EnclaveDropdownMenu
-              activeMainTab={activeMainTab}
-              onSelectTab={setActiveMainTab}
-              layoutMode={layoutMode}
-              onToggleLayoutMode={setLayoutMode}
-              onOpenGuide={() => setIsGuideOpen(true)}
-              onOpenBacktest={() => setIsBacktestOpen(true)}
-              theme={theme}
-            />
-
             {/* Sequenced Trading Action Runway Launch Button */}
             <button
               onClick={() => setIsRunwayOpen(true)}
@@ -509,106 +528,9 @@ export default function App() {
               {isLight ? <Moon className="w-3.5 h-3.5 text-slate-700" /> : <Sun className="w-3.5 h-3.5 text-amber-400" />}
               <span className="hidden sm:inline">{isLight ? 'Dark' : 'Light'}</span>
             </button>
-
-            {/* Lock / Sign Out Button */}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950/30 hover:bg-rose-950/60 text-rose-300 border border-rose-900/50 text-xs font-mono transition"
-              title="Sign Out & Lock Portal"
-            >
-              <LogOut className="w-3.5 h-3.5 text-rose-400" />
-              <span className="hidden sm:inline">Lock Gate</span>
-            </button>
           </div>
         </div>
       </header>
-
-      {/* 3. Primary App Navigation Bar (Hidden when Cockpit Pro is Active) */}
-      {layoutMode !== 'COCKPIT' && (
-      <nav className={`border-b px-4 transition-colors duration-200 ${isLight ? "bg-white border-slate-200" : "bg-[#0f172a] border-slate-800"}`}>
-
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 py-1">
-          <div className="flex items-center gap-1 overflow-x-auto">
-            <button
-              onClick={() => setActiveMainTab('SCANNER')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition shrink-0 ${
-                activeMainTab === 'SCANNER'
-                  ? 'bg-emerald-500/15 text-emerald-400 border-b-2 border-emerald-500'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span>{isMobileMode ? 'Trade & Signals' : 'Markets & Scanner'}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveMainTab('PORTFOLIO')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition shrink-0 ${
-                activeMainTab === 'PORTFOLIO'
-                  ? 'bg-emerald-500/15 text-emerald-400 border-b-2 border-emerald-500'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              <Briefcase className="w-4 h-4" />
-              <span>{isMobileMode ? 'Portfolio & Analytics' : 'My Portfolio & Holdings'}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveMainTab('AI_TERMINAL')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition shrink-0 ${
-                activeMainTab === 'AI_TERMINAL'
-                  ? 'bg-emerald-500/15 text-emerald-400 border-b-2 border-emerald-500'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              <Cpu className="w-4 h-4" />
-              <span>AI Analyst Terminal</span>
-            </button>
-
-            {!isMobileMode && (
-              <button
-                onClick={() => {
-                  setActiveMainTab('FLEET_SETUP');
-                  try { window.history.pushState(null, '', '/setup'); } catch(e) {}
-                }}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition shrink-0 ${
-                  activeMainTab === 'FLEET_SETUP'
-                    ? 'bg-emerald-500/15 text-emerald-400 border-b-2 border-emerald-500'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-              >
-                <Database className="w-4 h-4 text-emerald-400" />
-                <span>Fleet & Setup</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">Enclave</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => setIsBacktestOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition shrink-0"
-            >
-              <FlaskConical className="w-4 h-4 text-cyan-400" />
-              <span>Backtest Lab</span>
-            </button>
-
-          </div>
-
-          {isMobileMode && (
-            <button
-              type="button"
-              onClick={() => {
-                setLayoutMode('STANDARD');
-                try { localStorage.setItem('titan_layout_mode', 'STANDARD'); } catch (e) {}
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 text-[11px] font-mono font-bold transition shrink-0"
-            >
-              <Monitor className="w-3.5 h-3.5" />
-              <span>Switch to Full Webpage</span>
-            </button>
-          )}
-        </div>
-      </nav>
-      )}
 
       {/* Notification Toast for Staged Orders */}
       {stagedNotification && (

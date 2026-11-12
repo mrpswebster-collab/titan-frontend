@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Clock, ShieldCheck, Sun, Moon, AlertCircle } from 'lucide-react';
+import { Globe, Clock, ShieldCheck, Sun, Moon, AlertCircle, LogOut, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import EnclaveDropdownMenu from './EnclaveDropdownMenu';
 
-export default function DualClockTelemetryBar({ activeExchange, exchangeData, onRefresh, tenantId }) {
+export default function DualClockTelemetryBar({
+  activeExchange,
+  exchangeData,
+  onRefresh,
+  tenantId,
+  activeMainTab,
+  onSelectTab,
+  layoutMode,
+  onToggleLayoutMode,
+  onOpenGuide,
+  onOpenBacktest,
+  theme = 'dark',
+  onLogout,
+  emergencyStoppedCount = 0
+}) {
   const [clientTime, setClientTime] = useState(new Date());
   const [userTz, setUserTz] = useState('Australia/Sydney');
 
@@ -91,27 +106,44 @@ export default function DualClockTelemetryBar({ activeExchange, exchangeData, on
   };
 
   return (
-    <div className="w-full bg-[#111827]/90 backdrop-blur border-b border-slate-800 px-4 py-2.5 text-xs text-slate-300">
+    <div className="w-full bg-[#111827]/95 backdrop-blur border-b border-slate-800 px-4 py-2 text-xs text-slate-300">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        {/* Left: User Local Time */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
-            <Clock className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Your Time:</span>
+        {/* Left: User Local Time & Menu Page Dropdown (Placed directly under the time) */}
+        <div className="flex flex-col gap-1.5 py-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 text-emerald-400 font-medium text-xs">
+              <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>Your Time:</span>
+            </div>
+            <span className="font-mono font-bold text-slate-100 text-sm tracking-wide">
+              {formatClientTime()}
+            </span>
+            <span className="text-slate-400 font-mono text-xs hidden sm:inline">
+              {getClientDate()}
+            </span>
+            <span className="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-300 hidden md:inline">
+              {userTz.split('/')[1]?.replace('_', ' ') || userTz}
+              {isUserDst() && <span className="ml-1 text-emerald-400 font-bold font-mono">DST</span>}
+            </span>
           </div>
-          <span className="font-mono font-bold text-slate-100 text-sm tracking-wide">
-            {formatClientTime()}
-          </span>
-          <span className="text-slate-400 font-mono">
-            {getClientDate()}
-          </span>
-          <span className="bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-[10px] font-mono text-slate-300">
-            {userTz.split('/')[1]?.replace('_', ' ') || userTz}
-            {isUserDst() && <span className="ml-1 text-emerald-400 font-bold font-mono">DST</span>}
-          </span>
+
+          {/* Menu Page Dropdown: Placed directly at the top left under the time */}
+          {onSelectTab && (
+            <div className="flex items-center gap-2">
+              <EnclaveDropdownMenu
+                activeMainTab={activeMainTab}
+                onSelectTab={onSelectTab}
+                layoutMode={layoutMode}
+                onToggleLayoutMode={onToggleLayoutMode}
+                onOpenGuide={onOpenGuide}
+                onOpenBacktest={onOpenBacktest}
+                theme={theme}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Center: Live Exchange Bell Clock & Scoped Tenant (Positioned cleanly below Exchange Bell status) */}
+        {/* Center: Live Exchange Bell Clock & Emergency Stop Status */}
         <div className="flex flex-col items-center justify-center gap-1">
           <div className="flex items-center gap-2">
             <Globe className="w-3.5 h-3.5 text-cyan-400" />
@@ -123,25 +155,36 @@ export default function DualClockTelemetryBar({ activeExchange, exchangeData, on
             )}
             {getStatusBadge(exMeta?.session_phase, exMeta?.is_open)}
           </div>
-          {tenantId && (
-            <div className="flex items-center gap-1.5 text-[11px] font-mono">
-              <span className="text-slate-400">Scoped Tenant:</span>
-              <span className="px-2 py-0.5 rounded-md bg-slate-800/90 border border-slate-700/80 text-emerald-400 font-bold tracking-wider">
-                {tenantId}
+
+          {/* Emergency Stopped Workbooks Fleet Status under Exchange Details */}
+          <div className="flex items-center gap-1.5 text-[11px] font-mono">
+            {emergencyStoppedCount > 0 ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold animate-pulse">
+                <AlertTriangle className="w-3 h-3 text-rose-400" />
+                <span>{emergencyStoppedCount} Workbook(s) Emergency Stopped</span>
               </span>
-            </div>
-          )}
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                <span>All Fleet Nodes Operating</span>
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Right: Security Standard & Tri-Timestamp Verification */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Tri-Timestamp Audit Standard</span>
-          </div>
-          <span className="bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-mono">
-            RLS ZERO-TRUST
-          </span>
+        {/* Right: Clean Logout Button under Exchange Details */}
+        <div className="flex items-center gap-2">
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/60 text-xs font-mono font-bold transition shadow-sm hover:border-rose-600 active:scale-95"
+              title="Logout of Titan Institutional Enclave"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span>Logout</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

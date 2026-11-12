@@ -119,6 +119,21 @@ const DEFAULT_ADMIN_HOLDINGS = [
   { ticker: 'CSL', company: 'CSL Limited', workbook: '100-asx-workbook', exchange: 'ASX', currency: 'AUD', units: 115, avgCost: 284.00, livePrice: 298.50, marketValue: 34327.50, plDollar: 1667.50, plPct: 5.11, dayChangePct: 1.1, stopLoss: 272.00, status: 'FORTRESS_CORE', vol_mult: 1.5, vol_verified: true }
 ];
 
+const getWorkbookBadge = (wbId) => {
+  switch (wbId) {
+    case 'pennymines-workbook':
+      return { name: 'pennymines_', tag: 'Coiled Springs', color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' };
+    case 'ai-trader-workbook':
+      return { name: 'AI_trader_', tag: 'Moonshots', color: 'bg-purple-500/15 text-purple-300 border-purple-500/40' };
+    case '100-asx-workbook':
+      return { name: '100_ASX', tag: 'Bluechips', color: 'bg-blue-500/15 text-blue-300 border-blue-500/40' };
+    case 'special-workbook':
+      return { name: 'Special QUANT', tag: 'Reserve', color: 'bg-amber-500/15 text-amber-300 border-amber-500/40' };
+    default:
+      return { name: wbId || 'Primary', tag: 'Workbook', color: 'bg-slate-800 text-slate-300 border-slate-700' };
+  }
+};
+
 export default function ProCockpitView({
   userSession,
   activeExchange,
@@ -667,6 +682,7 @@ export default function ProCockpitView({
                       const shield = resolveAntiChurnShield(pos);
                       const rawBoughtAt = pos.bought_at || pos.boughtAt || null;
                       const daysHeld = pos.daysHeld ?? computeDaysSince(rawBoughtAt);
+                      const wbBadge = getWorkbookBadge(pos.workbook || activeWb.id);
 
                       return (
                         <tr
@@ -700,8 +716,11 @@ export default function ProCockpitView({
                               <span className="text-emerald-400 font-bold">{pos.ticker}</span>
                               <span className="text-[10px] text-slate-400 font-normal truncate max-w-[80px]">{pos.company}</span>
                             </div>
-                            <div className="text-[9px] text-slate-500 mt-0.5">
-                              {units.toLocaleString()}u {daysHeld !== null ? `• ${daysHeld}d` : ''}
+                            <div className="text-[9px] text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                              <span className={`px-1 py-0.2 rounded font-mono font-bold text-[8px] border ${wbBadge.color}`}>
+                                {wbBadge.name}
+                              </span>
+                              <span>{units.toLocaleString()}u {daysHeld !== null ? `• ${daysHeld}d` : ''}</span>
                             </div>
                           </td>
                           <td className="py-2.5 px-2 text-right">

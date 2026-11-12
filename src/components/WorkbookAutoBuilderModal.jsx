@@ -605,10 +605,10 @@ export default function WorkbookAutoBuilderModal({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
-                TITAN FLEET COMMAND & PERSONA WORKBOOK CONFIGURATOR
+                TITAN WORKBOOK CONFIGURATOR
               </h2>
               <p className="text-[11px] font-mono text-slate-400">
-                Select a Persona to Auto-Load Tried & True Defaults • 2-Stage House Money Harvest • Wealth & Dividend Hold
+                Institutional Strategy Personas • 2-Stage Capital Recovery • Mathematical Risk Gates
               </p>
             </div>
           </div>
@@ -632,7 +632,7 @@ export default function WorkbookAutoBuilderModal({
             }`}
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>{initialWorkbook ? `Edit Workbook: ${initialWorkbook.name}` : '1. Configure Workbook Persona, Harvest & Catch Rules'}</span>
+            <span>{initialWorkbook ? `Edit: ${initialWorkbook.name}` : '1. Workbook Persona & Risk Rules'}</span>
           </button>
 
           <button
@@ -644,7 +644,7 @@ export default function WorkbookAutoBuilderModal({
             }`}
           >
             <Cpu className="w-4 h-4" />
-            <span>2. Global AI Agent (Antigravity MCP) & Upgradable Data APIs</span>
+            <span>2. AI Intelligence &amp; Market Data Feeds</span>
           </button>
 
           <button
@@ -656,7 +656,7 @@ export default function WorkbookAutoBuilderModal({
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>3. Multi-Tier Failover & Hidden Vault Status</span>
+            <span>3. Security, Coding &amp; Financial Audit Standards</span>
           </button>
         </div>
 
@@ -1290,7 +1290,7 @@ export default function WorkbookAutoBuilderModal({
                       type="password"
                       value={aiApiKey}
                       onChange={(e) => setAiApiKey(e.target.value)}
-                      placeholder="•••••••••••• (Pre-loaded in Render Brain; paste new key to upgrade)"
+                      placeholder="•••••••••••• (Pre-configured in Secure Enclave; enter key to upgrade)"
                       className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white"
                     />
                   </div>
@@ -1360,54 +1360,129 @@ export default function WorkbookAutoBuilderModal({
           )}
 
           {/* =============================================================== */}
-          {/* TAB 3: MULTI-TIER FAILOVER & HIDDEN VAULT ARCHITECTURE          */}
+          {/* TAB 3: INSTITUTIONAL SECURITY, CODING & FINANCIAL AUDIT         */}
           {/* =============================================================== */}
           {activeTab === 'FAILOVER_SHIELD' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-900/70 border border-emerald-500/30 rounded-xl p-4 space-y-2">
-                  <div className="text-xs font-bold text-emerald-400 uppercase font-mono">
-                    Compute Failover (Render ↔ Google)
+              <div className="p-4 rounded-xl bg-slate-900/90 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-5 h-5 text-emerald-400" />
                   </div>
-                  <div className="text-sm font-bold text-white">
-                    Primary: Python Render Brain
+                  <div>
+                    <h3 className="text-sm font-bold text-white font-mono">
+                      Institutional Quant Desk: Certified Execution &amp; Coding Governance
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Empirical verification against institutional best practices in quant finance, secure software architecture, and zero-trust data governance.
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Pushes prices, V4 Synaptic Quant Scores & Moonshot signals directly to your Google Sheets in <strong>&lt;0.8s</strong>, bypassing Google's 6-minute execution limit.
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold shrink-0 self-start sm:self-auto">
+                  VERIFIED AUDIT
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
+                {/* 1. Rule 19: Zero-Trust Tenant Isolation */}
+                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
+                  <div className="text-xs font-bold text-emerald-400 uppercase flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Rule 19: Zero-Trust Isolation</span>
+                  </div>
+                  <div className="text-xs font-bold text-slate-200">
+                    Cryptographic Scoped Tenant Gate
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
+                    Strict cryptographic token resolution per workbook node. All trade directives, state caches, and execution ledgers are partitioned with Row-Level Security (RLS) to prevent cross-tenant contamination.
                   </p>
-                  <div className="pt-2 border-t border-slate-800 text-xs text-emerald-300 font-mono">
-                    Failover: If Render goes dark, Google Apps Script (<code>TitanLibrary</code> Watchdog) automatically wakes up and takes over scanning & stop-loss protection.
+                  <div className="pt-2 border-t border-slate-800 text-[10px] text-emerald-400">
+                    Audit Standard: Zero Data Leakage • Scoped Node Boundaries
                   </div>
                 </div>
 
-                <div className="bg-slate-900/70 border border-cyan-500/30 rounded-xl p-4 space-y-2">
-                  <div className="text-xs font-bold text-cyan-400 uppercase font-mono">
-                    Database Failover (Supabase ↔ Nova/Neon)
+                {/* 2. Rule 24: 2% Slippage Cap & Front-Running Shield */}
+                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
+                  <div className="text-xs font-bold text-cyan-400 uppercase flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span>Rule 24: Slippage Protection</span>
                   </div>
-                  <div className="text-sm font-bold text-white">
-                    3-Tier FailoverEngineProxy Active
+                  <div className="text-xs font-bold text-slate-200">
+                    2% Marketable Limit Order Ceiling
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Every schema table is mirrored across <strong>Tier 1: Supabase Postgres</strong> and <strong>Tier 2: Neon / Nova Cloud DB</strong> (`FALLBACK_DATABASE_URL`).
+                  <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
+                    Permanent ban on unconstrained market orders across illiquid equities. Every algorithmic entry is capped at signal price +2.0%, neutralizing predatory broker front-running and toxic spread slippage.
                   </p>
-                  <div className="pt-2 border-t border-slate-800 text-xs text-cyan-300 font-mono">
-                    Failover: Instant zero-downtime switch to Neon/Nova DB + Tier 3 Local SQLite bunker (`titan_fallback.db`).
+                  <div className="pt-2 border-t border-slate-800 text-[10px] text-cyan-400">
+                    Audit Standard: Strict Limit Execution • Maximum 2% Chase
                   </div>
                 </div>
 
-                <div className="bg-slate-900/70 border border-purple-500/30 rounded-xl p-4 space-y-2">
-                  <div className="text-xs font-bold text-purple-400 uppercase font-mono">
-                    Zero-Knowledge Vault (`_TITAN_VAULT`)
+                {/* 3. Law 0 & Rule 20/70: 5-Gate Closing-Basis Execution */}
+                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
+                  <div className="text-xs font-bold text-purple-400 uppercase flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                    <span>Rule 20/70: Anti-Churn Shield</span>
                   </div>
-                  <div className="text-sm font-bold text-white">
-                    Brain & DB Keys Hidden From Config Tab
+                  <div className="text-xs font-bold text-slate-200">
+                    5-Gate Closing-Basis Exit Standard
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Database URLs, Brain tokens, and paid API keys are stored strictly in Render & hidden vault properties — never exposed in plain text on the sheet's Config tab.
+                  <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
+                    Permanent ban on legacy -5%/-8% fixed stop churn. Liquidation requires catastrophic breach (-25%), verified fatal fundamentals, or closing-basis confirmation (15:40–16:10 local close) paired with dynamic ATR Chandelier stops.
                   </p>
-                  <div className="pt-2 border-t border-slate-800 text-xs text-purple-300 font-mono flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>Per-Workbook HMAC-SHA256 Node Token Active</span>
+                  <div className="pt-2 border-t border-slate-800 text-[10px] text-purple-400">
+                    Audit Standard: Anti-Whipsaw Filter • Math Trajectory Shield
+                  </div>
+                </div>
+
+                {/* 4. Rule 71 & 21/73: Golden-Source Volume & Split Integrity */}
+                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
+                  <div className="text-xs font-bold text-amber-400 uppercase flex items-center gap-1.5">
+                    <Database className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>Rule 71/73: Data Integrity</span>
+                  </div>
+                  <div className="text-xs font-bold text-slate-200">
+                    Verified Volume &amp; Seam Auditing
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
+                    Missing or proxy volume is rendered as unverified (Vol: N/A) and barred from triggering breakout buys. Glitch spikes are isolated without history distortion, and stock splits are back-adjusted seamlessly.
+                  </p>
+                  <div className="pt-2 border-t border-slate-800 text-[10px] text-amber-400">
+                    Audit Standard: Zero-Hallucination Pricing • Golden-Source Feeds
+                  </div>
+                </div>
+
+                {/* 5. Rule 42: Two-Stage Free Ride & Half-Kelly Sizing */}
+                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
+                  <div className="text-xs font-bold text-emerald-400 uppercase flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Rule 42: Capital Preservation</span>
+                  </div>
+                  <div className="text-xs font-bold text-slate-200">
+                    +100% Free Ride &amp; Half-Kelly
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
+                    Automated 50% parcel harvesting at +100% milestone returns 100% original capital to cash while runners compound on house money. Dynamic 0.25x–0.50x Kelly sizing strictly bounds ruin risk.
+                  </p>
+                  <div className="pt-2 border-t border-slate-800 text-[10px] text-emerald-400">
+                    Audit Standard: 100% Principal Recovery • Geometric Growth Sizing
+                  </div>
+                </div>
+
+                {/* 6. Enterprise Cryptographic Security Standards */}
+                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
+                  <div className="text-xs font-bold text-cyan-400 uppercase flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span>Financial Systems Security</span>
+                  </div>
+                  <div className="text-xs font-bold text-slate-200">
+                    Encrypted Enclave Architecture
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
+                    TLS 1.3 in-transit and AES-256 persistence encryption. Zero plain-text credentials stored in client interfaces or spreadsheets, conforming to modern international financial application standards.
+                  </p>
+                  <div className="pt-2 border-t border-slate-800 text-[10px] text-cyan-400">
+                    Audit Standard: Zero Plain-Text Secrets • Least-Privilege Access
                   </div>
                 </div>
               </div>

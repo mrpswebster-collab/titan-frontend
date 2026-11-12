@@ -107,21 +107,6 @@ const DEFAULT_ADMIN_WORKBOOKS = [
     openPositions: 1,
     dayPl: 370.00,
     dayPlPct: 1.48
-  },
-  {
-    id: 'titan-us-workbook',
-    name: 'Titan US Desk (Wall St Momentum)',
-    exchange: 'NYSE',
-    currency: 'USD',
-    strategy_protocol: 'INTERNATIONAL_ALPHA',
-    sector_persona: 'WALL_ST_MOMENTUM_TECH',
-    execution_mode: 'AUTONOMOUS',
-    equity: 20000.00,
-    cash: 14200.00,
-    starting_capital: 20000.00,
-    openPositions: 1,
-    dayPl: 290.00,
-    dayPlPct: 1.45
   }
 ];
 
@@ -131,8 +116,7 @@ const DEFAULT_ADMIN_HOLDINGS = [
   { ticker: 'WIA', company: 'Wia Gold Limited', workbook: 'pennymines-workbook', exchange: 'ASX', currency: 'AUD', units: 110000, avgCost: 0.115, livePrice: 0.145, marketValue: 15950.00, plDollar: 3300.00, plPct: 26.09, dayChangePct: 5.1, stopLoss: 0.125, status: 'TRAILING_STOP', vol_mult: 2.8, vol_verified: true },
   { ticker: 'SXG', company: 'Southern Cross Gold', workbook: 'special-workbook', exchange: 'ASX', currency: 'AUD', units: 8500, avgCost: 2.65, livePrice: 3.10, marketValue: 26350.00, plDollar: 3825.00, plPct: 16.98, dayChangePct: 2.6, stopLoss: 2.75, status: 'COILED_HOLD', vol_mult: 1.9, vol_verified: true },
   { ticker: 'NST', company: 'Northern Star Resources Ltd', workbook: 'special-workbook', exchange: 'ASX', currency: 'AUD', units: 35, avgCost: 10.75, livePrice: 25.65, marketValue: 897.75, plDollar: 521.50, plPct: 138.60, dayChangePct: 1.8, stopLoss: 22.80, status: 'FREE_CARRY_ACTIVE', vol_mult: 1.7, vol_verified: true },
-  { ticker: 'CSL', company: 'CSL Limited', workbook: '100-asx-workbook', exchange: 'ASX', currency: 'AUD', units: 115, avgCost: 284.00, livePrice: 298.50, marketValue: 34327.50, plDollar: 1667.50, plPct: 5.11, dayChangePct: 1.1, stopLoss: 272.00, status: 'FORTRESS_CORE', vol_mult: 1.5, vol_verified: true },
-  { ticker: 'SOUN', company: 'SoundHound AI Inc', workbook: 'titan-us-workbook', exchange: 'NYSE', currency: 'USD', units: 4500, avgCost: 3.90, livePrice: 4.82, marketValue: 21690.00, plDollar: 4140.00, plPct: 23.59, dayChangePct: 6.4, stopLoss: 4.15, status: 'MOMENTUM_SURGE', vol_mult: 3.1, vol_verified: true }
+  { ticker: 'CSL', company: 'CSL Limited', workbook: '100-asx-workbook', exchange: 'ASX', currency: 'AUD', units: 115, avgCost: 284.00, livePrice: 298.50, marketValue: 34327.50, plDollar: 1667.50, plPct: 5.11, dayChangePct: 1.1, stopLoss: 272.00, status: 'FORTRESS_CORE', vol_mult: 1.5, vol_verified: true }
 ];
 
 export default function ProCockpitView({

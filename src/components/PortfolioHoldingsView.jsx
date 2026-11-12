@@ -70,6 +70,21 @@ export default function PortfolioHoldingsView({
     (userSession?.email || '').toLowerCase() === 'mrpswebster@gmail.com'
   );
 
+  const getWorkbookBadge = (wbId) => {
+    switch (wbId) {
+      case 'pennymines-workbook':
+        return { name: 'pennymines_', tag: 'Coiled Springs', color: isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' };
+      case 'ai-trader-workbook':
+        return { name: 'AI_trader_', tag: 'Moonshots', color: isLight ? 'bg-purple-100 text-purple-800 border-purple-300' : 'bg-purple-500/15 text-purple-300 border-purple-500/40' };
+      case '100-asx-workbook':
+        return { name: '100_ASX', tag: 'Bluechips', color: isLight ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-blue-500/15 text-blue-300 border-blue-500/40' };
+      case 'special-workbook':
+        return { name: 'Special QUANT', tag: 'Reserve', color: isLight ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-300 border-amber-500/40' };
+      default:
+        return { name: wbId || 'Primary', tag: 'Workbook', color: isLight ? 'bg-slate-200 text-slate-700 border-slate-300' : 'bg-slate-800 text-slate-300 border-slate-700' };
+    }
+  };
+
   const defaultAdminWorkbooks = [
     { id: 'ALL', name: 'All Connected Fleet Workbooks (Consolidated)', exchange: 'GLOBAL', currency: 'AUD', equity: 72420.00, cash: 44950.00, openPositions: 6, dayPl: 1195.00, dayPlPct: 1.65 },
     { id: 'ai-trader-workbook', name: 'AI_trader_ ASX QUANT V125 (Moonshots)', exchange: 'ASX', currency: 'AUD', equity: 11250.00, cash: 7450.00, openPositions: 2, dayPl: 225.00, dayPlPct: 2.04 },
@@ -582,6 +597,23 @@ export default function PortfolioHoldingsView({
             </button>
           </div>
 
+          {/* Informational banner when All Fleet Workbooks is selected */}
+          {selectedWorkbook === 'ALL' && (
+            <div className={`mb-3 px-3.5 py-2.5 rounded-xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-sm ${
+              isLight ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-slate-900/90 border-slate-800 text-slate-300'
+            }`}>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400 font-bold">🌐 Consolidated Fleet Ledger:</span>
+                <span className="text-[11px] leading-relaxed">
+                  Viewing all tenant workbooks simultaneously. Shared tickers (e.g. <b>ALK</b>, <b>FAU</b>, <b>JNS</b>) represent independent parcels held in distinct tenant workbooks.
+                </span>
+              </div>
+              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 shrink-0">
+                Rule 19 Tenant Isolation
+              </span>
+            </div>
+          )}
+
           {filteredHoldings.length === 0 ? (
             <div className="p-10 text-center font-mono text-xs space-y-2">
               <div className={textMuted}>No open positions in this ledger currently.</div>
@@ -624,6 +656,7 @@ export default function PortfolioHoldingsView({
                 const stopLoss = Number(pos.stopLoss || pos.chandelierStop || 0);
                 const catastropheFloor = Number(pos.catastropheStop || (avgCost > 0 ? avgCost * 0.75 : 0));
                 const shield = resolveAntiChurnShield(pos);
+                const wbBadge = getWorkbookBadge(pos.workbook || activeWb.id);
 
                 return (
                   <div
@@ -669,9 +702,14 @@ export default function PortfolioHoldingsView({
                             {pos.company || '—'}
                           </span>
                         </div>
-                        <div className={`text-[10px] mt-0.5 ${textMuted}`}>
-                          {units.toLocaleString()} units • Entry ${avgCost.toFixed(avgCost < 1 ? 3 : 2)}
-                          {computedDays !== null && computedDays !== undefined ? ` • ${computedDays}d held` : ''}
+                        <div className="text-[10px] mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span className={`px-1.5 py-0.5 rounded font-mono font-bold border text-[9px] ${wbBadge.color}`}>
+                            📖 {wbBadge.name}
+                          </span>
+                          <span className={textMuted}>
+                            • {units.toLocaleString()} units • Entry ${avgCost.toFixed(avgCost < 1 ? 3 : 2)}
+                            {computedDays !== null && computedDays !== undefined ? ` • ${computedDays}d held` : ''}
+                          </span>
                         </div>
                       </div>
                       <div className="text-right">
@@ -767,6 +805,7 @@ export default function PortfolioHoldingsView({
                     const stopLoss = Number(pos.stopLoss || pos.chandelierStop || 0);
                     const catastropheFloor = Number(pos.catastropheStop || (avgCost > 0 ? avgCost * 0.75 : 0));
                     const shield = resolveAntiChurnShield(pos);
+                    const wbBadge = getWorkbookBadge(pos.workbook || activeWb.id);
 
                     return (
                       <tr
@@ -808,9 +847,9 @@ export default function PortfolioHoldingsView({
                               {pos.company || '—'}
                             </span>
                           </div>
-                          <div className={`text-[10px] mt-1 flex items-center gap-1.5 ${textMuted}`}>
-                            <span className={`px-1.5 py-0.2 rounded ${isLight ? 'bg-slate-200 text-slate-700' : 'bg-slate-800 text-slate-300'}`}>
-                              {pos.workbook || activeWb.id}
+                          <div className={`text-[10px] mt-1 flex items-center gap-1.5 flex-wrap ${textMuted}`}>
+                            <span className={`px-1.5 py-0.5 rounded font-mono font-bold border text-[9px] ${wbBadge.color}`}>
+                              📖 {wbBadge.name}
                             </span>
                             <span>• {units.toLocaleString()} units</span>
                           </div>

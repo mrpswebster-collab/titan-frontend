@@ -1,15 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Play, TrendingUp, ShieldCheck, BarChart3, Award, AlertCircle } from 'lucide-react';
 
+const POPULAR_TICKERS = {
+  ASX: [
+    { ticker: 'WA1', name: 'WA1 Resources (Niobium Discovery)' },
+    { ticker: 'DRO', name: 'Droneshield (Counter-Drone Defense)' },
+    { ticker: 'DVP', name: 'Develop Global (Energy Transition)' },
+    { ticker: 'ZIP', name: 'Zip Co Ltd (Fintech Growth)' },
+    { ticker: 'LTR', name: 'Liontown Resources (Lithium)' },
+    { ticker: 'TLX', name: 'Telix Pharmaceuticals (Biotech)' },
+    { ticker: 'NEU', name: 'Neuren Pharmaceuticals (Neurotech)' },
+    { ticker: 'PLS', name: 'Pilbara Minerals (Lithium Tier 1)' },
+    { ticker: 'BHP', name: 'BHP Group Ltd (Global Resource)' },
+    { ticker: 'CBA', name: 'Commonwealth Bank of Australia' },
+    { ticker: 'CSL', name: 'CSL Ltd (Biotech Global)' },
+    { ticker: 'WTC', name: 'WiseTech Global (Logistics Software)' },
+    { ticker: 'FMG', name: 'Fortescue Ltd (Iron Ore / Green)' }
+  ],
+  NYSE: [
+    { ticker: 'ASTS', name: 'AST SpaceMobile (Direct Satellite)' },
+    { ticker: 'PLTR', name: 'Palantir Technologies (AI Defense)' },
+    { ticker: 'NVDA', name: 'Nvidia Corp (AI Semiconductor)' },
+    { ticker: 'TSLA', name: 'Tesla Inc (EV & Autonomous)' },
+    { ticker: 'IONQ', name: 'IonQ Inc (Quantum Computing)' },
+    { ticker: 'RKLB', name: 'Rocket Lab USA (Space Launch)' },
+    { ticker: 'AAPL', name: 'Apple Inc (Consumer Tech)' },
+    { ticker: 'MSFT', name: 'Microsoft Corp (Cloud & AI)' }
+  ],
+  LSE: [
+    { ticker: 'RR.L', name: 'Rolls-Royce Holdings (Aerospace)' },
+    { ticker: 'AZN.L', name: 'AstraZeneca PLC (Biopharma)' },
+    { ticker: 'SHEL.L', name: 'Shell PLC (Global Energy)' },
+    { ticker: 'BARC.L', name: 'Barclays PLC (Banking)' }
+  ],
+  TSX: [
+    { ticker: 'SHOP.TO', name: 'Shopify Inc (E-Commerce Platform)' },
+    { ticker: 'NXE.TO', name: 'NexGen Energy Ltd (Uranium)' },
+    { ticker: 'CSU.TO', name: 'Constellation Software (Tech)' }
+  ]
+};
+
 export default function BacktestLabModal({ isOpen, onClose, defaultTicker = 'WA1', defaultExchange = 'ASX' }) {
-  const [ticker, setTicker] = useState(defaultTicker);
   const [exchange, setExchange] = useState(defaultExchange);
+  const [ticker, setTicker] = useState(defaultTicker);
   const [strategy, setStrategy] = useState('COILED_SPRING');
   const [years, setYears] = useState(5);
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState(null);
 
+  useEffect(() => {
+    if (defaultExchange) setExchange(defaultExchange);
+    if (defaultTicker) setTicker(defaultTicker);
+  }, [defaultTicker, defaultExchange, isOpen]);
+
+  const handleExchangeChange = (newEx) => {
+    setExchange(newEx);
+    const list = POPULAR_TICKERS[newEx] || POPULAR_TICKERS.ASX;
+    if (!list.some(item => item.ticker === ticker)) {
+      setTicker(list[0]?.ticker || 'WA1');
+    }
+  };
+
   if (!isOpen) return null;
+
+  const currentTickerList = POPULAR_TICKERS[exchange] || POPULAR_TICKERS.ASX;
 
   const handleRunBacktest = async () => {
     setIsRunning(true);
@@ -71,20 +125,28 @@ export default function BacktestLabModal({ isOpen, onClose, defaultTicker = 'WA1
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
             <div>
               <label className="text-[10px] text-slate-400 block mb-1">TICKER</label>
-              <input
-                type="text"
+              <select
                 value={ticker}
-                onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                className="w-full bg-[#0a0e17] border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-100 font-bold focus:outline-none focus:border-emerald-500"
-              />
+                onChange={(e) => setTicker(e.target.value)}
+                className="w-full bg-[#0a0e17] border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-100 font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
+              >
+                {ticker && !currentTickerList.some(item => item.ticker === ticker) && (
+                  <option value={ticker}>⭐ {ticker} (Selected Active Ticker)</option>
+                )}
+                {currentTickerList.map((item) => (
+                  <option key={item.ticker} value={item.ticker}>
+                    {item.ticker} — {item.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="text-[10px] text-slate-400 block mb-1">MARKET</label>
               <select
                 value={exchange}
-                onChange={(e) => setExchange(e.target.value)}
-                className="w-full bg-[#0a0e17] border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-100 font-bold focus:outline-none focus:border-emerald-500"
+                onChange={(e) => handleExchangeChange(e.target.value)}
+                className="w-full bg-[#0a0e17] border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-100 font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
               >
                 <option value="ASX">ASX (AU)</option>
                 <option value="NYSE">NYSE / NASDAQ (US)</option>

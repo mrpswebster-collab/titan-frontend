@@ -262,8 +262,9 @@ export default function InstitutionalGateAndSetupWizard({
       }
 
       const u = data.user || {};
-      setPendingGoogleToken(response.credential);
-      try { sessionStorage.setItem('titan_pending_google_token', response.credential); } catch(e) {}
+      const sessionTok = data.token || response.credential;
+      setPendingGoogleToken(sessionTok);
+      try { sessionStorage.setItem('titan_pending_google_token', sessionTok); } catch(e) {}
       setPendingUserEmail(u.email || '');
 
       // Check if user already has a PIN

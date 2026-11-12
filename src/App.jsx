@@ -228,16 +228,30 @@ export default function App() {
     };
   }, [activeMainTab, layoutMode]);
 
-  // User session with persistent localStorage authentication (requires cryptographic idToken)
+  // User session with persistent localStorage authentication (requires cryptographic idToken + non-expired JWT)
   const [userSession, setUserSession] = useState(() => {
     try {
       const saved = localStorage.getItem('titan_user_session');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.idToken && parsed.isAuthed) {
-          return parsed;
+          // Check if JWT is expired (e.g., old 1-hour Google OAuth token from previous build)
+          let isExpired = false;
+          try {
+            const parts = String(parsed.idToken).split('.');
+            if (parts.length === 3) {
+              const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+              const payload = JSON.parse(atob(base64));
+              if (payload && payload.exp && payload.exp * 1000 < Date.now()) {
+                isExpired = true;
+              }
+            }
+          } catch (jwtErr) {}
+          if (!isExpired) {
+            return parsed;
+          }
         }
-        // Purge any legacy unverified email-only session
+        // Purge any legacy or expired session so user sees the Main Login Screen & Mode Switch
         localStorage.removeItem('titan_user_session');
       }
     } catch (e) {}
@@ -448,24 +462,22 @@ export default function App() {
                 <span className="inline">Mobile</span>
               </button>
 
-              {!isMobileMode && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLayoutMode('COCKPIT');
-                    try { localStorage.setItem('titan_layout_mode', 'COCKPIT'); } catch(e) {}
-                  }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-bold transition ${
-                    layoutMode === 'COCKPIT'
-                      ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/50'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                  title="TITAN V156 Dashboard - Quant Cockpit (https://asx-quant-brain.onrender.com/ui)"
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="inline">Cockpit (Pro)</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setLayoutMode('COCKPIT');
+                  try { localStorage.setItem('titan_layout_mode', 'COCKPIT'); } catch(e) {}
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-bold transition ${
+                  layoutMode === 'COCKPIT'
+                    ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/50'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="TITAN V156 Dashboard - Quant Cockpit (https://asx-quant-brain.onrender.com/ui)"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="inline">Cockpit (Pro)</span>
+              </button>
             </div>
 
             {/* Institutional Help & Quick Guide (Hidden in Mobile Phone Mode to save space) */}
@@ -745,6 +757,7 @@ export default function App() {
                 setLayoutMode('STANDARD');
                 setActiveMainTab('AI_TERMINAL');
               }}
+              onLogout={handleLogout}
             />
           )}
         </main>
@@ -1078,69 +1091,92 @@ export default function App() {
         />
       )}
 
-      {/* Fixed Bottom Mobile Phone Navigation Bar (Analytics & Trade Screens + Webpage Switch) */}
-      {isMobileMode && (
-        <div className={`fixed bottom-0 left-0 right-0 z-40 border-t px-2 py-1.5 backdrop-blur-md shadow-2xl ${
-          isLight ? 'bg-white/95 border-slate-200' : 'bg-[#090e17]/95 border-slate-800'
-        }`}>
-          <div className="max-w-lg mx-auto grid grid-cols-4 gap-1 font-mono text-[10px]">
-            <button
-              type="button"
-              onClick={() => setActiveMainTab('SCANNER')}
-              className={`flex flex-col items-center justify-center py-1.5 rounded-xl font-bold transition ${
-                activeMainTab === 'SCANNER'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <LayoutGrid className="w-4 h-4 mb-0.5" />
-              <span>Trade</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveMainTab('PORTFOLIO')}
-              className={`flex flex-col items-center justify-center py-1.5 rounded-xl font-bold transition ${
-                activeMainTab === 'PORTFOLIO'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Briefcase className="w-4 h-4 mb-0.5" />
-              <span>Portfolio</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveMainTab('AI_TERMINAL')}
-              className={`flex flex-col items-center justify-center py-1.5 rounded-xl font-bold transition ${
-                activeMainTab === 'AI_TERMINAL'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Cpu className="w-4 h-4 mb-0.5" />
-              <span>AI Analytics</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setLayoutMode('STANDARD');
-                try { localStorage.setItem('titan_layout_mode', 'STANDARD'); } catch (e) {}
-              }}
-              className="flex flex-col items-center justify-center py-1.5 rounded-xl font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition"
-            >
-              <Monitor className="w-4 h-4 mb-0.5" />
-              <span>Webpage</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-
         </>
       )}
+
+      {/* Fixed Bottom Mobile Phone Navigation Bar (Analytics, Trade, Pro Display & Webpage Switch) */}
+      <div className={`${isMobileMode ? 'block' : 'sm:hidden'} fixed bottom-0 left-0 right-0 z-40 border-t px-2 py-1.5 backdrop-blur-md shadow-2xl ${
+        isLight ? 'bg-white/95 border-slate-200' : 'bg-[#090e17]/95 border-slate-800'
+      }`}>
+        <div className="max-w-lg mx-auto grid grid-cols-5 gap-1 font-mono text-[10px]">
+          <button
+            type="button"
+            onClick={() => {
+              if (layoutMode === 'COCKPIT') setLayoutMode('MOBILE');
+              setActiveMainTab('SCANNER');
+            }}
+            className={`flex flex-col items-center justify-center py-1.5 rounded-xl font-bold transition ${
+              layoutMode !== 'COCKPIT' && activeMainTab === 'SCANNER'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <LayoutGrid className="w-4 h-4 mb-0.5" />
+            <span>Trade</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (layoutMode === 'COCKPIT') setLayoutMode('MOBILE');
+              setActiveMainTab('PORTFOLIO');
+            }}
+            className={`flex flex-col items-center justify-center py-1.5 rounded-xl font-bold transition ${
+              layoutMode !== 'COCKPIT' && activeMainTab === 'PORTFOLIO'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Briefcase className="w-4 h-4 mb-0.5" />
+            <span>Portfolio</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (layoutMode === 'COCKPIT') setLayoutMode('MOBILE');
+              setActiveMainTab('AI_TERMINAL');
+            }}
+            className={`flex flex-col items-center justify-center py-1.5 rounded-xl font-bold transition ${
+              layoutMode !== 'COCKPIT' && activeMainTab === 'AI_TERMINAL'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Cpu className="w-4 h-4 mb-0.5" />
+            <span>Analytics</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setLayoutMode('COCKPIT');
+              try { localStorage.setItem('titan_layout_mode', 'COCKPIT'); } catch (e) {}
+            }}
+            className={`flex flex-col items-center justify-center py-1.5 rounded-xl font-bold transition ${
+              layoutMode === 'COCKPIT'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4 mb-0.5" />
+            <span>Pro Display</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const nextMode = layoutMode === 'MOBILE' ? 'STANDARD' : 'MOBILE';
+              setLayoutMode(nextMode);
+              try { localStorage.setItem('titan_layout_mode', nextMode); } catch (e) {}
+            }}
+            className="flex flex-col items-center justify-center py-1.5 rounded-xl font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition"
+          >
+            {layoutMode === 'MOBILE' ? <Monitor className="w-4 h-4 mb-0.5" /> : <Smartphone className="w-4 h-4 mb-0.5" />}
+            <span>{layoutMode === 'MOBILE' ? 'Webpage' : 'Mobile'}</span>
+          </button>
+        </div>
+      </div>
 
       {/* Footer with ASIC Statutory Disclaimer */}
       <footer className="bg-[#0f172a] border-t border-slate-800/80 px-4 py-6 text-slate-500 text-xs mt-auto">

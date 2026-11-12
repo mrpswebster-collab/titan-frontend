@@ -479,37 +479,50 @@ export default function ProCockpitView({
         }`}>
           <div className="p-3 border-b border-slate-800 bg-[#101b2a] flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <div className="flex bg-[#070c12] rounded-lg p-0.5 border border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLeftPaneTab('HOLDINGS');
-                    setMobileCockpitPane('HOLDINGS');
+              {/* Rolling Bar Sub-View Selector (Active Holdings vs Day-0 Inception) */}
+              <div className="relative p-0.5 rounded-lg border border-slate-800 bg-[#070c12] select-none flex items-center">
+                <div
+                  className="absolute top-0.5 bottom-0.5 rounded bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/20 transition-transform duration-300 ease-out z-0 pointer-events-none"
+                  style={{
+                    width: 'calc(50% - 2px)',
+                    left: '1px',
+                    transform: leftPaneTab === 'HOLDINGS' 
+                      ? 'translateX(0px)' 
+                      : 'translateX(calc(100% + 2px))'
                   }}
-                  className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold transition flex items-center gap-1 ${
-                    leftPaneTab === 'HOLDINGS'
-                      ? 'bg-emerald-500 text-slate-950'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Briefcase className="w-3 h-3" />
-                  <span>Holdings ({filteredHoldings.length})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLeftPaneTab('INCEPTION');
-                    setMobileCockpitPane('INCEPTION');
-                  }}
-                  className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold transition flex items-center gap-1 ${
-                    leftPaneTab === 'INCEPTION'
-                      ? 'bg-emerald-500 text-slate-950'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Sparkles className="w-3 h-3" />
-                  <span>Day-0 Inception</span>
-                </button>
+                />
+                <div className="relative grid grid-cols-2 gap-0.5 z-10 font-mono text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLeftPaneTab('HOLDINGS');
+                      setMobileCockpitPane('HOLDINGS');
+                    }}
+                    className={`px-2.5 py-1 rounded font-bold transition flex items-center justify-center gap-1 active:scale-95 ${
+                      leftPaneTab === 'HOLDINGS'
+                        ? 'text-slate-950 font-black'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Briefcase className="w-3 h-3" />
+                    <span>Holdings ({filteredHoldings.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLeftPaneTab('INCEPTION');
+                      setMobileCockpitPane('INCEPTION');
+                    }}
+                    className={`px-2.5 py-1 rounded font-bold transition flex items-center justify-center gap-1 active:scale-95 ${
+                      leftPaneTab === 'INCEPTION'
+                        ? 'text-slate-950 font-black'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>Day-0 Inception</span>
+                  </button>
+                </div>
               </div>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
                 {activeWb.name}

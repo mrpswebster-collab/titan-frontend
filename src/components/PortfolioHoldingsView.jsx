@@ -16,7 +16,8 @@ import {
   ArrowRight,
   ExternalLink,
   Clock,
-  Activity
+  Activity,
+  ChevronDown
 } from 'lucide-react';
 import SignalInceptionView, { formatVerifiedVolMult, computeDaysSince } from './SignalInceptionView';
 
@@ -93,6 +94,35 @@ export default function PortfolioHoldingsView({
   const [holdings, setHoldings] = useState(() => (isAdminSession ? defaultAdminHoldings : []));
   const [accessTier, setAccessTier] = useState(() => (isAdminSession ? 'SUPERADMIN_FLEET' : 'ISOLATED_CLIENT_ENCLAVE'));
   const [loading, setLoading] = useState(true);
+
+  // Touch Swipe Gesture Tracking for Mobile rolling bar
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchStartY, setTouchStartY] = useState(null);
+
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches.length > 0) {
+      setTouchStartX(e.touches[0].clientX);
+      setTouchStartY(e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null || !e.changedTouches || e.changedTouches.length === 0) return;
+    const diffX = e.changedTouches[0].clientX - touchStartX;
+    const diffY = e.changedTouches[0].clientY - (touchStartY ?? 0);
+    // Only trigger horizontal roll if horizontal swipe is dominant and exceeds 40px
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+      if (diffX < 0) {
+        // Swiped Left -> roll to Day Zero Tracker
+        setActiveSubTab('SIGNAL_INCEPTION');
+      } else {
+        // Swiped Right -> roll to Active Holdings
+        setActiveSubTab('ACTIVE_HOLDINGS');
+      }
+    }
+    setTouchStartX(null);
+    setTouchStartY(null);
+  };
 
   // Capital Calibration
   const [capitalInput, setCapitalInput] = useState(String(userSession?.startingCapital || 25000));
@@ -248,7 +278,11 @@ export default function PortfolioHoldingsView({
   const textMuted = isLight ? 'text-slate-500' : 'text-slate-400';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="max-w-7xl mx-auto px-4 py-6 space-y-6"
+    >
       {/* 1. Direct Banner to Fleet & Setup Menu (Hidden in Mobile Phone Mode) */}
       {!isMobileMode && (
       <div className={`rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
@@ -288,93 +322,165 @@ export default function PortfolioHoldingsView({
       </div>
       )}
 
-      {/* 2. Workbook Filter Pills & Sub-View Switcher */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {workbooks.length > 1 ? (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            <span className={`text-xs font-mono font-bold uppercase shrink-0 ${textMuted}`}>
-              Ledger:
-            </span>
-            <button
-              type="button"
-              onClick={() => setSelectedWorkbook('ALL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition shadow-sm ${
-                selectedWorkbook === 'ALL'
-                  ? 'bg-emerald-500 text-black shadow-emerald-500/20'
-                  : isLight
-                    ? 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-              }`}
-            >
-              Consolidated (All Nodes)
-            </button>
+      {/* 2. Ledger Selection Dropdown (Mobile Mode) & Rolling Bar Left-to-Right Sub-View Selector */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+        {/* Ledger Selector: In Mobile Mode (or on mobile screens), strictly a clean Dropdown Selection */}
+        {isMobileMode ? (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto">
+            <div className="flex items-center justify-between sm:justify-start gap-2">
+              <span className={`text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 ${textMuted}`}>
+                <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Banking Ledger:</span>
+              </span>
+              <span className="text-[10px] font-mono text-emerald-400 sm:hidden">
+                {activeWb.name}
+              </span>
+            </div>
+            <div className="relative w-full sm:w-80">
+              <select
+                value={selectedWorkbook}
+                onChange={(e) => setSelectedWorkbook(e.target.value)}
+                className={`w-full rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold outline-none cursor-pointer border transition shadow-sm appearance-none pr-8 ${
+                  isLight
+                    ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-500'
+                    : 'bg-[#080e18] border-slate-700 text-emerald-400 focus:border-emerald-500 shadow-inner'
+                }`}
+              >
+                {accessTier === 'SUPERADMIN_FLEET' && (
+                  <option value="ALL">🌐 All Connected Workbooks (Consolidated Fleet)</option>
+                )}
+                {workbooks.map(wb => (
+                  <option key={wb.id} value={wb.id}>
+                    📁 {wb.name} ({wb.exchange || 'ASX'} • ${Number(wb.equity || 0).toLocaleString()})
+                  </option>
+                ))}
+                {workbooks.length === 0 && (
+                  <option value={fallbackSheet.id}>📁 {fallbackSheet.name}</option>
+                )}
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+        ) : (
+          /* Desktop Ledger Selector with Mobile-Fallback Dropdown & Quick Pills */
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto">
+            {/* Mobile Breakpoint Dropdown Fallback */}
+            <div className="sm:hidden w-full relative">
+              <select
+                value={selectedWorkbook}
+                onChange={(e) => setSelectedWorkbook(e.target.value)}
+                className={`w-full rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold outline-none cursor-pointer border appearance-none pr-8 ${
+                  isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-[#080e18] border-slate-700 text-emerald-400'
+                }`}
+              >
+                <option value="ALL">🌐 All Connected Workbooks (Consolidated)</option>
+                {workbooks.map(wb => (
+                  <option key={wb.id} value={wb.id}>
+                    📁 {wb.name} ({wb.exchange || 'ASX'} • ${Number(wb.equity || 0).toLocaleString()})
+                  </option>
+                ))}
+                {workbooks.length === 0 && (
+                  <option value={fallbackSheet.id}>📁 {fallbackSheet.name}</option>
+                )}
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
 
-            {workbooks.map(wb => (
+            {/* Desktop Pill Selector */}
+            <div className="hidden sm:flex items-center gap-2 overflow-x-auto pb-1">
+              <span className={`text-xs font-mono font-bold uppercase shrink-0 flex items-center gap-1 ${textMuted}`}>
+                <Database className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Ledger:</span>
+              </span>
               <button
-                key={wb.id}
                 type="button"
-                onClick={() => setSelectedWorkbook(wb.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition shadow-sm shrink-0 flex items-center gap-1.5 ${
-                  selectedWorkbook === wb.id
+                onClick={() => setSelectedWorkbook('ALL')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition shadow-sm ${
+                  selectedWorkbook === 'ALL'
                     ? 'bg-emerald-500 text-black shadow-emerald-500/20'
                     : isLight
                       ? 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                       : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 }`}
               >
-                <span>{wb.name}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${selectedWorkbook === wb.id ? 'bg-black/20 text-black' : 'bg-slate-700 text-emerald-300'}`}>
-                  {wb.exchange || 'ASX'}
-                </span>
+                Consolidated (All Nodes)
               </button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <span className={`text-xs font-mono font-bold uppercase ${textMuted}`}>
-              Active Banking Ledger:
-            </span>
-            <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-lg border ${
-              isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-slate-800/90 border-slate-700 text-emerald-300'
-            }`}>
-              {activeWb.name} ({activeWb.exchange || currencyInput})
-            </span>
+
+              {workbooks.map(wb => (
+                <button
+                  key={wb.id}
+                  type="button"
+                  onClick={() => setSelectedWorkbook(wb.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition shadow-sm shrink-0 flex items-center gap-1.5 ${
+                    selectedWorkbook === wb.id
+                      ? 'bg-emerald-500 text-black shadow-emerald-500/20'
+                      : isLight
+                        ? 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  <span>{wb.name}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${selectedWorkbook === wb.id ? 'bg-black/20 text-black' : 'bg-slate-700 text-emerald-300'}`}>
+                    {wb.exchange || 'ASX'}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Segmented Sub-Tab Switcher: Active Holdings vs Signal Inception */}
-        <div className={`inline-flex p-1 rounded-xl border self-start md:self-auto ${
-          isLight ? 'bg-slate-100 border-slate-200' : 'bg-[#0b1120] border-slate-800'
-        }`}>
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('ACTIVE_HOLDINGS')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
-              activeSubTab === 'ACTIVE_HOLDINGS'
-                ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                : isLight
-                  ? 'text-slate-600 hover:text-slate-900'
-                  : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Briefcase className="w-3.5 h-3.5" />
-            <span>Active Holdings ({filteredHoldings.length})</span>
-          </button>
+        {/* Rolling Bar Left-to-Right Sub-View Selector (Active Holdings vs Day Zero Tracker) */}
+        <div className="w-full lg:w-auto">
+          <div className={`relative p-1 rounded-2xl border transition shadow-inner select-none max-w-md mx-auto lg:mx-0 ${
+            isLight ? 'bg-slate-200/90 border-slate-300' : 'bg-[#070c14] border-slate-800'
+          }`}>
+            {/* Animated Rolling Bar Glider: Slides Left-to-Right / Right-to-Left on Press */}
+            <div
+              className="absolute top-1 bottom-1 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400 shadow-md shadow-emerald-500/25 transition-transform duration-300 ease-out z-0 pointer-events-none"
+              style={{
+                width: 'calc(50% - 4px)',
+                left: '2px',
+                transform: activeSubTab === 'ACTIVE_HOLDINGS' 
+                  ? 'translateX(0px)' 
+                  : 'translateX(calc(100% + 4px))'
+              }}
+            />
 
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('SIGNAL_INCEPTION')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
-              activeSubTab === 'SIGNAL_INCEPTION'
-                ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                : isLight
-                  ? 'text-slate-600 hover:text-slate-900'
-                  : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Signal Inception (Day-0 Tracker)</span>
-          </button>
+            {/* Pressable Buttons on Rolling Track */}
+            <div className="relative grid grid-cols-2 gap-1 z-10 font-mono">
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('ACTIVE_HOLDINGS')}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-3 sm:px-4 rounded-xl text-xs font-extrabold transition-colors duration-200 cursor-pointer active:scale-95 ${
+                  activeSubTab === 'ACTIVE_HOLDINGS'
+                    ? 'text-slate-950 font-bold'
+                    : isLight
+                      ? 'text-slate-600 hover:text-slate-900'
+                      : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="View Active Portfolio Holdings"
+              >
+                <Briefcase className={`w-3.5 h-3.5 ${activeSubTab === 'ACTIVE_HOLDINGS' ? 'text-slate-950' : 'text-slate-400'}`} />
+                <span className="truncate">Active Holdings ({filteredHoldings.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('SIGNAL_INCEPTION')}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-3 sm:px-4 rounded-xl text-xs font-extrabold transition-colors duration-200 cursor-pointer active:scale-95 ${
+                  activeSubTab === 'SIGNAL_INCEPTION'
+                    ? 'text-slate-950 font-bold'
+                    : isLight
+                      ? 'text-slate-600 hover:text-slate-900'
+                      : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="View Day Zero Tracker (Day-0 Signal Inception)"
+              >
+                <Sparkles className={`w-3.5 h-3.5 ${activeSubTab === 'SIGNAL_INCEPTION' ? 'text-slate-950' : 'text-slate-400'}`} />
+                <span className="truncate">Day Zero Tracker</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

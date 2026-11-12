@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, Clock, ShieldCheck, Sun, Moon, AlertCircle, LogOut, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import EnclaveDropdownMenu from './EnclaveDropdownMenu';
 
 export default function DualClockTelemetryBar({
   activeExchange,
   exchangeData,
   onRefresh,
   tenantId,
-  activeMainTab,
-  onSelectTab,
-  layoutMode,
-  onToggleLayoutMode,
-  onOpenGuide,
-  onOpenBacktest,
-  theme = 'dark',
   onLogout,
   emergencyStoppedCount = 0
 }) {
@@ -108,39 +100,22 @@ export default function DualClockTelemetryBar({
   return (
     <div className="w-full bg-[#111827]/95 backdrop-blur border-b border-slate-800 px-4 py-2 text-xs text-slate-300">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        {/* Left: User Local Time & Menu Page Dropdown (Placed directly under the time) */}
-        <div className="flex flex-col gap-1.5 py-0.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 text-emerald-400 font-medium text-xs">
-              <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Your Time:</span>
-            </div>
-            <span className="font-mono font-bold text-slate-100 text-sm tracking-wide">
-              {formatClientTime()}
-            </span>
-            <span className="text-slate-400 font-mono text-xs hidden sm:inline">
-              {getClientDate()}
-            </span>
-            <span className="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-300 hidden md:inline">
-              {userTz.split('/')[1]?.replace('_', ' ') || userTz}
-              {isUserDst() && <span className="ml-1 text-emerald-400 font-bold font-mono">DST</span>}
-            </span>
+        {/* Left: User Local Time */}
+        <div className="flex items-center gap-2 flex-wrap py-0.5">
+          <div className="flex items-center gap-1.5 text-emerald-400 font-medium text-xs">
+            <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>Your Time:</span>
           </div>
-
-          {/* Menu Page Dropdown: Placed directly at the top left under the time */}
-          {onSelectTab && (
-            <div className="flex items-center gap-2">
-              <EnclaveDropdownMenu
-                activeMainTab={activeMainTab}
-                onSelectTab={onSelectTab}
-                layoutMode={layoutMode}
-                onToggleLayoutMode={onToggleLayoutMode}
-                onOpenGuide={onOpenGuide}
-                onOpenBacktest={onOpenBacktest}
-                theme={theme}
-              />
-            </div>
-          )}
+          <span className="font-mono font-bold text-slate-100 text-sm tracking-wide">
+            {formatClientTime()}
+          </span>
+          <span className="text-slate-400 font-mono text-xs hidden sm:inline">
+            {getClientDate()}
+          </span>
+          <span className="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-300 hidden md:inline">
+            {userTz.split('/')[1]?.replace('_', ' ') || userTz}
+            {isUserDst() && <span className="ml-1 text-emerald-400 font-bold font-mono">DST</span>}
+          </span>
         </div>
 
         {/* Center: Live Exchange Bell Clock & Emergency Stop Status */}

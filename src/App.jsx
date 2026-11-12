@@ -13,7 +13,6 @@ import ProCockpitView from './components/ProCockpitView';
 import HelpTooltip from './components/HelpTooltip';
 import GuidedTourModal from './components/GuidedTourModal';
 import FleetSetupView from './components/FleetSetupView';
-import EnclaveDropdownMenu from './components/EnclaveDropdownMenu';
 import SequencedTradingRunwayModal from './components/SequencedTradingRunwayModal';
 
 import { 
@@ -374,19 +373,12 @@ export default function App() {
   return (
     <div className={`min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-black transition-colors duration-200 ${isMobileMode ? 'pb-16' : ''} ${isLight ? "bg-slate-50 text-slate-900" : "bg-[#0a0e17] text-slate-100"}`}>
 
-      {/* 1. Dual-Clock World Exchange Telemetry Bar with Top-Left Page Menu Dropdown & Top-Right Logout */}
+      {/* 1. Dual-Clock World Exchange Telemetry Bar with Live Bell & Top-Right Logout */}
       <DualClockTelemetryBar
         activeExchange={activeExchange}
         exchangeData={exchangeData}
         tenantId={userSession?.tenantId}
         onRefresh={fetchExchangeStatus}
-        activeMainTab={activeMainTab}
-        onSelectTab={setActiveMainTab}
-        layoutMode={layoutMode}
-        onToggleLayoutMode={setLayoutMode}
-        onOpenGuide={() => setIsGuideOpen(true)}
-        onOpenBacktest={() => setIsBacktestOpen(true)}
-        theme={theme}
         onLogout={handleLogout}
         emergencyStoppedCount={emergencyStoppedCount}
       />
@@ -413,6 +405,50 @@ export default function App() {
                 )}
               </div>
             </div>
+
+            {/* Desktop View Switcher (Hidden in Mobile Phone Mode) */}
+            {!isMobileMode && (
+              <div className="hidden lg:flex items-center bg-[#070c12] p-0.5 rounded-xl border border-slate-800 gap-1 font-mono text-xs ml-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveMainTab('SCANNER')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                    activeMainTab === 'SCANNER'
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Trade &amp; Scanner</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveMainTab('PORTFOLIO')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                    activeMainTab === 'PORTFOLIO'
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  <span>Portfolio Holdings</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveMainTab('AI_TERMINAL')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                    activeMainTab === 'AI_TERMINAL'
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Cpu className="w-3.5 h-3.5" />
+                  <span>AI Terminal</span>
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">

@@ -91,14 +91,7 @@ export default function InstitutionalGateAndSetupWizard({
   const [pendingUserEmail, setPendingUserEmail] = useState('');
   const [pinInput, setPinInput] = useState('');
   const [confirmPinInput, setConfirmPinInput] = useState('');
-
-  // Self-Service Registration Flow (Turnstile + OTP + PIN)
-  const [regStep, setRegStep] = useState(1); // 1: Email + Turnstile, 2: OTP + PIN
-  const [regEmail, setRegEmail] = useState('');
-  const [regOtp, setRegOtp] = useState('');
-  const [regPin, setRegPin] = useState('');
-  const [regConfirmPin, setRegConfirmPin] = useState('');
-  const [turnstileToken, setTurnstileToken] = useState('MOCK_TURNSTILE_PASS');
+  const [inviteCode, setInviteCode] = useState('');
 
   // Forgot PIN Flow
   const [forgotStep, setForgotStep] = useState(1); // 1: Email, 2: OTP + New PIN
@@ -108,7 +101,6 @@ export default function InstitutionalGateAndSetupWizard({
   const [forgotConfirmPin, setForgotConfirmPin] = useState('');
 
   const googleBtnRef = useRef(null);
-  const turnstileRef = useRef(null);
   const turnstileForgotRef = useRef(null);
 
   // Onboarding Wizard State (Steps 1 to 4)
@@ -159,9 +151,9 @@ export default function InstitutionalGateAndSetupWizard({
       .catch(err => console.warn('Auth config fetch notice:', err));
   }, [userSession?.isAuthed, showSetupModalOnly]);
 
-  // 2. Render Google Sign-In Button on SIGN_IN tab
+  // 2. Render Google Sign-In Button on SIGN_IN or INVITE tab
   useEffect(() => {
-    if (userSession?.isAuthed || showSetupModalOnly || !googleClientId || authTab !== 'SIGN_IN' || signStep !== 'GOOGLE_AUTH') return;
+    if (userSession?.isAuthed || showSetupModalOnly || !googleClientId || (authTab !== 'SIGN_IN' && authTab !== 'INVITE') || signStep !== 'GOOGLE_AUTH') return;
 
     const initGoogleGsi = () => {
       if (window.google?.accounts?.id && googleBtnRef.current) {
@@ -188,55 +180,7 @@ export default function InstitutionalGateAndSetupWizard({
     }, 200);
 
     return () => clearInterval(timer);
-  }, [googleClientId, userSession?.isAuthed, showSetupModalOnly, authTab, signStep]);
-
-  // 3. Render Turnstile Widget for Registration
-  useEffect(() => {
-    if (authTab !== 'REGISTER' || regStep !== 1 || !turnstileSiteKey || !turnstileRef.current) return;
-    try {
-      if (window.turnstile && typeof window.turnstile.render === 'function') {
-        window.turnstile.render(turnstileRef.current, {
-          sitekey: turnstileSiteKey,
-          callback: (token) => {
-            setTurnstileToken(token);
-          },
-          'error-callback': () => {
-            setTurnstileToken('MOCK_TURNSTILE_PASS');
-          }
-        });
-      } else {
-        setTurnstileToken('MOCK_TURNSTILE_PASS');
-      }
-    } catch (e) {
-      setTurnstileToken('MOCK_TURNSTILE_PASS');
-    }
-  }, [authTab, regStep, turnstileSiteKey]);
-
-  // 4. Fetch Protected Blueprint when Authed
-  useEffect(() => {
-    if (!userSession?.isAuthed || !userSession?.idToken) return;
-    setLoadingBlueprint(true);
-    const qSheet = cleanSheetId || 'PENDING_SHEET';
-    fetch(`${API_BASE}/api/v2/onboarding/blueprint?spreadsheet_id=${encodeURIComponent(qSheet)}`, {
-      headers: {
-        'Authorization': `Bearer ${userSession.idToken}`
-      }
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Unauthorized blueprint fetch');
-        return res.json();
-      })
-      .then(data => {
-        setBlueprint({
-          wrapper_script: data.wrapper_script || '',
-          master_library_id: data.master_library_id || '',
-          library_identifier: data.library_identifier || 'TitanLibrary',
-          tenant_hmac_secret: data.tenant_hmac_secret || ''
-        });
-      })
-      .catch(err => console.warn('Blueprint fetch error:', err))
-      .finally(() => setLoadingBlueprint(false));
-  }, [userSession?.isAuthed, userSession?.idToken, cleanSheetId]);
+  }, [googleClientId, userSession?.isAuthed, showSetupModalOnly, authTab, signStep, inviteCode]);
 
   // Handler: Google OAuth Callback
   const handleGoogleCredentialResponse = async (response) => {
@@ -244,16 +188,21 @@ export default function InstitutionalGateAndSetupWizard({
     setIsAuthenticating(true);
     try {
       const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Australia/Sydney';
+      const bodyPayload = {
+        id_token: response.credential,
+        user_timezone: userTz
+      };
+      if (inviteCode && inviteCode.trim()) {
+        bodyPayload.invite_code = inviteCode.trim().toUpperCase();
+      }
+
       const res = await fetch(`${API_BASE}/api/v2/auth/handshake`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${response.credential}`
         },
-        body: JSON.stringify({
-          id_token: response.credential,
-          user_timezone: userTz
-        })
+        body: JSON.stringify(bodyPayload)
       });
 
       const data = await res.json();
@@ -340,85 +289,6 @@ export default function InstitutionalGateAndSetupWizard({
       });
     } catch (err) {
       setAuthError(err.message || 'Authentication failed. Please check your credentials.');
-    } finally {
-      setIsAuthenticating(false);
-    }
-  };
-
-  // Handler: Send Registration Email OTP
-  const handleSendRegOtp = async (e) => {
-    if (e) e.preventDefault();
-    if (!regEmail || !regEmail.includes('@') || !regEmail.includes('.')) {
-      setAuthError('Please enter a valid client email address.');
-      return;
-    }
-
-    setAuthError('');
-    setIsAuthenticating(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/v2/auth/register-challenge`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: regEmail.trim().toLowerCase(),
-          turnstile_token: turnstileToken || 'MOCK_TURNSTILE_PASS'
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || 'Failed to dispatch verification code.');
-      }
-      setAuthSuccessMsg(`A 6-digit verification code has been dispatched to ${regEmail}. Please check your inbox.`);
-      setRegStep(2);
-    } catch (err) {
-      setAuthError(err.message || 'Failed to dispatch verification email.');
-    } finally {
-      setIsAuthenticating(false);
-    }
-  };
-
-  // Handler: Verify Registration OTP & Save Initial PIN
-  const handleVerifyRegOtp = async (e) => {
-    if (e) e.preventDefault();
-    if (!regOtp || regOtp.trim().length !== 6) {
-      setAuthError('Please enter the 6-digit verification code from your email.');
-      return;
-    }
-    if (!regPin || regPin.length < 4) {
-      setAuthError('Please create a 4-digit Security PIN.');
-      return;
-    }
-    if (regPin !== regConfirmPin) {
-      setAuthError('PIN confirmation does not match. Please re-enter.');
-      return;
-    }
-
-    setAuthError('');
-    setIsAuthenticating(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/v2/auth/verify-email-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: regEmail.trim().toLowerCase(),
-          otp: regOtp.trim(),
-          initial_pin: regPin.trim()
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || 'Verification failed.');
-      }
-      setAuthSuccessMsg('✓ Email verified and Security PIN locked! You may now sign in with your Google account + PIN.');
-      setAuthTab('SIGN_IN');
-      setSignStep('GOOGLE_AUTH');
-      setRegStep(1);
-      setRegEmail('');
-      setRegOtp('');
-      setRegPin('');
-      setRegConfirmPin('');
-    } catch (err) {
-      setAuthError(err.message || 'Verification failed.');
     } finally {
       setIsAuthenticating(false);
     }
@@ -777,6 +647,24 @@ const handleCopyCode = () => {
               )}
             </div>
 
+            {/* Sovereign Private Enclave Header Badge */}
+            <div className="mb-5 p-3 rounded-xl bg-slate-950/90 border border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <div>
+                  <span className="text-[11px] font-mono font-bold text-white uppercase tracking-wider block">
+                    Sovereign Institutional Enclave
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    Rule 19 Zero-Trust · Superadmin & Authorized Nodes Only
+                  </span>
+                </div>
+              </div>
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">
+                PRIVATE NODE
+              </span>
+            </div>
+
             {/* Top Auth Mode Tabs */}
             <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 border border-slate-800 rounded-xl mb-6 font-mono text-xs">
               <button
@@ -794,25 +682,24 @@ const handleCopyCode = () => {
                 }`}
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Sign In</span>
+                <span>Authorized Sign-In</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => {
-                  setAuthTab('REGISTER');
-                  setRegStep(1);
+                  setAuthTab('INVITE');
                   setAuthError('');
                   setAuthSuccessMsg('');
                 }}
                 className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
-                  authTab === 'REGISTER'
-                    ? 'bg-emerald-500 text-black shadow-md'
+                  authTab === 'INVITE'
+                    ? 'bg-cyan-500 text-black shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <UserCheck className="w-3.5 h-3.5" />
-                <span>New Client Access</span>
+                <Key className="w-3.5 h-3.5" />
+                <span>Redeem Invite</span>
               </button>
             </div>
 
@@ -1058,135 +945,62 @@ const handleCopyCode = () => {
             )}
 
             {/* ============================================================= */}
-            {/* TAB 2: NEW CLIENT SELF-SERVICE REGISTRATION & ANTI-BOT */}
+            {/* TAB 2: REDEEM AUTHORIZED INVITATION CODE */}
             {/* ============================================================= */}
-            {authTab === 'REGISTER' && (
-              <div className="space-y-5 animate-in fade-in duration-200">
-                {regStep === 1 ? (
-                  <form onSubmit={handleSendRegOtp} className="space-y-4">
-                    <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
-                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold uppercase">
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>Client Verification & Email Entry</span>
+            {authTab === 'INVITE' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <div className="p-3.5 rounded-xl bg-slate-950/60 border border-cyan-800/40 space-y-2">
+                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase">
+                    <Key className="w-4 h-4" />
+                    <span>Enter Institutional Invite Code</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    This trading node operates in a private enclave. New clients require a cryptographic invitation code generated by the Sovereign Administrator (<strong className="text-white">mrpswebster@gmail.com</strong>).
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                    1-Time Invite Code (e.g. TITAN-XXXX-XXXX)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                    placeholder="TITAN-XXXX-XXXX"
+                    className="w-full tracking-widest text-center font-bold bg-[#0a0e17] border border-cyan-700 focus:border-cyan-400 rounded-lg px-3 py-2 text-sm font-mono text-cyan-400 outline-none uppercase"
+                  />
+                </div>
+
+                <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2 text-center">
+                  <span className="text-[10px] font-mono text-slate-400 block">
+                    After entering your invite code, authenticate with your authorized Google account below:
+                  </span>
+                  <div className="flex justify-center min-h-[50px] py-1">
+                    {isAuthenticating ? (
+                      <div className="text-xs font-mono text-cyan-400 animate-pulse py-2 flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Verifying Invitation...</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 leading-relaxed">
-                        Enter your Google or corporate email address to receive a one-time verification code.
-                      </p>
-                    </div>
+                    ) : (
+                      <div ref={googleBtnRef} className="flex justify-center" />
+                    )}
+                  </div>
+                </div>
 
-                    <div>
-                      <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
-                        Client Email Address
-                      </label>
-                      <div className="relative">
-                        <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
-                        <input
-                          type="email"
-                          required
-                          value={regEmail}
-                          onChange={(e) => setRegEmail(e.target.value)}
-                          placeholder="client@gmail.com"
-                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg pl-9 pr-3 py-2 text-xs font-mono text-white outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Cloudflare Turnstile Shield Container */}
-                    <div className="p-3 bg-[#0a0e17] border border-slate-800 rounded-xl flex flex-col items-center justify-center space-y-2">
-                      <div className="flex items-center gap-2 text-[10px] font-mono text-cyan-400 uppercase tracking-wider">
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Verification Check</span>
-                      </div>
-                      <div ref={turnstileRef} className="my-1" />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isAuthenticating || !regEmail}
-                      className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-xs font-mono font-bold text-black flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-500/20"
-                    >
-                      <Mail className="w-3.5 h-3.5" />
-                      <span>{isAuthenticating ? 'Sending Verification Code...' : 'Send 1-Time Verification Code'}</span>
-                    </button>
-                  </form>
-                ) : (
-                  /* Step 2: Enter 6-Digit OTP + Set 4-Digit Security PIN */
-                  <form onSubmit={handleVerifyRegOtp} className="space-y-4">
-                    <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-                      <div className="text-xs font-mono text-emerald-400 font-bold uppercase">
-                        Step 2: Enter Code & Lock Security PIN
-                      </div>
-                      <p className="text-[11px] text-slate-400">
-                        Paste the 6-digit code sent to <strong className="text-white">{regEmail}</strong> and choose your 4-digit Security PIN.
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
-                        6-Digit Email Verification Code
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={6}
-                        required
-                        value={regOtp}
-                        onChange={(e) => setRegOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                        placeholder="123456"
-                        className="w-full text-center tracking-[0.4em] bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-sm font-mono text-emerald-400 outline-none"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
-                          Create 4-Digit PIN
-                        </label>
-                        <input
-                          type="password"
-                          maxLength={6}
-                          required
-                          value={regPin}
-                          onChange={(e) => setRegPin(e.target.value.replace(/[^0-9]/g, ''))}
-                          placeholder="••••"
-                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
-                          Confirm PIN
-                        </label>
-                        <input
-                          type="password"
-                          maxLength={6}
-                          required
-                          value={regConfirmPin}
-                          onChange={(e) => setRegConfirmPin(e.target.value.replace(/[^0-9]/g, ''))}
-                          placeholder="••••"
-                          className="w-full bg-[#0a0e17] border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setRegStep(1)}
-                        className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 transition"
-                      >
-                        Back
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isAuthenticating || regOtp.length !== 6 || regPin.length < 4}
-                        className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-xs font-mono font-bold text-black flex items-center justify-center gap-1.5 transition shadow-lg shadow-emerald-500/20"
-                      >
-                        <BadgeCheck className="w-4 h-4" />
-                        <span>{isAuthenticating ? 'Securing Node...' : 'Verify & Lock PIN'}</span>
-                      </button>
-                    </div>
-                  </form>
-                )}
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthTab('SIGN_IN');
+                      setAuthError('');
+                    }}
+                    className="text-xs font-mono text-slate-400 hover:text-white transition"
+                  >
+                    Already verified? Return to Authorized Sign-In
+                  </button>
+                </div>
               </div>
             )}
 

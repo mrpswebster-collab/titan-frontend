@@ -27,11 +27,18 @@ const DEFAULT_TARGETS_BY_EXCHANGE = {
     { ticker: 'ARN', name: 'Aldoro Resources', sector: 'MINING', persona: 'Materials, Mining & Exploration (Geologist / Assay Auditor)' },
     { ticker: 'PLS', name: 'Pilbara Minerals', sector: 'MINING', persona: 'Materials, Mining & Exploration (Geologist / Assay Auditor)' },
     { ticker: 'NST', name: 'Northern Star Resources', sector: 'MINING', persona: 'Materials, Mining & Exploration (Geologist / Assay Auditor)' },
+    { ticker: 'CU6', name: 'Clarity Pharmaceuticals', sector: 'BIOTECH', persona: 'Healthcare, Pharma & Biotech (Clinical Regulatory Auditor)' },
+    { ticker: 'NEU', name: 'Neuren Pharmaceuticals', sector: 'BIOTECH', persona: 'Healthcare, Pharma & Biotech (Clinical Regulatory Auditor)' },
+    { ticker: 'TLX', name: 'Telix Pharmaceuticals', sector: 'BIOTECH', persona: 'Healthcare, Pharma & Biotech (Clinical Regulatory Auditor)' },
+    { ticker: 'DXB', name: 'Dimerix Limited', sector: 'BIOTECH', persona: 'Healthcare, Pharma & Biotech (Clinical Regulatory Auditor)' },
     { ticker: 'CSL', name: 'CSL Limited', sector: 'BIOTECH', persona: 'Healthcare, Pharma & Biotech (Clinical Regulatory Auditor)' },
     { ticker: 'BHP', name: 'BHP Group', sector: 'RISK', persona: 'Institutional Quantitative Risk Officer' },
     { ticker: 'CBA', name: 'Commonwealth Bank', sector: 'RISK', persona: 'Institutional Quantitative Risk Officer' }
   ],
   NYSE: [
+    { ticker: 'VRTX', name: 'Vertex Pharmaceuticals', sector: 'BIOTECH', persona: 'Healthcare, Pharma & Biotech (Clinical Regulatory Auditor)' },
+    { ticker: 'REGN', name: 'Regeneron Pharmaceuticals', sector: 'BIOTECH', persona: 'Healthcare, Pharma & Biotech (Clinical Regulatory Auditor)' },
+    { ticker: 'CRSP', name: 'CRISPR Therapeutics', sector: 'BIOTECH', persona: 'Healthcare, Pharma & Biotech (Clinical Regulatory Auditor)' },
     { ticker: 'SOUN', name: 'SoundHound AI Inc', sector: 'TECH', persona: 'Technology, Defense & SaaS (Momentum Growth Specialist)' },
     { ticker: 'PLTR', name: 'Palantir Technologies', sector: 'TECH', persona: 'Technology, Defense & SaaS (Momentum Growth Specialist)' },
     { ticker: 'NVDA', name: 'NVIDIA Corporation', sector: 'TECH', persona: 'Technology, Defense & SaaS (Momentum Growth Specialist)' },
@@ -66,8 +73,8 @@ const PERSONA_OPTIONS = [
   },
   {
     value: 'Healthcare, Pharma & Biotech (Clinical Regulatory Auditor)',
-    label: '🧬 Biotech Auditor (FDA Readouts & Endpoints)',
-    desc: 'FDA/TGA clinical phases, primary endpoints & cash runway'
+    label: '🧬 Biotech & Pharma Auditor (Phase 2/3 FDA Readouts & 12-Mo Runway)',
+    desc: 'Phase 2/3 trial endpoints, FDA/TGA readouts, 12-mo cash runway & anti-FOMO gate'
   },
   {
     value: 'Technology, Defense & SaaS (Momentum Growth Specialist)',

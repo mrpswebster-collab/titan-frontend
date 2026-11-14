@@ -117,6 +117,41 @@ const STRATEGY_BLUEPRINTS = [
     }
   },
   {
+    id: 'BIOTECH_PHARMA_CATALYST',
+    title: '🧬 Biotech, Medical & Pharma Catalyst',
+    subtitle: 'Phase 2/3 Clinical Trials, Radiopharma & FDA/TGA Readouts | Strict 12-Mo Runway Defense',
+    badge: 'BIOTECH AI',
+    defaults: {
+      exchange: 'ASX',
+      currency: 'AUD',
+      strategy_protocol: 'MOONSHOT_COILED_SPRING',
+      sector_persona: 'BIOTECH_CLINICAL_AUDITOR',
+      wealth_sub_modes: [],
+      execution_mode: 'AUTONOMOUS',
+      starting_capital: 5000,
+      min_price: 0.01,
+      max_price: 50.00,
+      stop_loss_pct: 20.0,
+      chandelier_atr_mult: 4.5,
+      take_profit_pct: 2000.0,
+      power_thrust_rsi_override: true,
+      max_rsi: 88,
+      min_conviction: 8,
+      kelly_fraction: 0.35,
+      max_open_positions: 10,
+      harvest_enabled: true,
+      harvest_mode: 'RECOVER_PRINCIPAL_PCT',
+      harvest_trigger_gain_pct: 100.0,
+      harvest_recovery_pct: 100.0,
+      catch_macd_cross: true,
+      catch_chandelier_atr: true,
+      catch_ema_break: false,
+      catch_ema_period: 20,
+      catch_obv_distribution: true,
+      catch_hard_ceiling: false
+    }
+  },
+  {
     id: 'INTERNATIONAL_ALPHA',
     title: '🌍 International World Exchanges (NYSE / NASDAQ / LSE / TSX)',
     subtitle: 'Wall St Tech, AI & Global Momentum | Multi-Currency FX Pot Auto-Calibration',
@@ -253,8 +288,8 @@ const PERSONA_OPTIONS = [
   },
   {
     id: 'BIOTECH_CLINICAL_AUDITOR',
-    label: '🧬 Biotech & Clinical Trial Regulatory Auditor (Phase I/II/III, FDA/TGA Readouts)',
-    blueprintId: 'EXPLORATION_ASSAY_SNIPER'
+    label: '🧬 Biotech & Clinical Trial Regulatory Auditor (Phase 2/3, FDA/TGA Readouts & 12-Mo Runway)',
+    blueprintId: 'BIOTECH_PHARMA_CATALYST'
   }
 ];
 

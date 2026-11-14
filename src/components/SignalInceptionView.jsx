@@ -390,10 +390,10 @@ export default function SignalInceptionView({
           })}
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
-            <thead className={`text-[10px] uppercase tracking-wider border-b ${
-              isLight ? 'bg-slate-50 text-slate-500 border-slate-200' : 'bg-[#0f172a] text-slate-400 border-slate-800'
+        <div className="overflow-x-auto max-h-[640px] overflow-y-auto">
+          <table className="w-full text-left text-xs font-mono border-collapse">
+            <thead className={`sticky top-0 z-20 text-[10px] uppercase tracking-wider border-b shadow-sm ${
+              isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-[#0f172a] text-slate-300 border-slate-800'
             }`}>
               <tr>
                 <th className="py-3 px-4">Ticker / Day-0 Ranked</th>

@@ -654,18 +654,6 @@ export default function App() {
                   <span className="hidden sm:inline">Refresh</span>
                 </button>
               )}
-
-              {/* Direct Fullscreen / External Window Popout */}
-              <a
-                href={`https://asx-quant-brain.onrender.com/ui?token=${encodeURIComponent(userSession?.idToken || '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition"
-                title="Launch Graphical Analytics Dashboard in Fullscreen Browser Tab"
-              >
-                <span>Launch Fullscreen</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
             </div>
           </div>
 
@@ -860,9 +848,9 @@ export default function App() {
                 ))}
               </div>
             ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-mono">
-                <thead className={`text-[10px] uppercase tracking-wider border-b ${isLight ? "bg-slate-100/90 text-slate-600 border-slate-200" : "bg-[#0f172a] text-slate-400 border-slate-800"}`}>
+            <div className="overflow-x-auto max-h-[640px] overflow-y-auto">
+              <table className="w-full text-left text-xs font-mono border-collapse">
+                <thead className={`sticky top-0 z-20 text-[10px] uppercase tracking-wider border-b shadow-sm ${isLight ? "bg-slate-100 text-slate-700 border-slate-300" : "bg-[#0f172a] text-slate-300 border-slate-800"}`}>
                   <tr>
                     <th className="py-3 px-4">Symbol / Name</th>
                     <th className="py-3 px-4">Sector</th>

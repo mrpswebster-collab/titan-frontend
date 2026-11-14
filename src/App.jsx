@@ -383,31 +383,24 @@ export default function App() {
         emergencyStoppedCount={emergencyStoppedCount}
       />
 
-      {/* 2. Top Portal Header */}
-      <header className={`border-b px-4 py-2.5 sticky top-0 z-40 backdrop-blur transition-colors duration-200 ${isLight ? "bg-white/95 border-slate-200 shadow-sm" : "bg-[#111827] border-slate-800"}`}>
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className={`font-bold text-base tracking-tight font-mono ${isLight ? "text-slate-900" : "text-emerald-400"}`}>
-                  TITAN
-                </h1>
-                {isMobileMode ? (
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                    <Smartphone className="w-3 h-3 text-cyan-400" />
-                    MOBILE MODE: ANALYTICS &amp; TRADE ONLY
-                  </span>
-                ) : (
+      {/* 2. Top Portal Header (Desktop Mode Only - Mobile uses DualClockTelemetryBar + Bottom Dock) */}
+      {!isMobileMode && (
+        <header className={`border-b px-4 py-2.5 sticky top-0 z-40 backdrop-blur transition-colors duration-200 ${isLight ? "bg-white/95 border-slate-200 shadow-sm" : "bg-[#111827] border-slate-800"}`}>
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className={`font-bold text-base tracking-tight font-mono ${isLight ? "text-slate-900" : "text-emerald-400"}`}>
+                    TITAN
+                  </h1>
                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     {userSession?.name || 'Authorized Fleet'}
                   </span>
-                )}
+                </div>
               </div>
-            </div>
 
-            {/* Desktop View Switcher (Hidden in Mobile Phone Mode) */}
-            {!isMobileMode && (
+              {/* Desktop View Switcher */}
               <div className="hidden lg:flex items-center bg-[#070c12] p-0.5 rounded-xl border border-slate-800 gap-1 font-mono text-xs ml-2">
                 <button
                   type="button"
@@ -448,22 +441,20 @@ export default function App() {
                   <span>AI Terminal</span>
                 </button>
               </div>
-            )}
-          </div>
+            </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Sequenced Trading Action Runway Launch Button */}
-            <button
-              onClick={() => setIsRunwayOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 border-emerald-500/50 hover:bg-emerald-500/30 shadow-emerald-950/20"
-              title="Launch Sequenced 4-Step Trading Action Runway"
-            >
-              <Zap className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="font-mono">Action Runway</span>
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Sequenced Trading Action Runway Launch Button */}
+              <button
+                onClick={() => setIsRunwayOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 border-emerald-500/50 hover:bg-emerald-500/30 shadow-emerald-950/20"
+                title="Launch Sequenced 4-Step Trading Action Runway"
+              >
+                <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="font-mono">Action Runway</span>
+              </button>
 
-            {/* Direct Dedicated Setup Hub Button (Hidden in Mobile Phone Mode) */}
-            {!isMobileMode && (
+              {/* Direct Dedicated Setup Hub Button */}
               <button
                 onClick={() => setShowSetupModal(true)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
@@ -473,70 +464,68 @@ export default function App() {
                       ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
                       : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
                 }`}
-                title="Open Dedicated Fleet Setup & Workbook Wizard (Pop-Up Modal)"
+                title="Open Dedicated Fleet Setup &amp; Workbook Wizard (Pop-Up Modal)"
               >
                 <Database className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="hidden sm:inline">Setup Hub</span>
               </button>
-            )}
 
-            {/* Workspace Layout Mode Toggle: Webpage (Standard) vs. Mobile (Trade/Analytics) vs. Cockpit (Pro) */}
-            <div className="flex items-center bg-[#070c12] p-0.5 rounded-lg border border-slate-800 shadow-inner">
-              <button
-                type="button"
-                onClick={() => {
-                  setLayoutMode('STANDARD');
-                  try { localStorage.setItem('titan_layout_mode', 'STANDARD'); } catch(e) {}
-                }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-bold transition ${
-                  layoutMode === 'STANDARD'
-                    ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Full Webpage Mode (Complete Enclave, Google Sheets Auto-Builder & Multi-Tab Desk)"
-              >
-                <Monitor className="w-3.5 h-3.5" />
-                <span className="inline">Webpage</span>
-              </button>
+              {/* Workspace Layout Mode Toggle: Webpage (Standard) vs. Mobile (Trade/Analytics) vs. Cockpit (Pro) */}
+              <div className="flex items-center bg-[#070c12] p-0.5 rounded-lg border border-slate-800 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLayoutMode('STANDARD');
+                    try { localStorage.setItem('titan_layout_mode', 'STANDARD'); } catch(e) {}
+                  }}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-bold transition ${
+                    layoutMode === 'STANDARD'
+                      ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Full Webpage Mode (Complete Enclave, Google Sheets Auto-Builder &amp; Multi-Tab Desk)"
+                >
+                  <Monitor className="w-3.5 h-3.5" />
+                  <span className="inline">Webpage</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setLayoutMode('MOBILE');
-                  if (activeMainTab === 'FLEET_SETUP') setActiveMainTab('SCANNER');
-                  try { localStorage.setItem('titan_layout_mode', 'MOBILE'); } catch(e) {}
-                }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-bold transition ${
-                  layoutMode === 'MOBILE'
-                    ? 'bg-cyan-500/20 text-cyan-300 shadow-sm border border-cyan-500/50'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Mobile Phone Mode (Limited Display: Analytics & Trade Screens Only)"
-              >
-                <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="inline">Mobile</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLayoutMode('MOBILE');
+                    if (activeMainTab === 'FLEET_SETUP') setActiveMainTab('SCANNER');
+                    try { localStorage.setItem('titan_layout_mode', 'MOBILE'); } catch(e) {}
+                  }}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-bold transition ${
+                    layoutMode === 'MOBILE'
+                      ? 'bg-cyan-500/20 text-cyan-300 shadow-sm border border-cyan-500/50'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Mobile Phone Mode (Limited Display: Analytics &amp; Trade Screens Only)"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="inline">Mobile</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setLayoutMode('COCKPIT');
-                  try { localStorage.setItem('titan_layout_mode', 'COCKPIT'); } catch(e) {}
-                }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-bold transition ${
-                  layoutMode === 'COCKPIT'
-                    ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/50'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="TITAN V156 Dashboard - Quant Cockpit (https://asx-quant-brain.onrender.com/ui)"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="inline">Cockpit (Pro)</span>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLayoutMode('COCKPIT');
+                    try { localStorage.setItem('titan_layout_mode', 'COCKPIT'); } catch(e) {}
+                  }}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-bold transition ${
+                    layoutMode === 'COCKPIT'
+                      ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/50'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="TITAN V156 Dashboard - Quant Cockpit (https://asx-quant-brain.onrender.com/ui)"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="inline">Cockpit (Pro)</span>
+                </button>
+              </div>
 
-            {/* Institutional Help & Quick Guide (Hidden in Mobile Phone Mode to save space) */}
-            {!isMobileMode && (
+              {/* Institutional Help & Quick Guide */}
               <button
                 onClick={() => setIsGuideOpen(true)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
@@ -549,24 +538,24 @@ export default function App() {
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>Guide</span>
               </button>
-            )}
 
-            {/* Dark / Light Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
-                isLight 
-                  ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200' 
-                  : 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
-              }`}
-              title={isLight ? "Switch to Obsidian Dark Mode" : "Switch to Swiss Crisp Light Mode"}
-            >
-              {isLight ? <Moon className="w-3.5 h-3.5 text-slate-700" /> : <Sun className="w-3.5 h-3.5 text-amber-400" />}
-              <span className="hidden sm:inline">{isLight ? 'Dark' : 'Light'}</span>
-            </button>
+              {/* Dark / Light Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+                  isLight 
+                    ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200' 
+                    : 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
+                }`}
+                title={isLight ? "Switch to Obsidian Dark Mode" : "Switch to Swiss Crisp Light Mode"}
+              >
+                {isLight ? <Moon className="w-3.5 h-3.5 text-slate-700" /> : <Sun className="w-3.5 h-3.5 text-amber-400" />}
+                <span className="hidden sm:inline">{isLight ? 'Dark' : 'Light'}</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Notification Toast for Staged Orders */}
       {stagedNotification && (
@@ -881,7 +870,7 @@ export default function App() {
                     <th className="py-3 px-4">Symbol / Name</th>
                     <th className="py-3 px-4">Sector</th>
                     <th className="py-3 px-4 text-right">
-                      Price <HelpTooltip title="Price" text="Signal price with Rule 24 (+2% marketable limit cap) enforced." theme={theme} />
+                      Price <HelpTooltip title="Price" text="Signal price with +2% marketable limit cap enforced." theme={theme} />
                     </th>
                     <th className="py-3 px-4 text-right">Change</th>
                     <th className="py-3 px-4 text-center">

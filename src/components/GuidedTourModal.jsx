@@ -15,13 +15,13 @@ export default function GuidedTourModal({ isOpen, onClose, theme = 'dark' }) {
     },
     {
       icon: ShieldCheck,
-      title: '2. Rule 24: 2% Slippage Cap',
+      title: '2. 2% Slippage Cap & Limit Protection',
       color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
       description: 'Market orders are strictly banned. All orders execute via Marketable Limit Orders capped at Signal Price + 2%. You never chase overextended spikes.'
     },
     {
       icon: Sparkles,
-      title: '3. Rule 42: Two-Stage Free Ride',
+      title: '3. Two-Stage Capital Recovery Milestone',
       color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
       description: 'When an investment reaches +100% gain, 50% is harvested immediately back to cash to return 100% of your starting capital. The remaining 50% runs on house money targeting 2,000%+ returns.'
     },

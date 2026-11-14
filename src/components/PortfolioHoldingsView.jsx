@@ -41,10 +41,10 @@ export function resolveAntiChurnShield(pos) {
   }
   if (plPct >= 100 || rawShield.includes('FREE_RIDE') || rawShield.includes('RULE_42')) {
     return {
-      code: 'RULE_42_FREE_RIDE',
-      label: 'RULE_42_FREE_RIDE',
+      code: 'FREE_RIDE_HARVEST',
+      label: 'FREE_RIDE_HARVEST',
       tone: 'cyan',
-      desc: 'Stage-2 House Money Runner + ATR Chandelier'
+      desc: 'Stage-2 Capital Recovered Runner + ATR Chandelier'
     };
   }
   return {
@@ -609,7 +609,7 @@ export default function PortfolioHoldingsView({
                 </span>
               </div>
               <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 shrink-0">
-                Rule 19 Tenant Isolation
+                Zero-Trust Tenant Isolation
               </span>
             </div>
           )}

@@ -56,7 +56,7 @@ export default function EnclaveDropdownMenu({
         {
           id: 'SCANNER',
           label: 'Markets & Trade Scanner',
-          desc: 'Rule 53 Coiled Spring breakouts & live signals',
+          desc: 'Coiled Spring breakouts & live signals',
           icon: LayoutGrid,
           badge: 'Live',
           badgeColor: 'emerald',

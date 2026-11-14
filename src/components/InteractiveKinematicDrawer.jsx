@@ -169,7 +169,7 @@ export default function InteractiveKinematicDrawer({
     attributionTags.push({ label: `Shield: ${shield.label}`, positive: true });
   }
   if (plPct >= 100) {
-    attributionTags.push({ label: 'Rule 42 +100% Free-Ride Harvest Reached', positive: true });
+    attributionTags.push({ label: '+100% Capital Recovery Harvest Reached', positive: true });
   }
 
   const aiDossierText =
@@ -300,7 +300,7 @@ export default function InteractiveKinematicDrawer({
 
               <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-3 border-t border-slate-800/80">
                 <div>
-                  <span className="text-slate-500 block text-[10px]">RULE 24 (2% CHASE CAP)</span>
+                  <span className="text-slate-500 block text-[10px]">2% SLIPPAGE CAP</span>
                   <span className="text-amber-400 font-semibold">
                     {currencySymbol}{(livePrice * 1.02).toFixed(livePrice < 1 ? 3 : 2)}
                   </span>
@@ -346,10 +346,10 @@ export default function InteractiveKinematicDrawer({
                 </div>
               </div>
 
-              {/* Rule 42 Free-Ride Progress */}
+              {/* Capital Recovery Free-Ride Progress */}
               <div className="pt-1">
                 <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-1">
-                  <span>RULE 42 STAGE-1 (+100% FREE-RIDE HARVEST)</span>
+                  <span>STAGE-1 (+100% CAPITAL RECOVERY HARVEST)</span>
                   <span className="text-emerald-400 font-bold">{freeRideProgress.toFixed(1)}% / 100%</span>
                 </div>
                 <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
@@ -365,7 +365,7 @@ export default function InteractiveKinematicDrawer({
             <div className="space-y-2.5">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 uppercase tracking-wider font-mono">
                 <Activity className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Rule 53 Kinematic Vectors</span>
+                <span>Kinematic Vector Momentum</span>
               </div>
 
               <div className="grid grid-cols-2 gap-2.5 font-mono">
@@ -404,7 +404,7 @@ export default function InteractiveKinematicDrawer({
                     {volInfo.label}
                   </span>
                   <span className="text-[10px] text-slate-500 mt-1 block">
-                    {volInfo.verified ? 'Rule 53 >= 1.5x gate' : 'Never faked as 1.0x'}
+                    {volInfo.verified ? 'Volume threshold >= 1.5x' : 'Never faked as 1.0x'}
                   </span>
                 </div>
               </div>
@@ -538,7 +538,7 @@ export default function InteractiveKinematicDrawer({
 
               <div className="flex items-center justify-between text-[10px] font-mono text-purple-400 border-t border-purple-900/30 pt-2">
                 <span>Sector: {data.sector || 'Quantitative Universe'}</span>
-                <span>Rule 19 Scoped</span>
+                <span>Tenant Isolated</span>
               </div>
             </div>
 
@@ -555,7 +555,7 @@ export default function InteractiveKinematicDrawer({
             <div className="bg-amber-950/20 border border-amber-800/40 rounded-xl p-3 text-xs text-amber-300/90 flex items-start gap-2.5">
               <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold block mb-0.5">Rule 24 Slippage Cap Enforced</span>
+                <span className="font-semibold block mb-0.5">2% Slippage Cap Enforced</span>
                 <span className="text-[11px] text-amber-400/80 leading-normal">
                   Orders are capped at a strict +2.0% marketable limit ceiling ({currencySymbol}{(livePrice * 1.02).toFixed(livePrice < 1 ? 3 : 2)}) with minimum $500 parcel protection.
                 </span>

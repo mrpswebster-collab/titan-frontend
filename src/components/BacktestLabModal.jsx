@@ -201,7 +201,7 @@ export default function BacktestLabModal({ isOpen, onClose, defaultTicker = 'WA1
                     {results.ticker} ({exchange}) — {years}-Year Strategy Performance
                   </span>
                   <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">
-                    2% CHASE & RULE 24 SIMULATED
+                    2% SLIPPAGE CAP & CHASE SIMULATED
                   </span>
                 </div>
 

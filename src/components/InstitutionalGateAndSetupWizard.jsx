@@ -423,7 +423,7 @@ const handleCopyCode = () => {
     { key: 'TITAN_STARTING_CAPITAL', value: `${startingCapital.toFixed(2)}`, desc: `Custom Starting Capital Allocation (${currency})` },
     { key: 'TITAN_BASE_CURRENCY', value: currency, desc: 'Primary accounting & position sizing currency' },
     { key: 'TITAN_KELLY_FRACTION', value: `${kellyFraction}`, desc: 'Fractional Kelly Criterion risk dampener' },
-    { key: 'TITAN_CHASE_LIMIT_PCT', value: `${chaseLimitPct}%`, desc: 'Rule 24 maximum slippage ceiling above signal price' },
+    { key: 'TITAN_CHASE_LIMIT_PCT', value: `${chaseLimitPct}%`, desc: 'Maximum slippage ceiling (+2% marketable limit cap) above signal price' },
     { key: 'TITAN_API_ENDPOINT', value: API_BASE, desc: 'Autonomous Render Quant Brain Gateway' },
     { key: 'TITAN_ACTIVE_EXCHANGE', value: 'ASX', desc: 'Default primary exchange (ASX / NYSE / LSE / TSX)' }
   ];
@@ -531,45 +531,10 @@ const handleCopyCode = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Top Bar Quick Display Mode & Webpage Switcher */}
-            <div className="flex items-center bg-[#070c12] p-0.5 rounded-lg border border-slate-800 text-[11px] font-mono">
-              <button
-                type="button"
-                onClick={() => handleModeSwitch('STANDARD')}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-bold transition ${
-                  layoutMode !== 'MOBILE'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Launch Full Desktop Webpage Mode (Complete Enclave, Google Sheets Auto-Builder & Fleet Setup)"
-              >
-                <Monitor className="w-3.5 h-3.5" />
-                <span>Full Webpage</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleModeSwitch('MOBILE')}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-bold transition ${
-                  layoutMode === 'MOBILE'
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Launch Mobile Phone Mode (Limited Display: Analytics & Trade Screens Only)"
-              >
-                <Smartphone className="w-3.5 h-3.5" />
-                <span>Mobile Mode</span>
-              </button>
-            </div>
-
-            <a
-              href="https://asx-quant-brain.onrender.com/ui"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-800 text-[11px] font-mono font-bold transition"
-              title="Switch directly to V156 Fullscreen Pro Trader Webpage"
-            >
-              <span>V156 Pro Webpage</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2.5 py-1 rounded-lg">
+              AUTHENTICATED ENCLAVE GATE
+            </span>
           </div>
         </header>
 
@@ -587,17 +552,10 @@ const handleCopyCode = () => {
               </p>
             </div>
 
-            {/* Display Mode & Webpage Switcher on Main Login */}
+            {/* Display Mode Switcher on Main Login (Single Source of Truth) */}
             <div className="mb-5 p-3 rounded-xl bg-slate-950/90 border border-slate-800/90 space-y-2.5">
-              <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
                 <span>Select Terminal Display Mode</span>
-                <a
-                  href="https://asx-quant-brain.onrender.com/ui"
-                  className="text-emerald-400 hover:text-emerald-300 font-bold inline-flex items-center gap-1"
-                >
-                  <span>Open V156 Pro Webpage</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-xs">
@@ -656,7 +614,7 @@ const handleCopyCode = () => {
                     Sovereign Institutional Enclave
                   </span>
                   <span className="text-[10px] font-mono text-slate-400">
-                    Rule 19 Zero-Trust · Superadmin & Authorized Nodes Only
+                    Zero-Trust Isolation · Authorized Fleet Nodes Only
                   </span>
                 </div>
               </div>

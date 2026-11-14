@@ -53,7 +53,7 @@ export default function KellySizingCalculator({ ticker, price, currency = 'AUD',
           <span>Kelly Criterion & Risk Sizing Calculator</span>
         </div>
         <span className="font-mono text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">
-          {fractionMode} KELLY (RULE 37)
+          {fractionMode} KELLY SIZING MODEL
         </span>
       </div>
 

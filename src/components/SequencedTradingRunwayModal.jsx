@@ -105,7 +105,7 @@ export default function SequencedTradingRunwayModal({
 
   const startingCap = userSession?.startingCapital || 25000;
   const parcelValue = (startingCap * (parcelSizePct / 100));
-  const chaseLimitPrice = +(selectedStock.price * 1.02).toFixed(4); // Rule 24 2% chase cap
+  const chaseLimitPrice = +(selectedStock.price * 1.02).toFixed(4); // 2% chase cap
   const estimatedUnits = Math.floor(parcelValue / chaseLimitPrice);
 
   const handleExecuteStage = () => {
@@ -119,7 +119,7 @@ export default function SequencedTradingRunwayModal({
         total: parcelValue,
         atrStop: (selectedStock.price * 0.90).toFixed(4),
         harvestTarget: (selectedStock.price * 2.0).toFixed(4),
-        rule: 'Rule 24 (2% Chase Cap) + Rule 53 Kinematic'
+        rule: '2% Slippage Cap + Kinematic Vector'
       });
     }
     setOrderStagedSuccess(true);
@@ -148,7 +148,7 @@ export default function SequencedTradingRunwayModal({
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold tracking-tight">Sequenced Trading Action Runway</h2>
                 <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                  RULE 53 & 24 GATE
+                  KINEMATIC &amp; SLIPPAGE GATE
                 </span>
               </div>
               <p className="text-xs text-slate-400">Step-by-step institutional trade preparation and parcel staging</p>
@@ -168,7 +168,7 @@ export default function SequencedTradingRunwayModal({
             { num: 1, label: 'Market Bell', desc: 'Exchange Telemetry' },
             { num: 2, label: 'Kinematic Scan', desc: 'Coiled Springs' },
             { num: 3, label: 'AI Dossier', desc: 'Geologist Review' },
-            { num: 4, label: 'Parcel Stage', desc: 'Rule 24 Chase Cap' },
+            { num: 4, label: 'Parcel Stage', desc: '2% Slippage Cap' },
           ].map((s) => {
             const isActive = currentStep === s.num;
             const isCompleted = currentStep > s.num || orderStagedSuccess;
@@ -253,7 +253,7 @@ export default function SequencedTradingRunwayModal({
               <div className="p-4 rounded-xl bg-cyan-950/20 border border-cyan-800/40 flex items-start gap-3">
                 <ShieldCheck className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                 <div className="text-xs text-cyan-200/90 leading-relaxed">
-                  <strong>Tri-Timestamp Standard Active:</strong> Exchange bell timestamp, local client clock, and server audit log are synchronised. All subsequent staged limit orders will enforce Rule 24 (2% slippage cap).
+                  <strong>Tri-Timestamp Standard Active:</strong> Exchange bell timestamp, local client clock, and server audit log are synchronised. All subsequent staged limit orders will enforce marketable limit protection (2% slippage cap).
                 </div>
               </div>
             </div>
@@ -266,7 +266,7 @@ export default function SequencedTradingRunwayModal({
                 <div>
                   <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-emerald-400" />
-                    Step 2: Coiled Spring Candidates (Rule 53 Filtered)
+                    Step 2: Coiled Spring Candidates (Kinematic Filtered)
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
                     Select the high-conviction candidate to route into autonomous AI Quant & Geologist review.
@@ -375,7 +375,7 @@ export default function SequencedTradingRunwayModal({
 
                 <div className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-800/40 text-xs text-emerald-300/90 flex items-center gap-2 font-mono">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  <span>Rule 53 Kinematic Gate PASSED: Minimum 3:1 reward-to-risk ratio confirmed against ATR trailing stop.</span>
+                  <span>Kinematic Momentum Gate PASSED: Minimum 3:1 reward-to-risk ratio confirmed against ATR trailing stop.</span>
                 </div>
               </div>
             </div>
@@ -388,7 +388,7 @@ export default function SequencedTradingRunwayModal({
                 <div>
                   <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
                     <Zap className="w-4 h-4 text-emerald-400" />
-                    Step 4: Rule 24 Parcel Staging & Sovereign Limit Routing
+                    Step 4: Parcel Staging &amp; Sovereign Limit Routing
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
                     Stage marketable limit order with strictly enforced 2% slippage cap and 2-stage free ride auto-harvest.
@@ -467,7 +467,7 @@ export default function SequencedTradingRunwayModal({
                   <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-800/40 flex items-start gap-2.5 text-xs text-amber-300/90 font-mono">
                     <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                     <span>
-                      <strong>Rule 24 Slippage Protection:</strong> Market orders prohibited on small-caps. Transmitting order as a Marketable Limit Order capped at ${chaseLimitPrice}.
+                      <strong>Slippage Protection:</strong> Market orders prohibited on small-caps. Transmitting order as a Marketable Limit Order capped at ${chaseLimitPrice}.
                     </span>
                   </div>
                 </div>
@@ -512,7 +512,7 @@ export default function SequencedTradingRunwayModal({
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black text-xs font-extrabold transition shadow-lg shadow-emerald-950 animate-pulse"
                 >
                   <Zap className="w-4 h-4" />
-                  <span>TRANSMIT RULE 24 LIMIT ORDER</span>
+                  <span>TRANSMIT MARKETABLE LIMIT ORDER</span>
                 </button>
               )}
             </div>

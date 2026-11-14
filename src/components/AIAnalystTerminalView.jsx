@@ -464,7 +464,7 @@ export default function AIAnalystTerminalView({
                   type="button"
                   onClick={() => onStageFromAI(dossier.ticker)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono shadow-sm transition"
-                  title="Stage Limit Order in Cockpit (Rule 24 2% Cap)"
+                  title="Stage Limit Order in Cockpit (2% Slippage Cap)"
                 >
                   <Zap className="w-3.5 h-3.5 fill-current" />
                   <span>Stage {dossier.directive}</span>

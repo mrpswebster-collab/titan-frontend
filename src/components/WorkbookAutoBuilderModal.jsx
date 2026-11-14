@@ -997,7 +997,7 @@ export default function WorkbookAutoBuilderModal({
                         2. Stage-1 House Money Harvest
                       </span>
                       <span className="text-[9px] font-mono bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded">
-                        Rule 24 &gt;= $500 Guard
+                        &gt;= $500 Parcel Guard
                       </span>
                     </div>
 
@@ -1419,11 +1419,11 @@ export default function WorkbookAutoBuilderModal({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
-                {/* 1. Rule 19: Zero-Trust Tenant Isolation */}
+                {/* 1. Zero-Trust Tenant Isolation */}
                 <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
                   <div className="text-xs font-bold text-emerald-400 uppercase flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Rule 19: Zero-Trust Isolation</span>
+                    <span>Zero-Trust Tenant Isolation</span>
                   </div>
                   <div className="text-xs font-bold text-slate-200">
                     Cryptographic Scoped Tenant Gate
@@ -1436,11 +1436,11 @@ export default function WorkbookAutoBuilderModal({
                   </div>
                 </div>
 
-                {/* 2. Rule 24: 2% Slippage Cap & Front-Running Shield */}
+                {/* 2. Slippage Protection & Front-Running Shield */}
                 <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
                   <div className="text-xs font-bold text-cyan-400 uppercase flex items-center gap-1.5">
                     <Zap className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                    <span>Rule 24: Slippage Protection</span>
+                    <span>Marketable Limit Protection</span>
                   </div>
                   <div className="text-xs font-bold text-slate-200">
                     2% Marketable Limit Order Ceiling
@@ -1453,11 +1453,11 @@ export default function WorkbookAutoBuilderModal({
                   </div>
                 </div>
 
-                {/* 3. Law 0 & Rule 20/70: 5-Gate Closing-Basis Execution */}
+                {/* 3. 5-Gate Closing-Basis Execution */}
                 <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
                   <div className="text-xs font-bold text-purple-400 uppercase flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                    <span>Rule 20/70: Anti-Churn Shield</span>
+                    <span>Anti-Churn Exit Shield</span>
                   </div>
                   <div className="text-xs font-bold text-slate-200">
                     5-Gate Closing-Basis Exit Standard
@@ -1470,11 +1470,11 @@ export default function WorkbookAutoBuilderModal({
                   </div>
                 </div>
 
-                {/* 4. Rule 71 & 21/73: Golden-Source Volume & Split Integrity */}
+                {/* 4. Golden-Source Volume & Split Integrity */}
                 <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
                   <div className="text-xs font-bold text-amber-400 uppercase flex items-center gap-1.5">
                     <Database className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span>Rule 71/73: Data Integrity</span>
+                    <span>Golden-Source Data Integrity</span>
                   </div>
                   <div className="text-xs font-bold text-slate-200">
                     Verified Volume &amp; Seam Auditing
@@ -1487,11 +1487,11 @@ export default function WorkbookAutoBuilderModal({
                   </div>
                 </div>
 
-                {/* 5. Rule 42: Two-Stage Free Ride & Half-Kelly Sizing */}
+                {/* 5. Two-Stage Free Ride & Half-Kelly Sizing */}
                 <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
                   <div className="text-xs font-bold text-emerald-400 uppercase flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Rule 42: Capital Preservation</span>
+                    <span>Two-Stage Capital Recovery</span>
                   </div>
                   <div className="text-xs font-bold text-slate-200">
                     +100% Free Ride &amp; Half-Kelly

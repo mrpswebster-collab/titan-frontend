@@ -246,7 +246,7 @@ export default function FleetSetupView({
         }
       });
       const data = await res.json();
-      setAgentActionMsg(`Scan Complete! Found ${data.results?.[0]?.targets_found || 0} Rule 53 Coiled Springs.`);
+      setAgentActionMsg(`Scan Complete! Found ${data.results?.[0]?.targets_found || 0} Coiled Spring breakouts.`);
       fetchAgentStatus();
     } catch (err) {
       setAgentActionMsg('Pre-market scan trigger failed.');
@@ -272,7 +272,7 @@ export default function FleetSetupView({
           action: 'AI BUY',
           shares: 2000,
           price: 1.25,
-          reason: 'Automated Rule 53 Coiled Spring breakout dry-run simulation'
+          reason: 'Automated Coiled Spring breakout dry-run simulation'
         })
       });
       const data = await res.json();
@@ -438,7 +438,7 @@ export default function FleetSetupView({
               </div>
               <div className="space-y-2">
                 <h3 className={`text-sm font-bold ${textPrimary}`}>
-                  How Multi-Workbook Fleet Isolation Works (Rule 19 Zero-Trust)
+                  How Multi-Workbook Fleet Isolation Works (Zero-Trust Isolation)
                 </h3>
                 <p className={`text-xs leading-relaxed ${textMuted}`}>
                   Each Google Sheet workbook functions as an isolated institutional satellite node. Rather than mixing penny mining speculations with dividend-paying blue-chips, you can provision dedicated workbooks for each operational objective. Each workbook holds its own independently audited SQLite database and cryptographic security token on Render:
@@ -457,7 +457,7 @@ export default function FleetSetupView({
                     </p>
                   </div>
                   <div className={`p-3 rounded-xl border ${subCardBg}`}>
-                    <strong className="text-purple-400 font-mono block">3. Two-Stage Harvesting (Rule 42)</strong>
+                    <strong className="text-purple-400 font-mono block">3. Two-Stage Harvesting</strong>
                     <p className={`text-[11px] mt-1 ${textMuted}`}>
                       Configure whether a sheet automatically recovers 100% of capital at +100% gain, or enables <code className="text-emerald-300">HOLD_100_COMPOUND</code> targeting 2,000%+ multi-baggers.
                     </p>
@@ -775,7 +775,7 @@ export default function FleetSetupView({
                   Autonomous Cloud Sentinel Daemon & Event Stream
                 </h3>
                 <p className={`text-xs leading-relaxed ${textMuted}`}>
-                  The Cloud Sentinel runs continuously on Render. It processes real-time price feeds, evaluates the 5-pillar Rule 53 Coiled Spring kinematic vector, and broadcasts structured telemetry over Server-Sent Events (SSE).
+                  The Cloud Sentinel runs continuously on Render. It processes real-time price feeds, evaluates the 5-pillar Coiled Spring kinematic vector, and broadcasts structured telemetry over Server-Sent Events (SSE).
                 </p>
                 <div className="flex flex-wrap items-center gap-3 pt-2">
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs font-mono">
@@ -888,7 +888,7 @@ export default function FleetSetupView({
                   Bring-Your-Own Antigravity Agent (FastMCP Multi-Tenant Bridge)
                 </h3>
                 <p className={`text-xs leading-relaxed ${textMuted}`}>
-                  Connect your local Antigravity CLI (<code className="text-white">agy</code>), Antigravity IDE, Claude Desktop, or custom Python agents to your scoped Titan trading desk. All AI reasoning runs using your local Google AI credits with <strong>zero hosting overhead</strong>, while all trade executions adhere strictly to Rule 19 Zero-Trust and Rule 24 slippage caps.
+                  Connect your local Antigravity CLI (<code className="text-white">agy</code>), Antigravity IDE, Claude Desktop, or custom Python agents to your scoped Titan trading desk. All AI reasoning runs using your local Google AI credits with <strong>zero hosting overhead</strong>, while all trade executions adhere strictly to zero-trust tenant isolation and marketable limit slippage caps.
                 </p>
               </div>
             </div>
@@ -977,7 +977,7 @@ export default function FleetSetupView({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
                     <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
                       <strong className="text-emerald-400 font-mono">fetch_sniper_targets()</strong>
-                      <p className="text-slate-400 text-[10px] mt-0.5">Returns Coiled Spring breakouts passing the 5-pillar Rule 53 kinematic filter.</p>
+                      <p className="text-slate-400 text-[10px] mt-0.5">Returns Coiled Spring breakouts passing the 5-pillar kinematic momentum filter.</p>
                     </div>
                     <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
                       <strong className="text-cyan-400 font-mono">execute_portfolio_action()</strong>

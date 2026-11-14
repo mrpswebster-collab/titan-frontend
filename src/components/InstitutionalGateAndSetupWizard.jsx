@@ -539,8 +539,8 @@ const handleCopyCode = () => {
         </header>
 
         {/* Main Auth Container */}
-        <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-4">
-          <div className={`${isMobileSelected ? 'max-w-md' : 'max-w-xl'} w-full bg-[#0d131f] border border-slate-800/80 rounded-2xl shadow-2xl p-5 sm:p-8 relative overflow-hidden transition-all duration-200`}>
+        <main className="flex-1 flex items-center justify-center p-3 sm:p-6 my-2 sm:my-4">
+          <div className="max-w-xl w-full bg-[#0d131f] border border-slate-800/80 rounded-2xl shadow-2xl p-4 sm:p-8 relative overflow-hidden transition-all duration-200">
             
             {/* Header Titles */}
             <div className="text-center space-y-2 mb-5">
@@ -605,23 +605,6 @@ const handleCopyCode = () => {
               )}
             </div>
 
-            {/* Sovereign Private Enclave Header Badge */}
-            <div className="mb-5 p-3 rounded-xl bg-slate-950/90 border border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <div>
-                  <span className="text-[11px] font-mono font-bold text-white uppercase tracking-wider block">
-                    Sovereign Institutional Enclave
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400">
-                    Zero-Trust Isolation · Authorized Fleet Nodes Only
-                  </span>
-                </div>
-              </div>
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">
-                PRIVATE NODE
-              </span>
-            </div>
 
             {/* Top Auth Mode Tabs */}
             <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 border border-slate-800 rounded-xl mb-6 font-mono text-xs">

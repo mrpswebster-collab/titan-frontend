@@ -518,10 +518,10 @@ export default function App() {
                       ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/50'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
-                  title="TITAN V156 Dashboard - Quant Cockpit (https://asx-quant-brain.onrender.com/ui)"
+                  title="TITAN Graphical Analytics — Visual Quant Cockpit"
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="inline">Cockpit (Pro)</span>
+                  <span className="inline">Graphical Analytics</span>
                 </button>
               </div>
 
@@ -594,10 +594,7 @@ export default function App() {
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold font-mono tracking-wider text-emerald-400 uppercase">
-                  TITAN V156 Dashboard — Quant Cockpit
-                </span>
-                <span className="hidden md:inline-block text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700">
-                  Target: https://asx-quant-brain.onrender.com/ui
+                  TITAN Graphical Analytics — Visual Quant Cockpit
                 </span>
               </div>
             </div>
@@ -614,7 +611,7 @@ export default function App() {
                 <span>Start Trading Runway (4-Step)</span>
               </button>
 
-              {/* Cockpit Mode Toggle (Native V156 Cockpit vs High-Density React Grid) */}
+              {/* Cockpit Mode Toggle (Graphical View vs High-Density React Grid) */}
               <div className="bg-[#080d14] p-0.5 rounded-lg border border-slate-800 flex items-center text-[11px] font-mono">
                 <button
                   type="button"
@@ -624,9 +621,9 @@ export default function App() {
                       ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
-                  title="Direct Native V156 Backend Cockpit Dashboard"
+                  title="Direct Visual Graphical Analytics Dashboard"
                 >
-                  Native V156 UI
+                  Graphical View
                 </button>
                 <button
                   type="button"
@@ -638,7 +635,7 @@ export default function App() {
                   }`}
                   title="High-Density React Grid Cockpit"
                 >
-                  React Grid
+                  Grid View
                 </button>
               </div>
 
@@ -664,7 +661,7 @@ export default function App() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition"
-                title="Launch TITAN V156 Dashboard in Fullscreen Browser Tab"
+                title="Launch Graphical Analytics Dashboard in Fullscreen Browser Tab"
               >
                 <span>Launch Fullscreen</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -678,7 +675,7 @@ export default function App() {
               <iframe
                 id="titan-v156-iframe"
                 src={`https://asx-quant-brain.onrender.com/ui?token=${encodeURIComponent(userSession?.idToken || '')}`}
-                title="TITAN V156 Dashboard - Quant Cockpit"
+                title="TITAN Graphical Analytics — Visual Quant Cockpit"
                 className="w-full h-full border-0"
                 style={{ minHeight: 'calc(100vh - 120px)' }}
                 allow="clipboard-read; clipboard-write; fullscreen"
@@ -797,7 +794,7 @@ export default function App() {
             </div>
 
             {isMobileMode ? (
-              <div className="p-3 space-y-3 font-mono text-xs">
+              <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 font-mono text-xs">
                 {tickerList.map((item) => (
                   <div
                     key={`mob-scan-${item.ticker}`}
@@ -1045,7 +1042,7 @@ export default function App() {
       <div className={`${isMobileMode ? 'block' : 'sm:hidden'} fixed bottom-0 left-0 right-0 z-40 border-t px-2 py-1.5 backdrop-blur-md shadow-2xl ${
         isLight ? 'bg-white/95 border-slate-200' : 'bg-[#090e17]/95 border-slate-800'
       }`}>
-        <div className="max-w-lg mx-auto grid grid-cols-5 gap-1 font-mono text-[10px]">
+        <div className="max-w-2xl mx-auto grid grid-cols-5 gap-1.5 font-mono text-[10px] sm:text-xs">
           <button
             type="button"
             onClick={() => {
@@ -1107,7 +1104,7 @@ export default function App() {
             }`}
           >
             <SlidersHorizontal className="w-4 h-4 mb-0.5" />
-            <span>Pro Display</span>
+            <span className="truncate">Graphic Analytics</span>
           </button>
 
           <button

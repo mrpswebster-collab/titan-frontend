@@ -436,7 +436,7 @@ export default function PortfolioHoldingsView({
 
         {/* Rolling Bar Left-to-Right Sub-View Selector (Active Holdings vs Day Zero Tracker) */}
         <div className="w-full lg:w-auto">
-          <div className={`relative p-1 rounded-2xl border transition shadow-inner select-none max-w-md mx-auto lg:mx-0 ${
+          <div className={`relative p-1 rounded-2xl border transition shadow-inner select-none w-full sm:max-w-md lg:max-w-lg lg:mx-0 ${
             isLight ? 'bg-slate-200/90 border-slate-300' : 'bg-[#070c14] border-slate-800'
           }`}>
             {/* Animated Rolling Bar Glider: Slides Left-to-Right / Right-to-Left on Press */}
@@ -571,6 +571,7 @@ export default function PortfolioHoldingsView({
           selectedWorkbook={selectedWorkbook}
           onSelectTicker={onSelectTicker}
           theme={theme}
+          isMobileMode={isMobileMode}
         />
       ) : (
         <div className={`rounded-2xl border overflow-hidden shadow-xl transition ${cardBg}`}>
@@ -622,7 +623,7 @@ export default function PortfolioHoldingsView({
               </div>
             </div>
           ) : isMobileMode ? (
-            <div className="p-3 space-y-3 font-mono text-xs">
+            <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 font-mono text-xs">
               {filteredHoldings.map((pos) => {
                 const units = Number(pos.units || 0);
                 const avgCost = Number(pos.avgCost || pos.entryPrice || 0);

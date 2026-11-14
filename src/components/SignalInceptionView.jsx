@@ -61,7 +61,8 @@ export default function SignalInceptionView({
   selectedWorkbook = 'ALL',
   onSelectTicker,
   theme = 'dark',
-  compact = false
+  compact = false,
+  isMobileMode = false
 }) {
   const isLight = theme === 'light';
   const [records, setRecords] = useState([]);
@@ -292,6 +293,101 @@ export default function SignalInceptionView({
               <span className="text-slate-200">peak_price_since_inception (MFE)</span> · <span className="text-slate-200">low_price_since_inception (MAE)</span>
             </div>
           </div>
+        </div>
+      ) : isMobileMode ? (
+        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 font-mono text-xs">
+          {filteredRecords.map((rec) => {
+            const firstPrice = Number(rec.first_price || rec.firstPrice || 0);
+            const livePrice = Number(rec.current_price || rec.livePrice || 0);
+            const sincePct = firstPrice > 0 && livePrice > 0
+              ? ((livePrice - firstPrice) / firstPrice) * 100
+              : Number(rec.since_discovery_pct ?? 0);
+            const peakPrice = Number(rec.peak_price_since_inception || rec.peakPrice || 0);
+            const lowPrice = Number(rec.low_price_since_inception || rec.lowPrice || 0);
+            const mfePct = firstPrice > 0 && peakPrice > 0
+              ? ((peakPrice - firstPrice) / firstPrice) * 100
+              : Number(rec.mfe_pct ?? 0);
+            const maePct = firstPrice > 0 && lowPrice > 0
+              ? ((lowPrice - firstPrice) / firstPrice) * 100
+              : Number(rec.mae_pct ?? 0);
+
+            const volInfo = formatVerifiedVolMult(
+              rec.first_vol_mult ?? rec.vol_mult ?? rec.volMult,
+              rec.vol_verified ?? rec.is_vol_verified
+            );
+            const daysSince = computeDaysSince(rec.first_ranked_at || rec.firstRankedAt);
+            const cat = categorizeRecord(rec);
+
+            return (
+              <div
+                key={`mob-inc-${rec.workbook || 'WB'}-${rec.ticker}-${rec.first_ranked_at || ''}`}
+                onClick={() =>
+                  onSelectTicker &&
+                  onSelectTicker({
+                    ...rec,
+                    ticker: rec.ticker,
+                    name: rec.company || rec.name || rec.ticker,
+                    price: livePrice || firstPrice,
+                    conviction: rec.first_conviction || rec.conviction || 'N/A',
+                    currency: rec.currency || 'AUD',
+                    initialDrawerTab: 'INCEPTION'
+                  })
+                }
+                className={`rounded-xl border p-3.5 cursor-pointer transition space-y-2.5 ${
+                  isLight
+                    ? 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-900'
+                    : 'bg-[#0b1220] border-slate-800 hover:border-emerald-500/40 text-slate-100'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400 font-bold text-sm">{rec.ticker}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                        cat === 'BOUGHT_ACTIVE'
+                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40'
+                          : cat === 'WATCHED_MISSED'
+                            ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40'
+                            : 'bg-slate-800 text-slate-300 border-slate-700'
+                      }`}>
+                        {cat.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <div className={`text-[11px] truncate max-w-[180px] mt-0.5 ${textMuted}`}>
+                      {rec.company || rec.name || '—'}
+                      {daysSince !== null ? ` • ${daysSince}d ago` : ''}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-sm">
+                      ${livePrice.toFixed(livePrice < 1 ? 3 : 2)}
+                    </div>
+                    <div className={`text-[11px] font-bold ${sincePct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {sincePct >= 0 ? '+' : ''}{sincePct.toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-slate-800/60">
+                  <div>
+                    <span className="text-slate-500 block text-[9px]">DAY-0 ENTRY</span>
+                    <span className="text-slate-300 font-semibold">${firstPrice.toFixed(firstPrice < 1 ? 3 : 2)}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-slate-500 block text-[9px]">VOL MULT</span>
+                    <span className={volInfo.verified ? 'text-cyan-400 font-bold' : 'text-amber-400'}>
+                      {volInfo.label}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] font-mono pt-1 text-slate-400">
+                  <span className="text-emerald-400 font-bold">MFE: +{Math.max(0, mfePct).toFixed(1)}%</span>
+                  <span className="text-rose-400">MAE: {maePct.toFixed(1)}%</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="overflow-x-auto">

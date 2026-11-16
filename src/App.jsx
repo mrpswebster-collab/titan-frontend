@@ -163,7 +163,7 @@ export default function App() {
   const [stagedNotification, setStagedNotification] = useState(null);
 
   // Workspace Layout Mode: 'COCKPIT' (Admin Pro) vs. 'STANDARD' (Retail Multi-Tab)
-  const [cockpitSubView, setCockpitSubView] = useState('PRO_GRID');
+  const [cockpitSubView, setCockpitSubView] = useState('V156_NATIVE');
   const [layoutMode, setLayoutMode] = useState(() => {
     try {
       return localStorage.getItem('titan_layout_mode') || 'STANDARD';
@@ -404,9 +404,12 @@ export default function App() {
               <div className="hidden lg:flex items-center bg-[#070c12] p-0.5 rounded-xl border border-slate-800 gap-1 font-mono text-xs ml-2">
                 <button
                   type="button"
-                  onClick={() => setActiveMainTab('SCANNER')}
+                  onClick={() => {
+                    if (layoutMode === 'COCKPIT') setLayoutMode('STANDARD');
+                    setActiveMainTab('SCANNER');
+                  }}
                   className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                    activeMainTab === 'SCANNER'
+                    layoutMode !== 'COCKPIT' && activeMainTab === 'SCANNER'
                       ? 'bg-emerald-500 text-slate-950 shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
@@ -417,9 +420,12 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveMainTab('PORTFOLIO')}
+                  onClick={() => {
+                    if (layoutMode === 'COCKPIT') setLayoutMode('STANDARD');
+                    setActiveMainTab('PORTFOLIO');
+                  }}
                   className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                    activeMainTab === 'PORTFOLIO'
+                    layoutMode !== 'COCKPIT' && activeMainTab === 'PORTFOLIO'
                       ? 'bg-emerald-500 text-slate-950 shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
@@ -430,15 +436,36 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveMainTab('AI_TERMINAL')}
+                  onClick={() => {
+                    if (layoutMode === 'COCKPIT') setLayoutMode('STANDARD');
+                    setActiveMainTab('AI_TERMINAL');
+                  }}
                   className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                    activeMainTab === 'AI_TERMINAL'
+                    layoutMode !== 'COCKPIT' && activeMainTab === 'AI_TERMINAL'
                       ? 'bg-emerald-500 text-slate-950 shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   <Cpu className="w-3.5 h-3.5" />
                   <span>AI Terminal</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLayoutMode('COCKPIT');
+                    setCockpitSubView('V156_NATIVE');
+                    try { localStorage.setItem('titan_layout_mode', 'COCKPIT'); } catch(e) {}
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                    layoutMode === 'COCKPIT'
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Open TITAN V156 Dashboard - Quant Cockpit"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Quant Cockpit (V156)</span>
                 </button>
               </div>
             </div>
@@ -639,20 +666,33 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Refresh Iframe button */}
+              {/* Refresh & Popout Buttons */}
               {cockpitSubView === 'V156_NATIVE' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const iframe = document.getElementById('titan-v156-iframe');
-                    if (iframe) iframe.src = iframe.src;
-                  }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition border border-slate-700"
-                  title="Reload Backend Quant Cockpit Telemetry"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="hidden sm:inline">Refresh</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const iframe = document.getElementById('titan-v156-iframe');
+                      if (iframe) iframe.src = iframe.src;
+                    }}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition border border-slate-700"
+                    title="Reload Backend Quant Cockpit Telemetry"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="hidden sm:inline">Refresh</span>
+                  </button>
+
+                  <a
+                    href={`https://asx-quant-brain.onrender.com/ui?token=${encodeURIComponent(userSession?.idToken || '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition border border-slate-700"
+                    title="Open TITAN V156 Dashboard in a separate browser tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="hidden sm:inline">Open in New Tab</span>
+                  </a>
+                </>
               )}
             </div>
           </div>
@@ -1087,6 +1127,7 @@ export default function App() {
             type="button"
             onClick={() => {
               setLayoutMode('COCKPIT');
+              setCockpitSubView('V156_NATIVE');
               try { localStorage.setItem('titan_layout_mode', 'COCKPIT'); } catch (e) {}
             }}
             className={`flex flex-col items-center justify-center py-1.5 rounded-xl font-bold transition ${
@@ -1096,7 +1137,7 @@ export default function App() {
             }`}
           >
             <SlidersHorizontal className="w-4 h-4 mb-0.5" />
-            <span className="truncate">Graphic Analytics</span>
+            <span className="truncate">V156 Cockpit</span>
           </button>
 
           <button

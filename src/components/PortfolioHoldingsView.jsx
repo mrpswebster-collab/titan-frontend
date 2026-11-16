@@ -18,7 +18,8 @@ import {
   Clock,
   Activity,
   ChevronDown,
-  AlertTriangle
+  AlertTriangle,
+  SlidersHorizontal
 } from 'lucide-react';
 import SignalInceptionView, { formatVerifiedVolMult, computeDaysSince } from './SignalInceptionView';
 
@@ -60,6 +61,7 @@ export default function PortfolioHoldingsView({
   onSelectTicker,
   onUpdateSession,
   onNavigateToFleetSetup,
+  onNavigateToCockpit,
   isMobileMode = false,
   theme = 'dark'
 }) {
@@ -435,7 +437,7 @@ export default function PortfolioHoldingsView({
         </div>
 
         {/* Rolling Bar Left-to-Right Sub-View Selector (Active Holdings vs Day Zero Tracker) */}
-        <div className="w-full lg:w-auto">
+        <div className="w-full lg:w-auto flex flex-wrap items-center gap-2">
           <div className={`relative p-1 rounded-2xl border transition shadow-inner select-none w-full sm:max-w-md lg:max-w-lg lg:mx-0 ${
             isLight ? 'bg-slate-200/90 border-slate-300' : 'bg-[#070c14] border-slate-800'
           }`}>
@@ -486,6 +488,22 @@ export default function PortfolioHoldingsView({
               </button>
             </div>
           </div>
+
+          {onNavigateToCockpit && (
+            <button
+              type="button"
+              onClick={onNavigateToCockpit}
+              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-2xl text-xs font-mono font-bold transition border shadow-sm ${
+                isLight
+                  ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-800'
+                  : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40 text-emerald-300'
+              }`}
+              title="Open Graphic Analytics Visual Quant Cockpit"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Graphic Analytics</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -570,6 +588,8 @@ export default function PortfolioHoldingsView({
           userSession={userSession}
           selectedWorkbook={selectedWorkbook}
           onSelectTicker={onSelectTicker}
+          onNavigateToCockpit={onNavigateToCockpit}
+          holdings={holdings}
           theme={theme}
           isMobileMode={isMobileMode}
         />

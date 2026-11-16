@@ -964,6 +964,10 @@ export default function App() {
           userSession={userSession}
           theme={theme}
           isMobileMode={isMobileMode}
+          onNavigateToCockpit={() => {
+            setLayoutMode('COCKPIT');
+            try { localStorage.setItem('titan_layout_mode', 'COCKPIT'); } catch(e) {}
+          }}
           onNavigateToFleetSetup={
             isMobileMode
               ? undefined

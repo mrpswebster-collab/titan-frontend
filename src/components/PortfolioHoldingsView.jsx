@@ -96,12 +96,12 @@ export default function PortfolioHoldingsView({
   ];
 
   const defaultAdminHoldings = [
-    { ticker: 'FAU', company: 'First Au Ltd', workbook: 'ai-trader-workbook', exchange: 'ASX', currency: 'AUD', units: 50000, avgCost: 0.140, livePrice: 0.160, marketValue: 8000.00, plDollar: 1000.00, plPct: 14.29, dayChangePct: 3.2, stopLoss: 0.135, status: 'ACTIVE', vol_mult: 2.1, vol_verified: true },
-    { ticker: 'UM1', company: 'Unity Metals Ltd', workbook: 'ai-trader-workbook', exchange: 'ASX', currency: 'AUD', units: 65000, avgCost: 0.095, livePrice: 0.110, marketValue: 7150.00, plDollar: 975.00, plPct: 15.79, dayChangePct: 4.8, stopLoss: 0.088, status: 'ACTIVE', vol_mult: 2.4, vol_verified: true },
-    { ticker: 'WIA', company: 'Wia Gold Limited', workbook: 'pennymines-workbook', exchange: 'ASX', currency: 'AUD', units: 110000, avgCost: 0.115, livePrice: 0.145, marketValue: 15950.00, plDollar: 3300.00, plPct: 26.09, dayChangePct: 5.1, stopLoss: 0.125, status: 'TRAILING_STOP', vol_mult: 2.8, vol_verified: true },
-    { ticker: 'SXG', company: 'Southern Cross Gold', workbook: 'special-workbook', exchange: 'ASX', currency: 'AUD', units: 8500, avgCost: 2.65, livePrice: 3.10, marketValue: 26350.00, plDollar: 3825.00, plPct: 16.98, dayChangePct: 2.6, stopLoss: 2.75, status: 'COILED_HOLD', vol_mult: 1.9, vol_verified: true },
-    { ticker: 'NST', company: 'Northern Star Resources Ltd', workbook: 'special-workbook', exchange: 'ASX', currency: 'AUD', units: 35, avgCost: 10.75, livePrice: 25.65, marketValue: 897.75, plDollar: 521.50, plPct: 138.60, dayChangePct: 1.8, stopLoss: 22.80, status: 'FREE_CARRY_ACTIVE', vol_mult: 1.7, vol_verified: true },
-    { ticker: 'CSL', company: 'CSL Limited', workbook: '100-asx-workbook', exchange: 'ASX', currency: 'AUD', units: 115, avgCost: 284.00, livePrice: 298.50, marketValue: 34327.50, plDollar: 1667.50, plPct: 5.11, dayChangePct: 1.1, stopLoss: 272.00, status: 'FORTRESS_CORE', vol_mult: 1.5, vol_verified: true }
+    { ticker: 'FAU', company: 'First Au Ltd', workbook: 'ai-trader-workbook', exchange: 'ASX', currency: 'AUD', units: 50000, avgCost: 0.140, livePrice: 0.160, marketValue: 8000.00, plDollar: 1000.00, plPct: 14.29, dayChangePct: 3.2, stopLoss: 0.135, status: 'ACTIVE', vol_mult: 2.1, vol_verified: true, bought_at: '2024-04-10', daysHeld: 24 },
+    { ticker: 'UM1', company: 'Unity Metals Ltd', workbook: 'ai-trader-workbook', exchange: 'ASX', currency: 'AUD', units: 65000, avgCost: 0.095, livePrice: 0.110, marketValue: 7150.00, plDollar: 975.00, plPct: 15.79, dayChangePct: 4.8, stopLoss: 0.088, status: 'ACTIVE', vol_mult: 2.4, vol_verified: true, bought_at: '2024-04-18', daysHeld: 16 },
+    { ticker: 'WIA', company: 'Wia Gold Limited', workbook: 'pennymines-workbook', exchange: 'ASX', currency: 'AUD', units: 110000, avgCost: 0.115, livePrice: 0.145, marketValue: 15950.00, plDollar: 3300.00, plPct: 26.09, dayChangePct: 5.1, stopLoss: 0.125, status: 'TRAILING_STOP', vol_mult: 2.8, vol_verified: true, bought_at: '2024-03-20', daysHeld: 45 },
+    { ticker: 'SXG', company: 'Southern Cross Gold', workbook: 'special-workbook', exchange: 'ASX', currency: 'AUD', units: 8500, avgCost: 2.65, livePrice: 3.10, marketValue: 26350.00, plDollar: 3825.00, plPct: 16.98, dayChangePct: 2.6, stopLoss: 2.75, status: 'COILED_HOLD', vol_mult: 1.9, vol_verified: true, bought_at: '2024-03-01', daysHeld: 64 },
+    { ticker: 'NST', company: 'Northern Star Resources Ltd', workbook: 'special-workbook', exchange: 'ASX', currency: 'AUD', units: 35, avgCost: 10.75, livePrice: 25.65, marketValue: 897.75, plDollar: 521.50, plPct: 138.60, dayChangePct: 1.8, stopLoss: 22.80, status: 'FREE_CARRY_ACTIVE', vol_mult: 1.7, vol_verified: true, bought_at: '2023-11-12', daysHeld: 174 },
+    { ticker: 'CSL', company: 'CSL Limited', workbook: '100-asx-workbook', exchange: 'ASX', currency: 'AUD', units: 115, avgCost: 284.00, livePrice: 298.50, marketValue: 34327.50, plDollar: 1667.50, plPct: 5.11, dayChangePct: 1.1, stopLoss: 272.00, status: 'FORTRESS_CORE', vol_mult: 1.5, vol_verified: true, bought_at: '2024-01-15', daysHeld: 110 }
   ];
 
   const [selectedWorkbook, setSelectedWorkbook] = useState('ALL');
@@ -333,6 +333,52 @@ export default function PortfolioHoldingsView({
       dayPlPct
     };
   }, [filteredHoldings, activeWb]);
+
+  // Ideology Income Efficiency Analysis (Coiled Springs vs Moonshots vs Bluechips vs Reserve)
+  const ideologyStats = useMemo(() => {
+    const map = {
+      'pennymines-workbook': { id: 'pennymines-workbook', name: 'Coiled Springs', icon: '🚀', totalPl: 0, totalCost: 0, positions: 0, totalDays: 0, color: 'emerald' },
+      'ai-trader-workbook': { id: 'ai-trader-workbook', name: 'Moonshots', icon: '🎯', totalPl: 0, totalCost: 0, positions: 0, totalDays: 0, color: 'purple' },
+      '100-asx-workbook': { id: '100-asx-workbook', name: 'Bluechips', icon: '🏛️', totalPl: 0, totalCost: 0, positions: 0, totalDays: 0, color: 'blue' },
+      'special-workbook': { id: 'special-workbook', name: 'Special Reserve', icon: '⚡', totalPl: 0, totalCost: 0, positions: 0, totalDays: 0, color: 'amber' }
+    };
+
+    holdings.forEach(h => {
+      const wbKey = h.workbook || 'pennymines-workbook';
+      const target = map[wbKey] || map['special-workbook'];
+      const units = Number(h.units || 0);
+      const avgCost = Number(h.avgCost || h.entryPrice || 0);
+      const livePrice = Number(h.livePrice || h.price || 0);
+      const costBasis = Number(h.costBasis || (units * avgCost));
+      const marketValue = Number(h.marketValue || (units * livePrice));
+      const pl = h.plDollar !== undefined ? Number(h.plDollar) : (marketValue - costBasis);
+      const days = Number(h.daysHeld ?? h.days_held ?? 30);
+
+      target.totalPl += pl;
+      target.totalCost += costBasis;
+      target.positions += 1;
+      target.totalDays += days;
+    });
+
+    const list = Object.values(map).map(item => {
+      const returnPct = item.totalCost > 0 ? (item.totalPl / item.totalCost) * 100 : 0;
+      const avgDays = item.positions > 0 ? Math.max(1, Math.round(item.totalDays / item.positions)) : 1;
+      const velocityPerDay = avgDays > 0 ? (item.totalPl / avgDays) : 0;
+      const velocityPctPerDay = avgDays > 0 ? (returnPct / avgDays) : 0;
+      return {
+        ...item,
+        returnPct,
+        avgDays,
+        velocityPerDay,
+        velocityPctPerDay
+      };
+    });
+
+    list.sort((a, b) => b.velocityPerDay - a.velocityPerDay);
+    const topIdeology = list[0];
+
+    return { list, topIdeology };
+  }, [holdings]);
 
   const cardBg = isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#111827] border-slate-800';
   const textPrimary = isLight ? 'text-slate-900' : 'text-slate-100';
@@ -582,6 +628,79 @@ export default function PortfolioHoldingsView({
         </div>
       </div>
 
+      {/* 3B. Ideology Income Efficiency Summary Matrix (Quick Visual Glance: Best Income Strategy) */}
+      <div className={`rounded-2xl border p-4 transition ${cardBg}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
+              Ideology Income Efficiency &amp; Capital Velocity Matrix
+            </h3>
+          </div>
+          {ideologyStats.topIdeology && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold animate-pulse">
+              <span>👑 TOP INCOME ENGINE:</span>
+              <span className="text-white">{ideologyStats.topIdeology.name} (+${ideologyStats.topIdeology.velocityPerDay.toFixed(2)}/day • +{ideologyStats.topIdeology.velocityPctPerDay.toFixed(2)}%/day)</span>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-3.5 font-mono">
+          {ideologyStats.list.map((item, idx) => {
+            const isWinner = idx === 0;
+            return (
+              <div
+                key={item.id}
+                onClick={() => setSelectedWorkbook(item.id)}
+                className={`p-3.5 rounded-xl border transition cursor-pointer relative overflow-hidden ${
+                  selectedWorkbook === item.id
+                    ? 'border-emerald-500 bg-emerald-950/20 shadow-md shadow-emerald-950/30 ring-1 ring-emerald-500/50'
+                    : isWinner
+                      ? 'border-emerald-500/40 bg-[#0d1624] hover:border-emerald-400'
+                      : 'border-slate-800 bg-[#0a0f18] hover:border-slate-700'
+                }`}
+              >
+                {isWinner && (
+                  <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500 text-slate-950">
+                    #1 INCOME
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{item.icon}</span>
+                  <div>
+                    <div className="font-bold text-xs text-slate-100">{item.name}</div>
+                    <div className="text-[10px] text-slate-400">{item.positions} open position(s)</div>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-800/80 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 text-[11px]">Net Income:</span>
+                    <span className={`font-bold ${item.totalPl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {item.totalPl >= 0 ? '+' : ''}${item.totalPl.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 text-[11px]">Capital Velocity:</span>
+                    <span className={`font-bold ${item.velocityPerDay >= 0 ? 'text-cyan-300' : 'text-rose-300'}`}>
+                      {item.velocityPerDay >= 0 ? '+' : ''}${item.velocityPerDay.toFixed(2)} / day
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+                    <span>Avg Hold: <b className="text-slate-200">{item.avgDays}d</b></span>
+                    <span className={item.returnPct >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                      {item.returnPct >= 0 ? '+' : ''}{item.returnPct.toFixed(1)}% total
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* 4. Conditional View: Signal Inception Tab OR Westpac-Style Holdings Table */}
       {activeSubTab === 'SIGNAL_INCEPTION' ? (
         <SignalInceptionView
@@ -670,6 +789,9 @@ export default function PortfolioHoldingsView({
                       : (marketValue * (dayChangePct / 100));
                 const rawBoughtAt = pos.bought_at || pos.boughtAt || pos.entryDate || pos.entry_date || null;
                 const computedDays = pos.daysHeld ?? pos.days_held ?? computeDaysSince(rawBoughtAt);
+                const holdingDays = Math.max(1, computedDays || 1);
+                const holdingVelocityDollar = plDollar / holdingDays;
+                const holdingVelocityPct = plPct / holdingDays;
                 const volInfo = formatVerifiedVolMult(
                   pos.vol_mult ?? pos.volMult ?? pos.volumeMultiplier,
                   pos.vol_verified ?? pos.is_vol_verified
@@ -764,6 +886,24 @@ export default function PortfolioHoldingsView({
                         <span className="text-emerald-400 font-bold">{shield.label}</span>
                       </div>
                     </div>
+
+                    {/* Capital Velocity & Income Rate Strip */}
+                    <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3 h-3 text-cyan-400" />
+                        <span className="text-slate-400">
+                          {rawBoughtAt ? String(rawBoughtAt).slice(0, 10) : 'Entry'}: <b className="text-slate-200">{holdingDays}d held</b>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-400">Velocity:</span>
+                        <span className={`px-1.5 py-0.5 rounded font-bold ${
+                          holdingVelocityDollar >= 0 ? 'bg-cyan-500/15 text-cyan-300' : 'bg-rose-500/15 text-rose-300'
+                        }`}>
+                          {holdingVelocityDollar >= 0 ? '+' : ''}${holdingVelocityDollar.toFixed(2)}/d ({holdingVelocityPct >= 0 ? '+' : ''}{holdingVelocityPct.toFixed(2)}%/d)
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
@@ -776,11 +916,11 @@ export default function PortfolioHoldingsView({
                 }`}>
                   <tr>
                     <th className="py-3 px-4">Ticker / Workbook</th>
-                    <th className="py-3 px-3 text-right">Purchase Info &amp; Cost Basis</th>
+                    <th className="py-3 px-3 text-right">Purchase Date &amp; Cost</th>
                     <th className="py-3 px-3 text-right">Live Price &amp; Vol Mult</th>
                     <th className="py-3 px-3 text-right">Market Value</th>
                     <th className="py-3 px-3 text-right">Day Change ($ / %)</th>
-                    <th className="py-3 px-3 text-right">Since-Purchase P&amp;L</th>
+                    <th className="py-3 px-3 text-right">Since-Purchase P&amp;L &amp; Velocity</th>
                     <th className="py-3 px-4 text-right">Anti-Churn Shield &amp; Stops</th>
                   </tr>
                 </thead>
@@ -815,6 +955,9 @@ export default function PortfolioHoldingsView({
                     // Purchase Date & Days Held
                     const rawBoughtAt = pos.bought_at || pos.boughtAt || pos.entryDate || pos.entry_date || null;
                     const computedDays = pos.daysHeld ?? pos.days_held ?? computeDaysSince(rawBoughtAt);
+                    const holdingDays = Math.max(1, computedDays || 1);
+                    const holdingVelocityDollar = plDollar / holdingDays;
+                    const holdingVelocityPct = plPct / holdingDays;
 
                     // Verified Vol Mult (Never fake 1.0x)
                     const volInfo = formatVerifiedVolMult(
@@ -949,7 +1092,7 @@ export default function PortfolioHoldingsView({
                           )}
                         </td>
 
-                        {/* 6. Total Since-Purchase P&L ($ & %) */}
+                        {/* 6. Total Since-Purchase P&L & Capital Velocity */}
                         <td className="py-3.5 px-3 text-right">
                           <div className={`font-bold ${plDollar >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                             {plDollar >= 0 ? '+' : ''}${plDollar.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -961,6 +1104,18 @@ export default function PortfolioHoldingsView({
                                 : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
                             }`}>
                               {plPct >= 0 ? '+' : ''}{plPct.toFixed(2)}%
+                            </span>
+                          </div>
+                          <div className="text-[10px] mt-1 flex items-center justify-end gap-1 font-mono">
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                              holdingVelocityDollar >= 0
+                                ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+                                : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                            }`}>
+                              {holdingVelocityDollar >= 0 ? '+' : ''}${holdingVelocityDollar.toFixed(2)}/d
+                            </span>
+                            <span className="text-slate-400 text-[9px]">
+                              ({holdingVelocityPct >= 0 ? '+' : ''}{holdingVelocityPct.toFixed(2)}%/d)
                             </span>
                           </div>
                         </td>

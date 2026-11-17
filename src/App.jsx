@@ -14,6 +14,8 @@ import HelpTooltip from './components/HelpTooltip';
 import GuidedTourModal from './components/GuidedTourModal';
 import FleetSetupView from './components/FleetSetupView';
 import SequencedTradingRunwayModal from './components/SequencedTradingRunwayModal';
+import SecurityThreatModal from './components/SecurityThreatModal';
+import UserCredentialsModal from './components/UserCredentialsModal';
 import { useAuth } from './context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -164,6 +166,8 @@ export default function App() {
   const [isBacktestOpen, setIsBacktestOpen] = useState(false);
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [isRunwayOpen, setIsRunwayOpen] = useState(false);
+  const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+  const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
   const [stagedNotification, setStagedNotification] = useState(null);
 
   // Workspace Layout Mode: 'COCKPIT' (Admin Pro) vs. 'STANDARD' (Retail Multi-Tab)
@@ -390,6 +394,8 @@ export default function App() {
         tenantId={userSession?.tenantId}
         onRefresh={fetchExchangeStatus}
         onLogout={handleLogout}
+        onOpenSecurity={() => setIsSecurityOpen(true)}
+        onOpenCredentials={() => setIsCredentialsOpen(true)}
         emergencyStoppedCount={emergencyStoppedCount}
       />
 
@@ -561,6 +567,38 @@ export default function App() {
                   <span className="inline">Graphical Analytics</span>
                 </button>
               </div>
+
+              {/* Security Threat Enclave Modal Button */}
+              <button
+                onClick={() => setIsSecurityOpen(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+                  isSecurityOpen
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                    : isLight
+                      ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                      : 'bg-slate-800 text-emerald-400 border-slate-700 hover:bg-slate-700'
+                }`}
+                title="Open Zero-Trust Security Threat Enclave"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">Security</span>
+              </button>
+
+              {/* User Credentials & Planned Maintenance Modal Button */}
+              <button
+                onClick={() => setIsCredentialsOpen(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+                  isCredentialsOpen
+                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
+                    : isLight
+                      ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                      : 'bg-slate-800 text-cyan-400 border-slate-700 hover:bg-slate-700'
+                }`}
+                title="Open User Credentials &amp; Planned Maintenance"
+              >
+                <Key className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden sm:inline">Credentials</span>
+              </button>
 
               {/* Institutional Help & Quick Guide */}
               <button
@@ -1241,6 +1279,23 @@ export default function App() {
           handleStageOrder(order);
           setStagedNotification(order);
         }}
+        theme={theme}
+      />
+
+      {/* Zero-Trust Security Threat Enclave Modal */}
+      <SecurityThreatModal
+        isOpen={isSecurityOpen}
+        onClose={() => setIsSecurityOpen(false)}
+        userSession={userSession}
+        theme={theme}
+      />
+
+      {/* User Credentials, Node Setup & Planned Maintenance Modal */}
+      <UserCredentialsModal
+        isOpen={isCredentialsOpen}
+        onClose={() => setIsCredentialsOpen(false)}
+        userSession={userSession}
+        onLogout={handleLogout}
         theme={theme}
       />
     </div>

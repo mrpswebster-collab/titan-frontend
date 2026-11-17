@@ -14,6 +14,8 @@ import HelpTooltip from './components/HelpTooltip';
 import GuidedTourModal from './components/GuidedTourModal';
 import FleetSetupView from './components/FleetSetupView';
 import SequencedTradingRunwayModal from './components/SequencedTradingRunwayModal';
+import { useAuth } from './context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { 
   Zap, 
@@ -141,6 +143,8 @@ const resolveInitialTab = () => {
 };
 
 export default function App() {
+  const queryClient = useQueryClient();
+  const { signOut: supaSignOut, user: supaUser } = useAuth();
   // 1. Primary View State Declarations
   const [activeMainTab, setActiveMainTab] = useState(resolveInitialTab);
   const [theme, setTheme] = useState(() => {
@@ -336,6 +340,12 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    try {
+      queryClient.clear(); // Zero-leak memory sanitation: purge all cached financial records on logout
+    } catch (e) {}
+    try {
+      supaSignOut();
+    } catch (e) {}
     const reset = {
       isAuthed: false,
       hasCompletedSetup: false,

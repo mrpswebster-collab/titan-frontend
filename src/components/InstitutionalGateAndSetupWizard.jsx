@@ -25,8 +25,10 @@ import {
   BadgeCheck,
   Rocket,
   Smartphone,
-  Monitor
+  Monitor,
+  Database
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE = 'https://asx-quant-brain.onrender.com';
 
@@ -64,8 +66,62 @@ export default function InstitutionalGateAndSetupWizard({
   layoutMode = 'STANDARD',
   onSelectLayoutMode
 }) {
-  // Navigation Tabs: 'SIGN_IN' | 'REGISTER' | 'FORGOT_PIN'
-  const [authTab, setAuthTab] = useState('SIGN_IN');
+  // Navigation Tabs: 'SUPABASE' | 'SIGN_IN' | 'INVITE' | 'FORGOT_PIN'
+  const [authTab, setAuthTab] = useState('SUPABASE');
+
+  // Supabase Auth Integration
+  const { signInWithPassword, signUp, isConfigured: isSupaConfigured } = useAuth();
+  const [supaEmail, setSupaEmail] = useState('');
+  const [supaPassword, setSupaPassword] = useState('');
+  const [supaFullName, setSupaFullName] = useState('');
+  const [supaMode, setSupaMode] = useState('SIGN_IN'); // 'SIGN_IN' | 'SIGN_UP'
+  const [isSupaLoading, setIsSupaLoading] = useState(false);
+
+  const handleSupabaseSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccessMsg('');
+    setIsSupaLoading(true);
+    try {
+      if (supaMode === 'SIGN_IN') {
+        const data = await signInWithPassword({ email: supaEmail, password: supaPassword });
+        setAuthSuccessMsg('Supabase authentication successful! Synchronizing workspace...');
+        if (onLoginSuccess) {
+          onLoginSuccess({
+            email: data.user.email,
+            name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Quant Trader',
+            tenantId: data.user.id,
+            idToken: data.session.access_token,
+            startingCapital: 25000,
+            currency: 'AUD',
+            kellyFraction: 0.50
+          });
+        }
+      } else {
+        const data = await signUp({ email: supaEmail, password: supaPassword, fullName: supaFullName });
+        if (data?.user && !data?.session) {
+          setAuthSuccessMsg('Account created! Please check your email to verify before signing in.');
+        } else if (data?.user && data?.session) {
+          setAuthSuccessMsg('Account registered and authenticated!');
+          if (onLoginSuccess) {
+            onLoginSuccess({
+              email: data.user.email,
+              name: data.user.user_metadata?.full_name || supaFullName || 'Quant Trader',
+              tenantId: data.user.id,
+              idToken: data.session.access_token,
+              startingCapital: 25000,
+              currency: 'AUD',
+              kellyFraction: 0.50
+            });
+          }
+        }
+      }
+    } catch (err) {
+      setAuthError(err.message || 'Supabase authentication failed');
+    } finally {
+      setIsSupaLoading(false);
+    }
+  };
 
   const handleModeSwitch = (nextMode) => {
     try {
@@ -607,7 +663,24 @@ const handleCopyCode = () => {
 
 
             {/* Top Auth Mode Tabs */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 border border-slate-800 rounded-xl mb-6 font-mono text-xs">
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-950/80 border border-slate-800 rounded-xl mb-6 font-mono text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthTab('SUPABASE');
+                  setAuthError('');
+                  setAuthSuccessMsg('');
+                }}
+                className={`py-2 px-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all ${
+                  authTab === 'SUPABASE'
+                    ? 'bg-emerald-500 text-black shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span>Supabase</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -616,14 +689,14 @@ const handleCopyCode = () => {
                   setAuthError('');
                   setAuthSuccessMsg('');
                 }}
-                className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                className={`py-2 px-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all ${
                   authTab === 'SIGN_IN'
                     ? 'bg-emerald-500 text-black shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Authorized Sign-In</span>
+                <span>Google SSO</span>
               </button>
 
               <button
@@ -633,14 +706,14 @@ const handleCopyCode = () => {
                   setAuthError('');
                   setAuthSuccessMsg('');
                 }}
-                className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                className={`py-2 px-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all ${
                   authTab === 'INVITE'
                     ? 'bg-cyan-500 text-black shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <Key className="w-3.5 h-3.5" />
-                <span>Redeem Invite</span>
+                <span>Invite</span>
               </button>
             </div>
 
@@ -656,6 +729,109 @@ const handleCopyCode = () => {
               <div className="mb-5 p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-800/80 text-xs text-emerald-200 flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                 <div className="font-mono text-[11px] leading-relaxed">{authSuccessMsg}</div>
+              </div>
+            )}
+
+            {/* ============================================================= */}
+            {/* TAB 0: SUPABASE AUTH (EMAIL + PASSWORD + RLS) */}
+            {/* ============================================================= */}
+            {authTab === 'SUPABASE' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-center space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-mono font-semibold">
+                    <Database className="w-3 h-3" />
+                    <span>Supabase Auth & RLS Guard</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                    {supaMode === 'SIGN_IN'
+                      ? 'Sign in with your email and password to access your encrypted tenant workspace.'
+                      : 'Create a new institutional operator account protected by PostgreSQL Row-Level Security.'}
+                  </p>
+                </div>
+
+                {!isSupaConfigured && (
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="text-[11px] leading-relaxed">
+                      Supabase environment keys not detected. Define <code className="text-amber-200 font-mono">VITE_SUPABASE_URL</code> and <code className="text-amber-200 font-mono">VITE_SUPABASE_ANON_KEY</code> in <code className="text-amber-200">.env</code>.
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 p-1 bg-slate-900 rounded-lg border border-slate-800 text-xs font-mono">
+                  <button
+                    type="button"
+                    onClick={() => { setSupaMode('SIGN_IN'); setAuthError(''); setAuthSuccessMsg(''); }}
+                    className={`py-1.5 rounded-md transition ${supaMode === 'SIGN_IN' ? 'bg-emerald-500 text-black font-bold' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    Email Sign In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSupaMode('SIGN_UP'); setAuthError(''); setAuthSuccessMsg(''); }}
+                    className={`py-1.5 rounded-md transition ${supaMode === 'SIGN_UP' ? 'bg-emerald-500 text-black font-bold' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    New Account
+                  </button>
+                </div>
+
+                <form onSubmit={handleSupabaseSubmit} className="space-y-3 font-sans text-left">
+                  {supaMode === 'SIGN_UP' && (
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Full Name / Operator</label>
+                      <input
+                        type="text"
+                        required
+                        value={supaFullName}
+                        onChange={(e) => setSupaFullName(e.target.value)}
+                        placeholder="e.g. Alex Mercer"
+                        className="w-full bg-[#070b12] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-300 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={supaEmail}
+                      onChange={(e) => setSupaEmail(e.target.value)}
+                      placeholder="trader@institutional-desk.com"
+                      className="w-full bg-[#070b12] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-300 mb-1">Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={supaPassword}
+                      onChange={(e) => setSupaPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full bg-[#070b12] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSupaLoading || !isSupaConfigured}
+                    className="w-full mt-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs font-mono tracking-wide flex items-center justify-center gap-2 transition duration-150 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSupaLoading ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Verifying Credentials...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>{supaMode === 'SIGN_IN' ? 'Sign In with Supabase' : 'Create Supabase Account'}</span>
+                      </>
+                    )}
+                  </button>
+                </form>
               </div>
             )}
 

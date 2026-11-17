@@ -13,7 +13,8 @@ import {
   Award,
   AlertTriangle,
   Database,
-  Layers
+  Layers,
+  Zap
 } from 'lucide-react';
 import KellySizingCalculator from './KellySizingCalculator';
 import { formatVerifiedVolMult, computeDaysSince } from './SignalInceptionView';
@@ -35,6 +36,39 @@ export default function InteractiveKinematicDrawer({
   const [orderUnits, setOrderUnits] = useState(Number(data?.units) > 0 ? Number(data.units) : 10000);
   const [inceptionRecord, setInceptionRecord] = useState(null);
   const [loadingInception, setLoadingInception] = useState(false);
+  const [opportunityB, setOpportunityB] = useState(data?.opportunity_b || null);
+
+  // Query live analytics to detect Opportunity B (Ping-Pong Spread Harvest)
+  useEffect(() => {
+    if (!ticker) {
+      setOpportunityB(null);
+      return;
+    }
+    if (data?.opportunity_b) {
+      setOpportunityB(data.opportunity_b);
+      return;
+    }
+    let cancelled = false;
+    const fetchAnalytics = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/ticker/${encodeURIComponent(ticker)}/analytics?limit=30`, {
+          headers: { 'Authorization': `Bearer ${userSession?.idToken || ''}` }
+        });
+        if (!cancelled && res.ok) {
+          const json = await res.json();
+          if (json?.opportunity_b?.is_active) {
+            setOpportunityB(json.opportunity_b);
+          } else {
+            setOpportunityB(null);
+          }
+        }
+      } catch (e) {
+        if (!cancelled) setOpportunityB(null);
+      }
+    };
+    fetchAnalytics();
+    return () => { cancelled = true; };
+  }, [ticker, userSession?.idToken, data?.opportunity_b]);
 
   useEffect(() => {
     if (!ticker || !data) return;
@@ -313,6 +347,56 @@ export default function InteractiveKinematicDrawer({
                 </div>
               </div>
             </div>
+
+            {/* Opportunity B: Ping-Pong Spread Harvest Tactical Card */}
+            {opportunityB && opportunityB.is_active && (
+              <div className="bg-gradient-to-r from-emerald-950/50 via-teal-950/40 to-slate-900 border border-emerald-500/50 rounded-xl p-3.5 space-y-2.5 animate-in fade-in shadow-lg shadow-emerald-950/40">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <Zap className="w-3.5 h-3.5 text-amber-400" />
+                    <span>OPPORTUNITY B: SPREAD HARVEST ACTIVE</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+                    +{opportunityB.spread_yield_pct}% Spread Yield
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                  <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block">BID FLOOR (BUY TARGET)</span>
+                    <span className="text-sm font-bold text-emerald-400">
+                      {currencySymbol}{Number(opportunityB.floor_price).toFixed(opportunityB.floor_price < 1 ? 3 : 2)}
+                    </span>
+                  </div>
+                  <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block">ASK CEILING (HARVEST TARGET)</span>
+                    <span className="text-sm font-bold text-amber-400">
+                      {currencySymbol}{Number(opportunityB.ceiling_price).toFixed(opportunityB.ceiling_price < 1 ? 3 : 2)}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-[11px] font-mono text-slate-300 leading-normal flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-emerald-500/20">
+                  <span className="text-[10px] text-emerald-300/80">
+                    {opportunityB.cycles_detected} cycles • Passive Bid Capture Policy
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onExecuteOrder(ticker, {
+                        ...data,
+                        price: opportunityB.floor_price,
+                        units: orderUnits,
+                        isPassiveBid: true,
+                        opportunityType: 'OPPORTUNITY_B_SPREAD_HARVEST'
+                      });
+                    }}
+                    className="px-2.5 py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold transition shadow-sm"
+                  >
+                    Stage Limit at Bid ({currencySymbol}{Number(opportunityB.floor_price).toFixed(opportunityB.floor_price < 1 ? 3 : 2)})
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Anti-Churn Shield & Stop Diagnostics Card */}
             <div className={`border rounded-xl p-4 space-y-3 ${

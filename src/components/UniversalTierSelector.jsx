@@ -1,11 +1,22 @@
 import React from 'react';
-import { Zap, Shield, Rocket, Target } from 'lucide-react';
+import { Zap, Shield, Rocket, Target, Repeat } from 'lucide-react';
 
-export default function UniversalTierSelector({ activeTier, onSelectTier, activeExchange, theme = 'dark' }) {
+export default function UniversalTierSelector({ activeTier, onSelectTier, activeExchange, theme = 'dark', counts = {} }) {
   const isUsMarket = activeExchange === 'NYSE' || activeExchange === 'NASDAQ';
   const isLight = theme === 'light';
 
   const TIERS = [
+    {
+      id: 'OPPORTUNITY_B',
+      icon: Repeat,
+      badge: '⚡ PING-PONG SPREAD',
+      title: 'Opportunity B: Spread Harvester',
+      subtitle: 'Donchian Corridor Microcap Oscillations',
+      stats: 'Passive Bid Maker | Automated Ask Harvest | Net Yield +8%–18%',
+      accentColor: 'text-teal-400',
+      bgColorSelected: isLight ? 'bg-teal-50 border-teal-500 shadow-md shadow-teal-500/10' : 'bg-teal-500/10 border-teal-500/50 shadow-lg shadow-black/40',
+      badgeClass: isLight ? 'bg-teal-100 text-teal-800' : 'bg-teal-950/60 text-teal-300 border border-teal-500/30'
+    },
     {
       id: 'TIER_3',
       icon: Zap,
@@ -54,10 +65,11 @@ export default function UniversalTierSelector({ activeTier, onSelectTier, active
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {TIERS.map((tier) => {
           const Icon = tier.icon;
           const isSelected = activeTier === tier.id;
+          const count = counts[tier.id] !== undefined ? counts[tier.id] : null;
 
           return (
             <button
@@ -72,10 +84,11 @@ export default function UniversalTierSelector({ activeTier, onSelectTier, active
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full font-mono ${
+                <span className={`text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full font-mono flex items-center gap-1 ${
                   isSelected ? tier.badgeClass : (isLight ? 'bg-slate-100 text-slate-600' : 'bg-slate-800 text-slate-400')
                 }`}>
-                  {tier.badge}
+                  <span>{tier.badge}</span>
+                  {count !== null && <span className="opacity-75">({count})</span>}
                 </span>
                 <Icon className={`w-4 h-4 ${tier.accentColor}`} />
               </div>

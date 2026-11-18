@@ -49,6 +49,10 @@ import {
 
 const MOCK_TICKERS = {
   ASX: {
+    OPPORTUNITY_B: [
+      { ticker: 'BLG', name: 'Bellevue Gold (PING-PONG)', price: 0.155, floor_price: 0.150, ceiling_price: 0.165, spread_yield_pct: 10.0, change: 3.3, conviction: 'C:8', rsi: 52.1, macd: 'CORRIDOR', obv: 'OSCILLATING', currency: 'AUD', sector: 'Gold Mining / Spread Harvest', status: '⚡ OPP_B [ASK: $0.165]' },
+      { ticker: 'PEN', name: 'Peninsula Energy (PING-PONG)', price: 0.125, floor_price: 0.120, ceiling_price: 0.135, spread_yield_pct: 12.5, change: 4.1, conviction: 'C:8', rsi: 50.4, macd: 'CORRIDOR', obv: 'OSCILLATING', currency: 'AUD', sector: 'Uranium Developer / Spread Harvest', status: '⚡ OPP_B [BID: $0.120]' }
+    ],
     TIER_3: [
       { ticker: 'FAU', name: 'First Au Ltd (ACTIVE)', price: 0.160, change: 6.7, conviction: 'C:9', rsi: 49.5, macd: 'BULLISH_HOOK', obv: 'ACCUMULATING', currency: 'AUD', sector: 'Victorian Goldfields Exploration' },
       { ticker: 'UM1', name: 'Unity Metals Ltd (ACTIVE)', price: 0.110, change: 4.8, conviction: 'C:8', rsi: 46.2, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'AUD', sector: 'Base & Precious Metals' },
@@ -70,6 +74,7 @@ const MOCK_TICKERS = {
     ]
   },
   NYSE: {
+    OPPORTUNITY_B: [],
     TIER_3: [
       { ticker: 'SOUN', name: 'SoundHound AI Inc', price: 4.82, change: 14.2, conviction: 'C:9', rsi: 42.1, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'USD', sector: 'Conversational Voice AI' },
       { ticker: 'ASTS', name: 'AST SpaceMobile Inc', price: 24.15, change: 7.8, conviction: 'C:8', rsi: 47.5, macd: 'BULLISH_HOOK', obv: 'ACCUMULATING', currency: 'USD', sector: 'Direct-to-Cell Satellite' },
@@ -91,6 +96,7 @@ const MOCK_TICKERS = {
     ]
   },
   LSE: {
+    OPPORTUNITY_B: [],
     TIER_3: [
       { ticker: 'PREM', name: 'Premier African Minerals', price: 0.052, change: 12.8, conviction: 'C:7', rsi: 39.4, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'GBP', sector: 'Zulu Lithium Project' },
       { ticker: 'KOD', name: 'Kodal Minerals PLC', price: 0.38, change: 7.2, conviction: 'C:8', rsi: 44.1, macd: 'COILED', obv: 'ACCUMULATING', currency: 'GBP', sector: 'Bougouni Lithium Mine' }
@@ -107,6 +113,7 @@ const MOCK_TICKERS = {
     ]
   },
   TSX: {
+    OPPORTUNITY_B: [],
     TIER_3: [
       { ticker: 'PMET', name: 'Patriot Battery Metals', price: 4.85, change: 9.8, conviction: 'C:8', rsi: 42.5, macd: 'BULLISH_HOOK', obv: 'SURGING', currency: 'CAD', sector: 'Corvette Lithium Pegmatite' },
       { ticker: 'FIL', name: 'Filo Mining Corp', price: 21.40, change: 4.2, conviction: 'C:9', rsi: 48.9, macd: 'STEADY', obv: 'ACCUMULATING', currency: 'CAD', sector: 'Filo del Sol Copper-Gold' }
@@ -320,6 +327,26 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const [radarData, setRadarData] = useState(null);
+
+  const fetchRadar = async () => {
+    try {
+      const res = await fetch(`https://asx-quant-brain.onrender.com/api/v2/scanner/radar?exchange=${activeExchange}`);
+      if (res.ok) {
+        const data = await res.json();
+        setRadarData(data);
+      }
+    } catch (e) {
+      console.warn('Backend radar fetch notice:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchRadar();
+    const interval = setInterval(fetchRadar, 15000);
+    return () => clearInterval(interval);
+  }, [activeExchange]);
+
   const handleStageOrder = (ticker, data) => {
     const ceilingPrice = (data.price * 1.01).toFixed(3);
     setStagedNotification({
@@ -382,7 +409,9 @@ export default function App() {
 
   const currentExMeta = exchangeData?.[activeExchange] || {};
   const isExtendedHours = currentExMeta.session_phase === 'PRE_MARKET' || currentExMeta.session_phase === 'AFTER_HOURS';
-  const tickerList = MOCK_TICKERS[activeExchange]?.[activeTier] || [];
+  const liveTiers = radarData?.tiers;
+  const liveTierList = liveTiers && liveTiers[activeTier] && liveTiers[activeTier].length > 0 ? liveTiers[activeTier] : null;
+  const tickerList = liveTierList || MOCK_TICKERS[activeExchange]?.[activeTier] || [];
 
   return (
     <div className={`min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-black transition-colors duration-200 ${isMobileMode ? 'pb-16' : ''} ${isLight ? "bg-slate-50 text-slate-900" : "bg-[#0a0e17] text-slate-100"}`}>
@@ -825,12 +854,14 @@ export default function App() {
           <UniversalTierSelector
             activeTier={activeTier}
             onSelectTier={setActiveTier}
+            activeExchange={activeExchange}
             theme={theme}
             counts={{
-              TIER_3: MOCK_TICKERS[activeExchange]?.TIER_3?.length || 0,
-              TIER_1: MOCK_TICKERS[activeExchange]?.TIER_1?.length || 0,
-              TIER_2: MOCK_TICKERS[activeExchange]?.TIER_2?.length || 0,
-              POI_SNIPER: MOCK_TICKERS[activeExchange]?.POI_SNIPER?.length || 0
+              OPPORTUNITY_B: radarData?.counts?.OPPORTUNITY_B ?? (MOCK_TICKERS[activeExchange]?.OPPORTUNITY_B?.length || 0),
+              TIER_3: radarData?.counts?.TIER_3 ?? (MOCK_TICKERS[activeExchange]?.TIER_3?.length || 0),
+              TIER_1: radarData?.counts?.TIER_1 ?? (MOCK_TICKERS[activeExchange]?.TIER_1?.length || 0),
+              TIER_2: radarData?.counts?.TIER_2 ?? (MOCK_TICKERS[activeExchange]?.TIER_2?.length || 0),
+              POI_SNIPER: radarData?.counts?.POI_SNIPER ?? (MOCK_TICKERS[activeExchange]?.POI_SNIPER?.length || 0)
             }}
           />
 
@@ -841,7 +872,7 @@ export default function App() {
 
               <div>
                 <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                  <span>{activeExchange} {activeTier.replace('_', ' ')} Watchlist</span>
+                  <span>{activeExchange} {activeTier === 'OPPORTUNITY_B' ? '⚡ Opportunity B (Ping-Pong Spread Harvest)' : activeTier.replace('_', ' ')} Watchlist</span>
                   <span className="text-xs font-normal text-slate-400">({tickerList.length} assets active)</span>
                 </h2>
                 <p className="text-[11px] text-slate-400 font-mono mt-0.5">
@@ -888,6 +919,11 @@ export default function App() {
                           <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-[10px]">
                             {item.conviction}
                           </span>
+                          {(item.opportunity_b || activeTier === 'OPPORTUNITY_B') && (
+                            <span className="px-1.5 py-0.5 rounded bg-teal-500/20 border border-teal-500/40 text-teal-300 font-bold text-[9px]">
+                              ⚡ OPP B
+                            </span>
+                          )}
                         </div>
                         <div className="text-[11px] text-slate-400 truncate max-w-[200px] mt-0.5">
                           {item.name} • {item.sector}
@@ -903,6 +939,13 @@ export default function App() {
                         </div>
                       </div>
                     </div>
+
+                    {(item.opportunity_b || item.spread_yield_pct) && (
+                      <div className="flex items-center justify-between bg-teal-950/40 border border-teal-500/30 rounded-lg px-2.5 py-1 text-[10px] text-teal-300">
+                        <span>Floor ${Number(item.opportunity_b?.floor_price ?? item.floor_price).toFixed(3)} ↔ Ceil ${Number(item.opportunity_b?.ceiling_price ?? item.ceiling_price).toFixed(3)}</span>
+                        <span className="font-bold text-teal-400">+{Number(item.opportunity_b?.spread_yield_pct ?? item.spread_yield_pct).toFixed(1)}% Yield</span>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/60 text-[10px]">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -973,10 +1016,22 @@ export default function App() {
                         <div className="flex items-center gap-2">
                           <span className="text-emerald-400 font-mono text-sm">{item.ticker}</span>
                           <span className="text-[11px] text-slate-400 font-normal truncate max-w-[140px]">{item.name}</span>
+                          {(item.opportunity_b || activeTier === 'OPPORTUNITY_B') && (
+                            <span className="px-1.5 py-0.5 rounded bg-teal-500/20 border border-teal-500/40 text-teal-300 font-bold text-[9px] shrink-0">
+                              ⚡ OPP B
+                            </span>
+                          )}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-slate-400 text-[11px] truncate max-w-[160px]">
-                        {item.sector}
+                      <td className="py-3 px-4 text-slate-400 text-[11px] truncate max-w-[180px]">
+                        {(item.opportunity_b || item.spread_yield_pct) ? (
+                          <span className="text-teal-300 font-mono text-[10px] inline-flex items-center gap-1">
+                            ${Number(item.opportunity_b?.floor_price ?? item.floor_price).toFixed(3)} ↔ ${Number(item.opportunity_b?.ceiling_price ?? item.ceiling_price).toFixed(3)}
+                            <span className="text-emerald-400 font-bold">+{Number(item.opportunity_b?.spread_yield_pct ?? item.spread_yield_pct).toFixed(1)}%</span>
+                          </span>
+                        ) : (
+                          item.sector
+                        )}
                       </td>
                       <td className="py-3 px-4 text-right font-bold text-slate-100">
                         {item.currency} ${item.price.toFixed(item.price < 1 ? 4 : 2)}
@@ -988,9 +1043,15 @@ export default function App() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-[10px]">
-                          {item.conviction}
-                        </span>
+                        {(item.opportunity_b || item.spread_yield_pct) ? (
+                          <span className="px-2 py-0.5 rounded bg-teal-500/20 border border-teal-500/40 text-teal-300 font-bold text-[10px]">
+                            +{Number(item.opportunity_b?.spread_yield_pct ?? item.spread_yield_pct).toFixed(1)}%
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-[10px]">
+                            {item.conviction}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">

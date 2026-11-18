@@ -800,6 +800,7 @@ export default function ProCockpitView({
 
               <div className="flex bg-[#070c12] rounded-lg p-0.5 border border-slate-800">
                 {[
+                  { id: 'OPPORTUNITY_B', label: '⚡ Opp B Harvest' },
                   { id: 'TIER_3', label: '🚀 T3 Moonshot' },
                   { id: 'TIER_1', label: '🛡️ T1 Core' },
                   { id: 'POI_SNIPER', label: '🎯 POI' }
